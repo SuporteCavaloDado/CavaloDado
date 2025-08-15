@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CavaloDado - Doação de Produtos Físicos</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <!-- Header fixo -->
+    <header class="header">
+        <a href="index.html" class="logo">
+            <img src="assets/logo.svg" alt="CavaloDado" style="height: 30px;">
+        </a>
+        <button class="menu-toggle">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+    </header>
+
+    <!-- Menu lateral -->
+    <div class="menu-overlay"></div>
+    <nav class="menu-sidebar">
+        <div class="menu-header">
+            <button class="menu-close">&times;</button>
+        </div>
+        <div class="menu-items">
+            <a href="index.html" class="menu-item">Início</a>
+            <a href="login.html" class="menu-item">Entrar</a>
+            <a href="register.html" class="menu-item">Cadastrar</a>
+            <a href="regras.html" class="menu-item">Termos e Regras</a>
+        </div>
+    </nav>
+
+    <!-- Conteúdo principal -->
+    <main class="main-content">
+        <div class="container">
+            <!-- Anúncio superior -->
+            <div class="anuncio">
+                <img src="https://placehold.co/728x90?text=Anuncio+Leaderboard" alt="Anúncio Leaderboard">
+            </div>
+
+            <!-- Filtros -->
+            <div class="filtros-container">
+                <button class="filtros-toggle">
+                    Filtros
+                    <span>▼</span>
+                </button>
+                <div class="filtros-content">
+                    <!-- Barra de pesquisa -->
+                    <div class="search-container">
+                        <input type="text" class="search-input" placeholder="Pesquisar pedidos...">
+                        <button class="search-btn">🔍</button>
+                    </div>
+
+                    <!-- Filtros -->
+                    <div class="filtros-grid">
+                        <div class="form-group">
+                            <label class="form-label">Categoria</label>
+                            <select id="filtro-categoria" class="form-select">
+                                <option value="">Todas</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Estado</label>
+                            <select id="filtro-estado" class="form-select">
+                                <option value="">Todos</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Status</label>
+                            <select id="filtro-status" class="form-select">
+                                <option value="">Todos</option>
+                                <option value="Disponível">Disponível</option>
+                                <option value="Pendente">Pendente</option>
+                                <option value="Concluído">Concluído</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Data</label>
+                            <select id="filtro-data" class="form-select">
+                                <option value="">Qualquer data</option>
+                                <option value="24h">Últimas 24h</option>
+                                <option value="semana">Última semana</option>
+                                <option value="mes">Último mês</option>
+                                <option value="ano">Último ano</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                        <button class="btn btn-primary" onclick="aplicarFiltros()">Aplicar Filtros</button>
+                        <button class="btn btn-outline" onclick="limparFiltros()">Limpar</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Feed de pedidos -->
+            <div class="feed-container">
+                <!-- Pedidos serão carregados aqui via JavaScript -->
+            </div>
+
+            <!-- Anúncio inferior -->
+            <div class="anuncio">
+                <img src="https://placehold.co/728x90?text=Anuncio+Leaderboard" alt="Anúncio Leaderboard">
+            </div>
+        </div>
+    </main>
+
+    <!-- Estilos adicionais para modal -->
+    <style>
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .modal-content {
+            background: var(--cor-branco);
+            border-radius: var(--border-radius);
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--cor-cinza-medio);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            color: var(--cor-secundaria);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--cor-cinza-escuro);
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .endereco-completo {
+            background: var(--cor-cinza-claro);
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .endereco-completo h4 {
+            margin-bottom: 1rem;
+            color: var(--cor-secundaria);
+        }
+
+        .endereco-linha {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--cor-cinza-medio);
+        }
+
+        .endereco-linha:last-child {
+            border-bottom: none;
+        }
+
+        .endereco-linha button {
+            background: var(--cor-primaria);
+            border: none;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        .endereco-linha button:hover {
+            background: #E6C200;
+        }
+    </style>
+
+    <!-- Scripts -->
+    <script src="supabase/supabase-config.js"></script>
+    <script src="js/scripts.js"></script>
+</body>
+</html>
+

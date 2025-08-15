@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Novo Pedido - CavaloDado</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <!-- Botão voltar -->
+    <button class="btn-back" onclick="window.history.back()">←</button>
+
+    <!-- Header fixo -->
+    <header class="header">
+        <a href="index.html" class="logo">
+            <img src="assets/logo.svg" alt="CavaloDado" style="height: 30px;">
+        </a>
+        <button class="menu-toggle">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+    </header>
+
+    <!-- Menu lateral -->
+    <div class="menu-overlay"></div>
+    <nav class="menu-sidebar">
+        <div class="menu-header">
+            <button class="menu-close">&times;</button>
+        </div>
+        <div class="menu-items">
+            <a href="index.html" class="menu-item">Início</a>
+            <a href="dashboard.html" class="menu-item">Perfil</a>
+            <a href="new-request.html" class="menu-item">Novo Pedido</a>
+            <a href="dashboard.html#historico" class="menu-item">Histórico</a>
+            <a href="dashboard.html#progresso" class="menu-item">Progresso</a>
+            <a href="dashboard.html#favoritos" class="menu-item">Favoritos</a>
+            <a href="regras.html" class="menu-item">Termos e Regras</a>
+            <a href="#" class="menu-item" onclick="logout()">Sair</a>
+        </div>
+    </nav>
+
+    <!-- Conteúdo principal -->
+    <main class="main-content">
+        <div class="container">
+            <div style="max-width: 600px; margin: 0 auto;">
+                <div class="card">
+                    <h1 class="text-center" style="color: var(--cor-secundaria); margin-bottom: 2rem;">Criar Novo Pedido</h1>
+
+                    <div class="text-center" style="margin-bottom: 2rem; padding: 1rem; background: var(--cor-cinza-claro); border-radius: var(--border-radius);">
+                        <p style="margin: 0; color: var(--cor-cinza-escuro);">
+                            <strong>Limite:</strong> 1 pedido a cada 2 horas
+                        </p>
+                    </div>
+
+                    <form id="novo-pedido-form">
+                        <div class="form-group">
+                            <label for="titulo" class="form-label">Nome do produto *</label>
+                            <input type="text" id="titulo" class="form-input" maxlength="60" required>
+                            <small style="color: var(--cor-cinza-escuro);">Máximo 60 caracteres</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="categoria" class="form-label">Categoria *</label>
+                            <select id="categoria" class="form-select" required>
+                                <option value="">Selecione uma categoria</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="descricao" class="form-label">Descrição do pedido *</label>
+                            <textarea id="descricao" class="form-input" rows="4" required placeholder="Descreva por que você precisa deste produto e como ele irá ajudá-lo..."></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Mídia *</label>
+                            <div style="margin-bottom: 1rem;">
+                                <input type="radio" id="tipo-video" name="tipo-media" value="video" checked>
+                                <label for="tipo-video" style="margin-left: 0.5rem; margin-right: 2rem;">Vídeo (máx. 60s)</label>
+                                
+                                <input type="radio" id="tipo-fotos" name="tipo-media" value="fotos">
+                                <label for="tipo-fotos" style="margin-left: 0.5rem;">Fotos (máx. 10)</label>
+                            </div>
+
+                            <div id="upload-video" class="upload-area">
+                                <input type="file" id="video-input" accept="video/*" style="display: none;">
+                                <div onclick="document.getElementById('video-input').click()" style="cursor: pointer; padding: 2rem; border: 2px dashed var(--cor-cinza-medio); border-radius: var(--border-radius); text-align: center;">
+                                    <p>Clique para selecionar um vídeo</p>
+                                    <small>Máximo 60 segundos</small>
+                                </div>
+                            </div>
+
+                            <div id="upload-fotos" class="upload-area" style="display: none;">
+                                <input type="file" id="fotos-input" accept="image/*" multiple style="display: none;">
+                                <div onclick="document.getElementById('fotos-input').click()" style="cursor: pointer; padding: 2rem; border: 2px dashed var(--cor-cinza-medio); border-radius: var(--border-radius); text-align: center;">
+                                    <p>Clique para selecionar fotos</p>
+                                    <small>Máximo 10 imagens</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <div style="padding: 1rem; background: var(--cor-cinza-claro); border-radius: var(--border-radius);">
+                                <h4 style="margin-bottom: 0.5rem;">Endereço de entrega:</h4>
+                                <p style="margin: 0; color: var(--cor-cinza-escuro);">
+                                    O endereço cadastrado em suas configurações será usado para entrega.
+                                    <a href="config.html" style="color: var(--cor-secundaria);">Verificar/Editar endereço</a>
+                                </p>
+                            </div>
+                        </div>
+
+                        <div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: var(--border-radius); padding: 1rem; margin-bottom: 1.5rem;">
+                            <h4 style="color: #856404; margin-bottom: 0.5rem;">Produtos Proibidos:</h4>
+                            <p style="color: #856404; margin: 0; font-size: 0.9rem;">
+                                Armas, perecíveis, dinheiro, animais, drogas, veículos que exigem CNH, pagamentos de boletos, ativos financeiros, imóveis.
+                            </p>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary" style="width: 100%;">
+                            Criar Pedido
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Anúncio -->
+                <div class="anuncio" style="margin-top: 2rem;">
+                    <img src="https://placehold.co/728x90?text=Anuncio+Leaderboard" alt="Anúncio Leaderboard">
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Scripts -->
+    <script src="supabase/supabase-config.js"></script>
+    <script src="js/scripts.js"></script>
+    
+    <script>
+        // Alternar entre vídeo e fotos
+        document.querySelectorAll('input[name="tipo-media"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                const uploadVideo = document.getElementById('upload-video');
+                const uploadFotos = document.getElementById('upload-fotos');
+                
+                if (this.value === 'video') {
+                    uploadVideo.style.display = 'block';
+                    uploadFotos.style.display = 'none';
+                } else {
+                    uploadVideo.style.display = 'none';
+                    uploadFotos.style.display = 'block';
+                }
+            });
+        });
+
+        // Preview de arquivos
+        document.getElementById('video-input').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const video = document.createElement('video');
+                video.src = URL.createObjectURL(file);
+                video.controls = true;
+                video.style.width = '100%';
+                video.style.marginTop = '1rem';
+                
+                const uploadArea = document.querySelector('#upload-video div');
+                uploadArea.appendChild(video);
+            }
+        });
+
+        document.getElementById('fotos-input').addEventListener('change', function(e) {
+            const files = Array.from(e.target.files);
+            const uploadArea = document.querySelector('#upload-fotos div');
+            
+            files.forEach(file => {
+                const img = document.createElement('img');
+                img.src = URL.createObjectURL(file);
+                img.style.width = '100px';
+                img.style.height = '100px';
+                img.style.objectFit = 'cover';
+                img.style.margin = '0.5rem';
+                img.style.borderRadius = '8px';
+                
+                uploadArea.appendChild(img);
+            });
+        });
+    </script>
+</body>
+</html>
+

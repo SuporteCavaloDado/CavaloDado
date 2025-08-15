@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Termos e Regras - CavaloDado</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <!-- Botão voltar -->
+    <button class="btn-back" onclick="window.history.back()">←</button>
+
+    <!-- Header fixo -->
+    <header class="header">
+        <a href="index.html" class="logo">
+            <img src="assets/logo.svg" alt="CavaloDado" style="height: 30px;">
+        </a>
+        <button class="menu-toggle">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+    </header>
+
+    <!-- Menu lateral -->
+    <div class="menu-overlay"></div>
+    <nav class="menu-sidebar">
+        <div class="menu-header">
+            <button class="menu-close">&times;</button>
+        </div>
+        <div class="menu-items">
+            <a href="index.html" class="menu-item">Início</a>
+            <a href="login.html" class="menu-item">Entrar</a>
+            <a href="register.html" class="menu-item">Cadastrar</a>
+            <a href="regras.html" class="menu-item">Termos e Regras</a>
+        </div>
+    </nav>
+
+    <!-- Conteúdo principal -->
+    <main class="main-content">
+        <div class="container">
+            <div style="max-width: 800px; margin: 0 auto;">
+                <div class="card">
+                    <h1 class="text-center" style="color: var(--cor-secundaria); margin-bottom: 2rem;">Termos e Condições de Uso</h1>
+
+                    <div style="line-height: 1.8; color: var(--cor-preto);">
+                        <h2 style="color: var(--cor-secundaria); margin-top: 2rem; margin-bottom: 1rem;">1. Sobre o CavaloDado</h2>
+                        <p>O CavaloDado é uma plataforma gratuita que conecta pessoas que precisam de produtos físicos com aquelas dispostas a doar. Nossa missão é facilitar a solidariedade e promover o compartilhamento responsável de recursos.</p>
+
+                        <h2 style="color: var(--cor-secundaria); margin-top: 2rem; margin-bottom: 1rem;">2. Produtos Permitidos e Proibidos</h2>
+                        <p><strong>Produtos PROIBIDOS na plataforma:</strong></p>
+                        <ul style="margin-left: 2rem; margin-bottom: 1rem;">
+                            <li>Armas de qualquer tipo</li>
+                            <li>Produtos perecíveis (alimentos, medicamentos)</li>
+                            <li>Dinheiro ou transferências bancárias</li>
+                            <li>Animais ou seres vivos</li>
+                            <li>Serviços de qualquer natureza</li>
+                            <li>Drogas lícitas e ilícitas</li>
+                            <li>Veículos que exigem CNH</li>
+                            <li>Pagamentos de boletos ou contas</li>
+                            <li>Ativos financeiros</li>
+                            <li>Imóveis</li>
+                        </ul>
+
+                        <h2 style="color: var(--cor-secundaria); margin-top: 2rem; margin-bottom: 1rem;">3. Responsabilidades dos Usuários</h2>
+                        
+                        <h3 style="color: var(--cor-secundaria); margin-top: 1.5rem; margin-bottom: 0.5rem;">Para quem solicita produtos:</h3>
+                        <ul style="margin-left: 2rem; margin-bottom: 1rem;">
+                            <li>Fornecer informações verdadeiras sobre sua necessidade</li>
+                            <li>Manter endereço de entrega atualizado</li>
+                            <li>Aguardar respeitosamente por doações</li>
+                            <li>Confirmar o recebimento do produto</li>
+                            <li>Respeitar o limite de 1 pedido a cada 2 horas</li>
+                        </ul>
+
+                        <h3 style="color: var(--cor-secundaria); margin-top: 1.5rem; margin-bottom: 0.5rem;">Para quem doa produtos:</h3>
+                        <ul style="margin-left: 2rem; margin-bottom: 1rem;">
+                            <li>Enviar apenas produtos em boas condições</li>
+                            <li>Fornecer código de rastreio válido</li>
+                            <li>Arcar com custos de envio</li>
+                            <li>Não solicitar contrapartida financeira</li>
+                            <li>Respeitar prazos de entrega dos Correios</li>
+                        </ul>
+
+                        <h2 style="color: var(--cor-secundaria); margin-top: 2rem; margin-bottom: 1rem;">4. Processo de Doação</h2>
+                        <ol style="margin-left: 2rem; margin-bottom: 1rem;">
+                            <li>Usuário cria pedido com descrição detalhada</li>
+                            <li>Doador escolhe pedido e confirma doação</li>
+                            <li>Doador envia produto e fornece código de rastreio</li>
+                            <li>Status muda para "Pendente"</li>
+                            <li>Solicitante confirma recebimento</li>
+                            <li>Status muda para "Concluído"</li>
+                        </ol>
+
+                        <h2 style="color: var(--cor-secundaria); margin-top: 2rem; margin-bottom: 1rem;">5. Códigos de Rastreio</h2>
+                        <p>Todos os envios devem utilizar código de rastreio dos Correios (mínimo 13 caracteres). Em caso de produto não entregue após 90 dias, o pedido retorna automaticamente para status "Disponível".</p>
+
+                        <h2 style="color: var(--cor-secundaria); margin-top: 2rem; margin-bottom: 1rem;">6. Privacidade e Dados</h2>
+                        <p>Coletamos apenas dados essenciais para funcionamento da plataforma. Endereços são compartilhados apenas com doadores confirmados. Não vendemos ou compartilhamos dados pessoais com terceiros.</p>
+
+                        <h2 style="color: var(--cor-secundaria); margin-top: 2rem; margin-bottom: 1rem;">7. Limitações da Plataforma</h2>
+                        <p>O CavaloDado é apenas um intermediário. Não nos responsabilizamos por:</p>
+                        <ul style="margin-left: 2rem; margin-bottom: 1rem;">
+                            <li>Qualidade dos produtos enviados</li>
+                            <li>Atrasos ou problemas na entrega</li>
+                            <li>Conflitos entre usuários</li>
+                            <li>Produtos danificados durante transporte</li>
+                        </ul>
+
+                        <h2 style="color: var(--cor-secundaria); margin-top: 2rem; margin-bottom: 1rem;">8. Penalidades</h2>
+                        <p>Usuários que violarem estas regras poderão ter suas contas suspensas ou excluídas permanentemente, incluindo casos de:</p>
+                        <ul style="margin-left: 2rem; margin-bottom: 1rem;">
+                            <li>Solicitação de produtos proibidos</li>
+                            <li>Fornecimento de informações falsas</li>
+                            <li>Comportamento inadequado ou ofensivo</li>
+                            <li>Tentativas de burlar o sistema</li>
+                        </ul>
+
+                        <h2 style="color: var(--cor-secundaria); margin-top: 2rem; margin-bottom: 1rem;">9. Suporte</h2>
+                        <p>Para dúvidas, problemas ou denúncias, entre em contato através do e-mail: <strong>suporte.cavalodado@gmail.com</strong></p>
+
+                        <h2 style="color: var(--cor-secundaria); margin-top: 2rem; margin-bottom: 1rem;">10. Alterações nos Termos</h2>
+                        <p>Estes termos podem ser atualizados periodicamente. Usuários serão notificados sobre mudanças significativas. O uso continuado da plataforma implica aceitação das alterações.</p>
+
+                        <div style="background: var(--cor-cinza-claro); padding: 1.5rem; border-radius: var(--border-radius); margin-top: 2rem; text-align: center;">
+                            <p style="margin: 0; font-weight: bold;">Última atualização: 15 de agosto de 2025</p>
+                            <p style="margin: 0.5rem 0 0 0;">Ao usar o CavaloDado, você concorda com estes termos e condições.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Anúncio -->
+                <div class="anuncio" style="margin-top: 2rem;">
+                    <img src="https://placehold.co/728x90?text=Anuncio+Leaderboard" alt="Anúncio Leaderboard">
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Scripts -->
+    <script src="js/scripts.js"></script>
+</body>
+</html>
+

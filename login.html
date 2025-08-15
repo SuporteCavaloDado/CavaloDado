@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entrar - CavaloDado</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <!-- Botão voltar -->
+    <button class="btn-back" onclick="window.history.back()">←</button>
+
+    <!-- Header fixo -->
+    <header class="header">
+        <a href="index.html" class="logo">
+            <img src="assets/logo.svg" alt="CavaloDado" style="height: 30px;">
+        </a>
+        <button class="menu-toggle">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+    </header>
+
+    <!-- Menu lateral -->
+    <div class="menu-overlay"></div>
+    <nav class="menu-sidebar">
+        <div class="menu-header">
+            <button class="menu-close">&times;</button>
+        </div>
+        <div class="menu-items">
+            <a href="index.html" class="menu-item">Início</a>
+            <a href="login.html" class="menu-item">Entrar</a>
+            <a href="register.html" class="menu-item">Cadastrar</a>
+            <a href="regras.html" class="menu-item">Termos e Regras</a>
+        </div>
+    </nav>
+
+    <!-- Conteúdo principal -->
+    <main class="main-content">
+        <div class="container">
+            <div style="max-width: 400px; margin: 0 auto;">
+                <div class="card">
+                    <h1 class="text-center" style="color: var(--cor-secundaria); margin-bottom: 2rem;">Entrar</h1>
+
+                    <!-- Login com Google -->
+                    <button class="btn btn-outline" style="width: 100%; margin-bottom: 1rem;" onclick="loginComGoogle()">
+                        Entrar com Google
+                    </button>
+
+                    <div style="text-align: center; margin: 1rem 0; color: var(--cor-cinza-escuro);">ou</div>
+
+                    <!-- Formulário de login -->
+                    <form id="login-form">
+                        <div class="form-group">
+                            <label for="email" class="form-label">E-mail *</label>
+                            <input type="email" id="email" class="form-input" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="senha" class="form-label">Senha *</label>
+                            <div style="position: relative;">
+                                <input type="password" id="senha" class="form-input" required>
+                                <button type="button" onclick="toggleSenha()" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer;">
+                                    👁️
+                                </button>
+                            </div>
+                        </div>
+
+                        <div style="text-align: center; margin-bottom: 1rem;">
+                            <a href="forgot-password.html" style="color: var(--cor-secundaria); text-decoration: none;">
+                                Esqueceu sua senha?
+                            </a>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary" style="width: 100%;">
+                            Entrar
+                        </button>
+                    </form>
+
+                    <div style="text-align: center; margin-top: 2rem;">
+                        <p>Não tem conta? <a href="register.html" style="color: var(--cor-secundaria);">Cadastre-se</a></p>
+                    </div>
+                </div>
+
+                <!-- Anúncio -->
+                <div class="anuncio" style="margin-top: 2rem;">
+                    <img src="https://placehold.co/728x90?text=Anuncio+Leaderboard" alt="Anúncio Leaderboard">
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Scripts -->
+    <script src="supabase/supabase-config.js"></script>
+    <script src="js/scripts.js"></script>
+    
+    <script>
+        function toggleSenha() {
+            const senhaInput = document.getElementById('senha');
+            const tipo = senhaInput.type === 'password' ? 'text' : 'password';
+            senhaInput.type = tipo;
+        }
+
+        function loginComGoogle() {
+            // Implementar login com Google OAuth
+            alert('Funcionalidade de login com Google será implementada');
+        }
+    </script>
+</body>
+</html>
+

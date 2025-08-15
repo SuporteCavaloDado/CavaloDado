@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - CavaloDado</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <!-- Botão voltar -->
+    <button class="btn-back" onclick="window.history.back()">←</button>
+
+    <!-- Header fixo -->
+    <header class="header">
+        <a href="index.html" class="logo">
+            <img src="assets/logo.svg" alt="CavaloDado" style="height: 30px;">
+        </a>
+        <button class="menu-toggle">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+    </header>
+
+    <!-- Menu lateral -->
+    <div class="menu-overlay"></div>
+    <nav class="menu-sidebar">
+        <div class="menu-header">
+            <button class="menu-close">&times;</button>
+        </div>
+        <div class="menu-items">
+            <a href="index.html" class="menu-item">Início</a>
+            <a href="dashboard.html" class="menu-item">Perfil</a>
+            <a href="new-request.html" class="menu-item">Novo Pedido</a>
+            <a href="dashboard.html#historico" class="menu-item">Histórico</a>
+            <a href="dashboard.html#progresso" class="menu-item">Progresso</a>
+            <a href="dashboard.html#favoritos" class="menu-item">Favoritos</a>
+            <a href="regras.html" class="menu-item">Termos e Regras</a>
+            <a href="#" class="menu-item" onclick="logout()">Sair</a>
+        </div>
+    </nav>
+
+    <!-- Conteúdo principal -->
+    <main class="main-content">
+        <div class="container">
+            <!-- Navegação do dashboard -->
+            <div class="dashboard-nav" style="display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap;">
+                <button class="btn btn-outline" onclick="window.location.hash = ''; mostrarPerfil()">Perfil</button>
+                <button class="btn btn-outline" onclick="window.location.hash = 'historico'; mostrarHistorico()">Histórico</button>
+                <button class="btn btn-outline" onclick="window.location.hash = 'progresso'; mostrarProgresso()">Progresso</button>
+                <button class="btn btn-outline" onclick="window.location.hash = 'favoritos'; mostrarFavoritos()">Favoritos</button>
+            </div>
+
+            <!-- Conteúdo dinâmico -->
+            <div id="dashboard-content">
+                <!-- Conteúdo será carregado via JavaScript -->
+            </div>
+
+            <!-- Anúncio -->
+            <div class="anuncio" style="margin-top: 2rem;">
+                <img src="https://placehold.co/728x90?text=Anuncio+Leaderboard" alt="Anúncio Leaderboard">
+            </div>
+        </div>
+    </main>
+
+    <!-- Scripts -->
+    <script src="supabase/supabase-config.js"></script>
+    <script src="js/scripts.js"></script>
+</body>
+</html>
+
