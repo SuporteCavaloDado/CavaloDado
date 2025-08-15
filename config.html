@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configurações - CavaloDado</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <!-- Botão voltar -->
+    <button class="btn-back" onclick="window.history.back()">←</button>
+
+    <!-- Header fixo -->
+    <header class="header">
+        <a href="index.html" class="logo">
+            <img src="assets/logo.svg" alt="CavaloDado" style="height: 30px;">
+        </a>
+        <button class="menu-toggle">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+    </header>
+
+    <!-- Menu lateral -->
+    <div class="menu-overlay"></div>
+    <nav class="menu-sidebar">
+        <div class="menu-header">
+            <button class="menu-close">&times;</button>
+        </div>
+        <div class="menu-items">
+            <a href="index.html" class="menu-item">Início</a>
+            <a href="dashboard.html" class="menu-item">Perfil</a>
+            <a href="new-request.html" class="menu-item">Novo Pedido</a>
+            <a href="dashboard.html#historico" class="menu-item">Histórico</a>
+            <a href="dashboard.html#progresso" class="menu-item">Progresso</a>
+            <a href="dashboard.html#favoritos" class="menu-item">Favoritos</a>
+            <a href="regras.html" class="menu-item">Termos e Regras</a>
+            <a href="#" class="menu-item" onclick="logout()">Sair</a>
+        </div>
+    </nav>
+
+    <!-- Conteúdo principal -->
+    <main class="main-content">
+        <div class="container">
+            <div style="max-width: 600px; margin: 0 auto;">
+                <div class="card">
+                    <h1 class="text-center" style="color: var(--cor-secundaria); margin-bottom: 2rem;">Configurações</h1>
+
+                    <!-- Dados do perfil -->
+                    <div class="card" style="margin-bottom: 2rem;">
+                        <h3 style="color: var(--cor-secundaria); margin-bottom: 1rem;">Dados do Perfil</h3>
+                        
+                        <form id="perfil-form">
+                            <div class="form-group">
+                                <label for="nome" class="form-label">Nome completo</label>
+                                <input type="text" id="nome" class="form-input">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="email" class="form-label">E-mail</label>
+                                <input type="email" id="email" class="form-input" readonly>
+                                <small style="color: var(--cor-cinza-escuro);">E-mail não pode ser alterado</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="username" class="form-label">Nome de usuário</label>
+                                <input type="text" id="username" class="form-input">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="bio" class="form-label">Bio</label>
+                                <textarea id="bio" class="form-input" rows="3" placeholder="Conte um pouco sobre você..."></textarea>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                        </form>
+                    </div>
+
+                    <!-- Endereço -->
+                    <div class="card" style="margin-bottom: 2rem;">
+                        <h3 style="color: var(--cor-secundaria); margin-bottom: 1rem;">Endereço de Entrega</h3>
+                        <p style="color: var(--cor-cinza-escuro); margin-bottom: 1rem;">
+                            Este endereço será usado para entrega dos produtos doados.
+                        </p>
+                        
+                        <form id="endereco-form">
+                            <div class="form-group">
+                                <label for="cep" class="form-label">CEP *</label>
+                                <input type="text" id="cep" class="form-input" placeholder="00000-000" maxlength="9" required>
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem;">
+                                <div class="form-group">
+                                    <label for="rua" class="form-label">Rua *</label>
+                                    <input type="text" id="rua" class="form-input" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="numero" class="form-label">Número *</label>
+                                    <input type="text" id="numero" class="form-input" required>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="complemento" class="form-label">Complemento</label>
+                                <input type="text" id="complemento" class="form-input" placeholder="Apto, bloco, etc.">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="bairro" class="form-label">Bairro *</label>
+                                <input type="text" id="bairro" class="form-input" required>
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem;">
+                                <div class="form-group">
+                                    <label for="cidade" class="form-label">Cidade *</label>
+                                    <input type="text" id="cidade" class="form-input" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="estado-endereco" class="form-label">Estado *</label>
+                                    <select id="estado-endereco" class="form-select" required>
+                                        <option value="">UF</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">Salvar Endereço</button>
+                        </form>
+                    </div>
+
+                    <!-- Segurança -->
+                    <div class="card" style="margin-bottom: 2rem;">
+                        <h3 style="color: var(--cor-secundaria); margin-bottom: 1rem;">Segurança</h3>
+                        
+                        <form id="senha-form">
+                            <div class="form-group">
+                                <label for="senha-atual" class="form-label">Senha atual *</label>
+                                <input type="password" id="senha-atual" class="form-input" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="nova-senha" class="form-label">Nova senha *</label>
+                                <input type="password" id="nova-senha" class="form-input" minlength="6" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="confirmar-nova-senha" class="form-label">Confirmar nova senha *</label>
+                                <input type="password" id="confirmar-nova-senha" class="form-input" minlength="6" required>
+                            </div>
+
+                            <button type="submit" class="btn btn-secondary">Alterar Senha</button>
+                        </form>
+                    </div>
+
+                    <!-- Ações da conta -->
+                    <div class="card">
+                        <h3 style="color: var(--cor-secundaria); margin-bottom: 1rem;">Gerenciar Conta</h3>
+                        
+                        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                            <button class="btn btn-outline" onclick="logout()">Sair da Conta</button>
+                            <button class="btn btn-secondary" onclick="confirmarExclusaoConta()" style="background: #dc3545;">
+                                Excluir Conta
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Anúncio -->
+                <div class="anuncio" style="margin-top: 2rem;">
+                    <img src="https://placehold.co/728x90?text=Anuncio+Leaderboard" alt="Anúncio Leaderboard">
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Scripts -->
+    <script src="supabase/supabase-config.js"></script>
+    <script src="js/scripts.js"></script>
+    
+    <script>
+        // Preencher estados no select de endereço
+        document.addEventListener('DOMContentLoaded', function() {
+            const estadoSelect = document.getElementById('estado-endereco');
+            ESTADOS_BRASIL.forEach(estado => {
+                const option = document.createElement('option');
+                option.value = estado;
+                option.textContent = estado;
+                estadoSelect.appendChild(option);
+            });
+        });
+
+        // Máscara CEP
+        document.getElementById('cep').addEventListener('input', function(e) {
+            let valor = e.target.value.replace(/\D/g, '');
+            valor = valor.replace(/(\d{5})(\d)/, '$1-$2');
+            e.target.value = valor;
+        });
+
+        // Buscar CEP
+        document.getElementById('cep').addEventListener('blur', function(e) {
+            const cep = e.target.value.replace(/\D/g, '');
+            if (cep.length === 8) {
+                fetch(`https://viacep.com.br/ws/${cep}/json/`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (!data.erro) {
+                            document.getElementById('rua').value = data.logradouro;
+                            document.getElementById('bairro').value = data.bairro;
+                            document.getElementById('cidade').value = data.localidade;
+                            document.getElementById('estado-endereco').value = data.uf;
+                        }
+                    })
+                    .catch(error => console.log('Erro ao buscar CEP:', error));
+            }
+        });
+
+        // Salvar perfil
+        document.getElementById('perfil-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            alert('Perfil atualizado com sucesso!');
+        });
+
+        // Salvar endereço
+        document.getElementById('endereco-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            alert('Endereço salvo com sucesso!');
+        });
+
+        // Alterar senha
+        document.getElementById('senha-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const novaSenha = document.getElementById('nova-senha').value;
+            const confirmarSenha = document.getElementById('confirmar-nova-senha').value;
+            
+            if (novaSenha !== confirmarSenha) {
+                alert('As senhas não conferem');
+                return;
+            }
+            
+            alert('Senha alterada com sucesso!');
+            e.target.reset();
+        });
+
+        function confirmarExclusaoConta() {
+            if (confirm('Tem certeza que deseja excluir sua conta? Esta ação não pode ser desfeita.')) {
+                if (confirm('Esta ação é irreversível. Confirma a exclusão da conta?')) {
+                    alert('Conta excluída com sucesso!');
+                    logout();
+                }
+            }
+        }
+    </script>
+</body>
+</html>
+
