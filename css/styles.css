@@ -273,7 +273,7 @@ body {
 .feed-container {
     max-width: 400px;
     margin: 0 auto;
-    height: calc(100vh - 80px);
+    height: calc(100vh - 90px);
     overflow-y: auto;
     scroll-snap-type: y mandatory;
 }
