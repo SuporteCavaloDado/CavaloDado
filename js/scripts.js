@@ -506,38 +506,6 @@ function fazerLogin(e) {
     window.location.href = 'index.html';
 }
 
-// Login Google
-async function loginComGoogle() {
-    const { error } = await supabaseClient.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-            redirectTo: window.location.origin + '/index.html' 
-        }
-    });
-
-    if (error) {
-        console.error('Erro ao iniciar o login com Google:', error.message);
-        alert('Não foi possível iniciar o login com Google. Verifique o console para mais detalhes.');
-    }
-}
-async function verificarSessaoEAtivarUsuario() {
-    const { data: { session } } = await supabaseClient.auth.getSession();
-
-    if (session) {
-        usuarioLogado = session.user;
-        console.log('Acesso liberado! Usuário logado:', usuarioLogado.email);
-    } else {
-        usuarioLogado = null;
-    }
-}
-document.addEventListener('DOMContentLoaded', async () => {
-    await verificarSessaoEAtivarUsuario();
-
-    atualizarMenuLogado(); // Mostra/esconde os botões corretos
-    inicializarPagina();   // Carrega o conteúdo específico da página
-});
-
-
 // Registro
 function inicializarRegistro() {
     const form = document.getElementById('register-form');
