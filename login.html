@@ -45,8 +45,17 @@
                     <h1 class="text-center" style="color: var(--cor-secundaria); margin-bottom: 2rem;">Entrar</h1>
 
                     <!-- Login com Google -->
-                    <button class="btn btn-outline" style="width: 100%; margin-bottom: 1rem;" onclick="loginComGoogle()">
-                        Entrar com Google
+                    <button 
+                        class="btn btn-outline" 
+                        style="width: 100%; margin-bottom: 1rem;" 
+                        onclick="
+                            // Chama diretamente a função de login do Supabase aqui
+                            supabaseClient.auth.signInWithOAuth({
+                            provider: 'google'
+                        });
+                    "
+                >
+                        Cadastrar com Google
                     </button>
 
                     <div style="text-align: center; margin: 1rem 0; color: var(--cor-cinza-escuro);">ou</div>
