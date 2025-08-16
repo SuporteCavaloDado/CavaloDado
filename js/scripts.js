@@ -506,6 +506,21 @@ function fazerLogin(e) {
     window.location.href = 'index.html';
 }
 
+// Login Google
+async function loginComGoogle() {
+    const { error } = await supabaseClient.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+            redirectTo: window.location.origin + '/index.html' 
+        }
+    });
+
+    if (error) {
+        console.error('Erro ao iniciar o login com Google:', error);
+        alert('Ocorreu um erro ao tentar o login com Google.');
+    }
+}
+
 // Registro
 function inicializarRegistro() {
     const form = document.getElementById('register-form');
