@@ -115,7 +115,7 @@ function carregarPedidos() {
             status: 'Disponível',
             usuario: 'João Silva',
             data: '2025-08-15',
-            media: { tipo: 'video', url: 'https://placehold.co/400x600?text=Video+Notebook' },
+            media: { tipo: 'imagem', url: 'https://placehold.co/400x600?text=Notebook' },
             endereco: {
                 nome: 'João Silva',
                 rua: 'Rua das Flores, 123',
@@ -134,7 +134,7 @@ function carregarPedidos() {
             status: 'Disponível',
             usuario: 'Maria Santos',
             data: '2025-08-14',
-            media: { tipo: 'imagens', urls: ['https://placehold.co/400x600?text=Material+1', 'https://placehold.co/400x600?text=Material+2'] },
+            media: { tipo: 'imagem', url: 'https://placehold.co/400x600?text=Material' },
             endereco: {
                 nome: 'Maria Santos',
                 rua: 'Av. Copacabana, 456',
@@ -160,12 +160,6 @@ function renderizarFeed(pedidos) {
         const pedidoElement = criarElementoPedido(pedido);
         feedContainer.appendChild(pedidoElement);
     });
-    
-
-
-
-    // Inicializar vídeos
-    inicializarVideos();
 }
 
 function criarElementoPedido(pedido) {
@@ -173,27 +167,11 @@ function criarElementoPedido(pedido) {
     div.className = 'pedido-item';
     div.dataset.id = pedido.id;
     
-    let mediaHtml = '';
-    if (pedido.media.tipo === 'video') {
-        mediaHtml = `
-            <div class="pedido-media">
-                <video class="pedido-video" loop muted>
-                    <source src="${pedido.media.url}" type="video/mp4">
-                    <img src="${pedido.media.url}" alt="Preview do vídeo">
-                </video>
-            </div>
-        `;
-    } else {
-        mediaHtml = `
-            <div class="pedido-media">
-                <div class="pedido-images">
-                    ${pedido.media.urls.map((url, index) => 
-                        `<img src="${url}" alt="Imagem ${index + 1}" class="pedido-image ${index === 0 ? 'active' : ''}">`
-                    ).join('')}
-                </div>
-            </div>
-        `;
-    }
+    const mediaHtml = `
+        <div class="pedido-media">
+            <img src="${pedido.media.url}" alt="Imagem do pedido" class="pedido-image">
+        </div>
+    `;
     
     div.innerHTML = `
         ${mediaHtml}
@@ -223,22 +201,6 @@ function criarElementoPedido(pedido) {
     `;
     
     return div;
-}
-
-function inicializarVideos() {
-    const videos = document.querySelectorAll('.pedido-video');
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            const video = entry.target;
-            if (entry.isIntersecting) {
-                video.play();
-            } else {
-                video.pause();
-            }
-        });
-    }, { threshold: 0.5 });
-    
-    videos.forEach(video => observer.observe(video));
 }
 
 // Filtros
