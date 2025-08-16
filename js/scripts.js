@@ -1,42 +1,27 @@
-// Variáveis e Constantes Globais
+// Variáveis globais
 let usuarioLogado = null;
 let pedidosCache = [];
 let filtrosAtivos = {};
 
-// Adicionado: Constantes para evitar erros de "not defined"
-const CATEGORIAS = [
-    { id: 'empresa', nome: 'Empresa' },
-    { id: 'estudos', nome: 'Estudos' },
-    { id: 'pessoal', nome: 'Pessoal' },
-    { id: 'esportes', nome: 'Esportes' }
-];
-
-const ESTADOS_BRASIL = ["AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO"];
-
-
 // Inicialização
-document.addEventListener('DOMContentLoaded', async function() {
-    // Modificado: A verificação de usuário agora é a primeira coisa a ser feita e é assíncrona.
-    await verificarUsuarioLogado(); 
+document.addEventListener('DOMContentLoaded', function() {
+    verificarUsuarioLogado();
     inicializarMenu();
-    atualizarMenuLogado(); // Chamada movida para depois da verificação
     inicializarPagina();
 });
 
 // Verificar se usuário está logado
-// MODIFICADO: Substituído localStorage pela verificação real do Supabase
-async function verificarUsuarioLogado() {
-    const { data: { session } } = await supabaseClient.auth.getSession();
-    if (session) {
-        usuarioLogado = session.user;
-        console.log("Usuário logado:", usuarioLogado.email);
-    } else {
-        usuarioLogado = null;
+function verificarUsuarioLogado() {
+    const token = localStorage.getItem('cavalodado_token');
+    const usuario = localStorage.getItem('cavalodado_usuario');
+    
+    if (token && usuario) {
+        usuarioLogado = JSON.parse(usuario);
+        atualizarMenuLogado();
     }
 }
 
-
-// Inicializar menu (sem alterações)
+// Inicializar menu
 function inicializarMenu() {
     const menuToggle = document.querySelector('.menu-toggle');
     const menuOverlay = document.querySelector('.menu-overlay');
@@ -61,7 +46,7 @@ function inicializarMenu() {
     }
 }
 
-// Atualizar menu baseado no login (sem alterações na lógica interna)
+// Atualizar menu baseado no login
 function atualizarMenuLogado() {
     const menuItems = document.querySelector('.menu-items');
     if (!menuItems) return;
@@ -85,7 +70,7 @@ function atualizarMenuLogado() {
     }
 }
 
-// Inicializar página específica (sem alterações)
+// Inicializar página específica
 function inicializarPagina() {
     const pagina = window.location.pathname.split('/').pop() || 'index.html';
     
@@ -118,22 +103,52 @@ function inicializarFeed() {
     inicializarPesquisa();
 }
 
-// MODIFICADO: Carrega pedidos do Supabase em vez de dados de demonstração
-async function carregarPedidos() {
-    const { data, error } = await supabaseClient
-        .from('pedidos') // Certifique-se que o nome da tabela é 'pedidos'
-        .select('*')
-        .order('created_at', { ascending: false }); // Ordena pelos mais recentes
-
-    if (error) {
-        console.error('Erro ao carregar pedidos:', error);
-        return;
-    }
+function carregarPedidos() {
+    // Simular dados para demonstração
+    const pedidosDemo = [
+        {
+            id: 1,
+            titulo: 'Notebook para estudos',
+            descricao: 'Preciso de um notebook para continuar meus estudos em programação',
+            categoria: 'Estudos',
+            estado: 'SP',
+            status: 'Disponível',
+            usuario: 'João Silva',
+            data: '2025-08-15',
+            media: { tipo: 'video', url: 'https://placehold.co/400x600?text=Video+Notebook' },
+            endereco: {
+                nome: 'João Silva',
+                rua: 'Rua das Flores, 123',
+                bairro: 'Centro',
+                cidade: 'São Paulo',
+                estado: 'SP',
+                cep: '01234-567'
+            }
+        },
+        {
+            id: 2,
+            titulo: 'Material escolar',
+            descricao: 'Cadernos, lápis e canetas para o ano letivo',
+            categoria: 'Estudos',
+            estado: 'RJ',
+            status: 'Disponível',
+            usuario: 'Maria Santos',
+            data: '2025-08-14',
+            media: { tipo: 'imagens', urls: ['https://placehold.co/400x600?text=Material+1', 'https://placehold.co/400x600?text=Material+2'] },
+            endereco: {
+                nome: 'Maria Santos',
+                rua: 'Av. Copacabana, 456',
+                bairro: 'Copacabana',
+                cidade: 'Rio de Janeiro',
+                estado: 'RJ',
+                cep: '22070-001'
+            }
+        }
+    ];
     
-    pedidosCache = data;
+    pedidosCache = pedidosDemo;
     renderizarFeed(pedidosCache);
 }
-
 
 function renderizarFeed(pedidos) {
     const feedContainer = document.querySelector('.feed-container');
@@ -141,34 +156,49 @@ function renderizarFeed(pedidos) {
     
     feedContainer.innerHTML = '';
     
-    if (pedidos.length === 0) {
-        feedContainer.innerHTML = '<p style="text-align: center; padding: 2rem;">Nenhum pedido encontrado.</p>';
-        return;
-    }
-
     pedidos.forEach(pedido => {
         const pedidoElement = criarElementoPedido(pedido);
         feedContainer.appendChild(pedidoElement);
     });
+    
+
+
+
+    // Inicializar vídeos
+    inicializarVideos();
 }
 
-// MODIFICADO: Simplificado para lidar apenas com imagem única
 function criarElementoPedido(pedido) {
     const div = document.createElement('div');
     div.className = 'pedido-item';
     div.dataset.id = pedido.id;
     
-    // Espera uma única URL de imagem em 'media_url'
-    const mediaHtml = `
-        <div class="pedido-media">
-            <img src="${pedido.media_url}" alt="Foto do pedido: ${pedido.titulo}" class="pedido-image active">
-        </div>
-    `;
+    let mediaHtml = '';
+    if (pedido.media.tipo === 'video') {
+        mediaHtml = `
+            <div class="pedido-media">
+                <video class="pedido-video" loop muted>
+                    <source src="${pedido.media.url}" type="video/mp4">
+                    <img src="${pedido.media.url}" alt="Preview do vídeo">
+                </video>
+            </div>
+        `;
+    } else {
+        mediaHtml = `
+            <div class="pedido-media">
+                <div class="pedido-images">
+                    ${pedido.media.urls.map((url, index) => 
+                        `<img src="${url}" alt="Imagem ${index + 1}" class="pedido-image ${index === 0 ? 'active' : ''}">`
+                    ).join('')}
+                </div>
+            </div>
+        `;
+    }
     
     div.innerHTML = `
         ${mediaHtml}
         <div class="pedido-actions">
-            <button class="action-btn" onclick="verPerfil('${pedido.user_id}')">
+            <button class="action-btn" onclick="verPerfil('${pedido.usuario}')">
                 <span>👤</span>
             </button>
             <button class="action-btn btn-doar" onclick="abrirModalDoacao(${pedido.id})">
@@ -195,7 +225,21 @@ function criarElementoPedido(pedido) {
     return div;
 }
 
-// REMOVIDO: Função inicializarVideos() não é mais necessária com apenas imagens.
+function inicializarVideos() {
+    const videos = document.querySelectorAll('.pedido-video');
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            const video = entry.target;
+            if (entry.isIntersecting) {
+                video.play();
+            } else {
+                video.pause();
+            }
+        });
+    }, { threshold: 0.5 });
+    
+    videos.forEach(video => observer.observe(video));
+}
 
 // Filtros
 function inicializarFiltros() {
@@ -208,10 +252,10 @@ function inicializarFiltros() {
         });
     }
     
+    // Preencher selects de filtros
     preencherFiltros();
 }
 
-// MODIFICADO: Corrigido para usar o array de objetos CATEGORIAS
 function preencherFiltros() {
     const categoriaSelect = document.getElementById('filtro-categoria');
     const estadoSelect = document.getElementById('filtro-estado');
@@ -219,8 +263,8 @@ function preencherFiltros() {
     if (categoriaSelect) {
         CATEGORIAS.forEach(categoria => {
             const option = document.createElement('option');
-            option.value = categoria.id; // Usa o ID
-            option.textContent = categoria.nome; // Mostra o Nome
+            option.value = categoria;
+            option.textContent = categoria;
             categoriaSelect.appendChild(option);
         });
     }
@@ -235,8 +279,202 @@ function preencherFiltros() {
     }
 }
 
-// Restante das funções de filtro, pesquisa, modal, etc. (sem alterações críticas)
-// ... (código omitido para brevidade, ele permanece o mesmo) ...
+function aplicarFiltros() {
+    const categoria = document.getElementById('filtro-categoria')?.value;
+    const estado = document.getElementById('filtro-estado')?.value;
+    const status = document.getElementById('filtro-status')?.value;
+    const data = document.getElementById('filtro-data')?.value;
+    
+    filtrosAtivos = { categoria, estado, status, data };
+    
+    let pedidosFiltrados = pedidosCache.filter(pedido => {
+        if (categoria && pedido.categoria !== categoria) return false;
+        if (estado && pedido.estado !== estado) return false;
+        if (status && pedido.status !== status) return false;
+        // Implementar filtro de data conforme necessário
+        return true;
+    });
+    
+    renderizarFeed(pedidosFiltrados);
+}
+
+function limparFiltros() {
+    document.getElementById('filtro-categoria').value = '';
+    document.getElementById('filtro-estado').value = '';
+    document.getElementById('filtro-status').value = '';
+    document.getElementById('filtro-data').value = '';
+    
+    filtrosAtivos = {};
+    renderizarFeed(pedidosCache);
+}
+
+// Pesquisa
+function inicializarPesquisa() {
+    const searchBtn = document.querySelector('.search-btn');
+    const searchInput = document.querySelector('.search-input');
+    
+    if (searchBtn) {
+        searchBtn.addEventListener('click', realizarPesquisa);
+    }
+    
+    if (searchInput) {
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') realizarPesquisa();
+        });
+    }
+}
+
+function realizarPesquisa() {
+    const termo = document.querySelector('.search-input')?.value.toLowerCase();
+    if (!termo) return;
+    
+    const resultados = pedidosCache.filter(pedido => 
+        pedido.titulo.toLowerCase().includes(termo) ||
+        pedido.descricao.toLowerCase().includes(termo) ||
+        pedido.categoria.toLowerCase().includes(termo)
+    );
+    
+    renderizarFeed(resultados);
+}
+
+// Modal de doação
+function abrirModalDoacao(pedidoId) {
+    const pedido = pedidosCache.find(p => p.id === pedidoId);
+    if (!pedido) return;
+    
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Doar para: ${pedido.titulo}</h3>
+                <button class="modal-close" onclick="fecharModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="endereco-completo">
+                    <h4>Endereço de entrega:</h4>
+                    <div class="endereco-linha">
+                        <span>${pedido.endereco.nome}</span>
+                        <button onclick="copiarTexto('${pedido.endereco.nome}')">Copiar</button>
+                    </div>
+                    <div class="endereco-linha">
+                        <span>${pedido.endereco.rua}</span>
+                        <button onclick="copiarTexto('${pedido.endereco.rua}')">Copiar</button>
+                    </div>
+                    <div class="endereco-linha">
+                        <span>${pedido.endereco.bairro}</span>
+                        <button onclick="copiarTexto('${pedido.endereco.bairro}')">Copiar</button>
+                    </div>
+                    <div class="endereco-linha">
+                        <span>${pedido.endereco.cidade} - ${pedido.endereco.estado}</span>
+                        <button onclick="copiarTexto('${pedido.endereco.cidade} - ${pedido.endereco.estado}')">Copiar</button>
+                    </div>
+                    <div class="endereco-linha">
+                        <span>${pedido.endereco.cep}</span>
+                        <button onclick="copiarTexto('${pedido.endereco.cep}')">Copiar</button>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Código de rastreio *</label>
+                    <input type="text" id="codigo-rastreio" class="form-input" 
+                           placeholder="Digite o código de rastreio (mín. 13 caracteres)" 
+                           minlength="13" required>
+                </div>
+                
+                <div class="form-checkbox">
+                    <input type="checkbox" id="aceito-responsabilidade" required>
+                    <label for="aceito-responsabilidade">
+                        Concordo com as responsabilidades da doação
+                    </label>
+                </div>
+                
+                <button class="btn btn-primary" onclick="confirmarDoacao(${pedidoId})">
+                    Confirmar Doação
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+}
+
+function confirmarDoacao(pedidoId) {
+    const codigo = document.getElementById('codigo-rastreio').value;
+    const aceito = document.getElementById('aceito-responsabilidade').checked;
+    
+    if (!codigo || codigo.length < 13) {
+        alert('Código de rastreio deve ter pelo menos 13 caracteres');
+        return;
+    }
+    
+    if (!aceito) {
+        alert('Você deve concordar com as responsabilidades');
+        return;
+    }
+    
+    // Atualizar status do pedido
+    const pedido = pedidosCache.find(p => p.id === pedidoId);
+    if (pedido) {
+        pedido.status = 'Pendente';
+        pedido.codigoRastreio = codigo;
+    }
+    
+    alert('Doação confirmada! Obrigado por ajudar.');
+    fecharModal();
+    renderizarFeed(pedidosCache);
+}
+
+function copiarTexto(texto) {
+    navigator.clipboard.writeText(texto).then(() => {
+        alert('Texto copiado!');
+    });
+}
+
+function fecharModal() {
+    const modal = document.querySelector('.modal-overlay');
+    if (modal) modal.remove();
+}
+
+// Funções de ação
+function verPerfil(usuario) {
+    window.location.href = `dashboard.html?usuario=${encodeURIComponent(usuario)}`;
+}
+
+function toggleFavorito(pedidoId) {
+    if (!usuarioLogado) {
+        alert('Faça login para favoritar pedidos');
+        return;
+    }
+    
+    let favoritos = JSON.parse(localStorage.getItem('cavalodado_favoritos') || '[]');
+    const index = favoritos.indexOf(pedidoId);
+    
+    if (index === -1) {
+        favoritos.push(pedidoId);
+        alert('Adicionado aos favoritos!');
+    } else {
+        favoritos.splice(index, 1);
+        alert('Removido dos favoritos!');
+    }
+    
+    localStorage.setItem('cavalodado_favoritos', JSON.stringify(favoritos));
+}
+
+function compartilhar(pedidoId) {
+    const url = `${window.location.origin}/index.html?pedido=${pedidoId}`;
+    
+    if (navigator.share) {
+        navigator.share({
+            title: 'CavaloDado - Pedido de Doação',
+            url: url
+        });
+    } else {
+        navigator.clipboard.writeText(url).then(() => {
+            alert('Link copiado para compartilhamento!');
+        });
+    }
+}
 
 // Login
 function inicializarLogin() {
@@ -246,22 +484,23 @@ function inicializarLogin() {
     }
 }
 
-// MODIFICADO: Substituído simulação pelo login real do Supabase
-async function fazerLogin(e) {
+function fazerLogin(e) {
     e.preventDefault();
     
     const email = document.getElementById('email').value;
     const senha = document.getElementById('senha').value;
     
-    const { data, error } = await supabaseClient.auth.signInWithPassword({
+    // Simular login
+    const usuario = {
+        id: 1,
+        nome: 'Usuário Teste',
         email: email,
-        password: senha,
-    });
-
-    if (error) {
-        alert('Erro no login: ' + error.message);
-        return;
-    }
+        username: 'usuario_teste',
+        estado: 'SP'
+    };
+    
+    localStorage.setItem('cavalodado_token', 'token_simulado');
+    localStorage.setItem('cavalodado_usuario', JSON.stringify(usuario));
     
     alert('Login realizado com sucesso!');
     window.location.href = 'index.html';
@@ -274,11 +513,13 @@ function inicializarRegistro() {
         form.addEventListener('submit', fazerRegistro);
     }
     
+    // Máscara CPF
     const cpfInput = document.getElementById('cpf');
     if (cpfInput) {
         cpfInput.addEventListener('input', aplicarMascaraCPF);
     }
     
+    // Preencher estados
     const estadoSelect = document.getElementById('estado');
     if (estadoSelect) {
         ESTADOS_BRASIL.forEach(estado => {
@@ -298,8 +539,7 @@ function aplicarMascaraCPF(e) {
     e.target.value = valor;
 }
 
-// MODIFICADO: Substituído simulação pelo registro real do Supabase
-async function fazerRegistro(e) {
+function fazerRegistro(e) {
     e.preventDefault();
     
     const dados = {
@@ -313,6 +553,7 @@ async function fazerRegistro(e) {
         termos: document.getElementById('termos').checked
     };
     
+    // Validações básicas
     if (dados.senha !== dados.confirmarSenha) {
         alert('Senhas não conferem');
         return;
@@ -323,31 +564,16 @@ async function fazerRegistro(e) {
         return;
     }
     
-    const { data, error } = await supabaseClient.auth.signUp({
-        email: dados.email,
-        password: dados.senha,
-        options: {
-            data: { // Dados adicionais para salvar no perfil
-                full_name: dados.nome,
-                username: dados.username,
-                cpf: dados.cpf,
-                estado: dados.estado
-            }
-        }
-    });
-
-    if (error) {
-        alert('Erro no cadastro: ' + error.message);
-        return;
-    }
-    
-    alert('Cadastro realizado com sucesso! Verifique seu e-mail para confirmação (se habilitado).');
+    // Simular registro
+    alert('Cadastro realizado com sucesso!');
     window.location.href = 'login.html';
 }
 
-// MODIFICADO: Logout real do Supabase
-async function logout() {
-    await supabaseClient.auth.signOut();
+// Logout
+function logout() {
+    localStorage.removeItem('cavalodado_token');
+    localStorage.removeItem('cavalodado_usuario');
+    usuarioLogado = null;
     window.location.href = 'index.html';
 }
 
@@ -364,44 +590,124 @@ function inicializarNovoPedido() {
         form.addEventListener('submit', criarPedido);
     }
     
+    // Preencher categorias
     const categoriaSelect = document.getElementById('categoria');
     if (categoriaSelect) {
         CATEGORIAS.forEach(categoria => {
             const option = document.createElement('option');
-            option.value = categoria.id;
-            option.textContent = categoria.nome;
+            option.value = categoria;
+            option.textContent = categoria;
             categoriaSelect.appendChild(option);
         });
     }
 }
 
-// MODIFICADO: Cria pedido real no Supabase
-async function criarPedido(e) {
+
+function criarPedido(e) {
     e.preventDefault();
     
-    // A verificação de limite de tempo deve ser feita no backend (com Edge Functions) para ser segura.
-    // A verificação no frontend é apenas uma conveniência para o usuário.
+    // Verificar limite de tempo
+    const ultimoPedido = localStorage.getItem('cavalodado_ultimo_pedido');
+    if (ultimoPedido) {
+        const agora = new Date().getTime();
+        const ultimo = new Date(ultimoPedido).getTime();
+        const diferencaHoras = (agora - ultimo) / (1000 * 60 * 60);
+        
+        if (diferencaHoras < CONFIG.INTERVALO_PEDIDOS_HORAS) {
+            alert(`Você deve aguardar ${CONFIG.INTERVALO_PEDIDOS_HORAS} horas entre pedidos`);
+            return;
+        }
+    }
     
     const dados = {
         titulo: document.getElementById('titulo').value,
         categoria: document.getElementById('categoria').value,
-        descricao: document.getElementById('descricao').value,
-        user_id: usuarioLogado.id, // Associa o pedido ao usuário logado
-        // media_url: 'URL_DA_IMAGEM_APOS_UPLOAD' // Você precisará implementar o upload da imagem para o Storage
+        descricao: document.getElementById('descricao').value
     };
     
-    const { data, error } = await supabaseClient
-        .from('pedidos')
-        .insert([dados]);
-
-    if (error) {
-        alert('Erro ao criar pedido: ' + error.message);
-        return;
-    }
-    
+    // Simular criação
+    localStorage.setItem('cavalodado_ultimo_pedido', new Date().toISOString());
     alert('Pedido criado com sucesso!');
     window.location.href = 'index.html';
 }
 
-// Funções de Dashboard e Configurações (permanecem as mesmas, mas agora 'usuarioLogado' vem do Supabase)
-// ... (código omitido para brevidade) ...
+// Dashboard
+function inicializarDashboard() {
+    if (!usuarioLogado) {
+        window.location.href = 'login.html';
+        return;
+    }
+    
+    const hash = window.location.hash.substring(1);
+    
+    switch (hash) {
+        case 'historico':
+            mostrarHistorico();
+            break;
+        case 'favoritos':
+            mostrarFavoritos();
+            break;
+        default:
+            mostrarPerfil();
+    }
+}
+
+function mostrarPerfil() {
+    const content = document.getElementById('dashboard-content');
+    if (content) {
+        content.innerHTML = `
+            <h2>Meu Perfil</h2>
+            <div class="card">
+                <h3>${usuarioLogado.nome}</h3>
+                <p>@${usuarioLogado.username}</p>
+                <p>Estado: ${usuarioLogado.estado}</p>
+                <a href="config.html" class="btn btn-primary">Editar Perfil</a>
+            </div>
+        `;
+    }
+}
+
+function mostrarHistorico() {
+    const content = document.getElementById('dashboard-content');
+    if (content) {
+        content.innerHTML = `
+            <h2>Meu Histórico</h2>
+            <div class="card">
+                <p>Seus pedidos e doações aparecerão aqui.</p>
+            </div>
+        `;
+    }
+}
+
+function mostrarFavoritos() {
+    const content = document.getElementById('dashboard-content');
+    if (content) {
+        content.innerHTML = `
+            <h2>Meus Favoritos</h2>
+            <div class="card">
+                <p>Seus pedidos favoritos aparecerão aqui.</p>
+            </div>
+        `;
+    }
+}
+
+
+// Configurações
+function inicializarConfiguracoes() {
+    if (!usuarioLogado) {
+        window.location.href = 'login.html';
+        return;
+    }
+    
+    // Preencher formulário com dados do usuário
+    preencherDadosUsuario();
+}
+
+function preencherDadosUsuario() {
+    if (usuarioLogado) {
+        document.getElementById('nome').value = usuarioLogado.nome || '';
+        document.getElementById('email').value = usuarioLogado.email || '';
+        document.getElementById('username').value = usuarioLogado.username || '';
+    }
+}
+
