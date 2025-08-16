@@ -480,11 +480,7 @@ function compartilhar(pedidoId) {
 function inicializarLogin() {
     const form = document.getElementById('login-form');
     if (form) {
-        form.addEventListener('submit', fazerLogin);
-
-    const googleButton = document.getElementById('google-login-btn');
-    if (googleButton) {
-        googleButton.addEventListener('click', loginComGoogle);    
+        form.addEventListener('submit', fazerLogin);    
     }
 }
 
