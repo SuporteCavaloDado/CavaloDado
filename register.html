@@ -45,7 +45,16 @@
                     <h1 class="text-center" style="color: var(--cor-secundaria); margin-bottom: 2rem;">Cadastrar</h1>
 
                     <!-- Cadastro com Google -->
-                    <button class="btn btn-outline" style="width: 100%; margin-bottom: 1rem;" onclick="cadastroComGoogle()">
+                    <button 
+                        class="btn btn-outline" 
+                        style="width: 100%; margin-bottom: 1rem;" 
+                        onclick="
+                            // Chama diretamente a função de login do Supabase aqui
+                            supabaseClient.auth.signInWithOAuth({
+                            provider: 'google'
+                        });
+                    "
+                >
                         Cadastrar com Google
                     </button>
 
