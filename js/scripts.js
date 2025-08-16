@@ -56,9 +56,7 @@ function atualizarMenuLogado() {
             <a href="index.html" class="menu-item">Início</a>
             <a href="dashboard.html" class="menu-item">Perfil</a>
             <a href="new-request.html" class="menu-item">Novo Pedido</a>
-            <a href="dashboard.html#historico" class="menu-item">Histórico</a>
-            <a href="dashboard.html#progresso" class="menu-item">Progresso</a>
-            <a href="dashboard.html#favoritos" class="menu-item">Favoritos</a>
+            <a href="config.html" class="menu-item">Configurações</a>
             <a href="regras.html" class="menu-item">Termos e Regras</a>
             <a href="#" class="menu-item" onclick="logout()">Sair</a>
         `;
@@ -163,6 +161,9 @@ function renderizarFeed(pedidos) {
         feedContainer.appendChild(pedidoElement);
     });
     
+
+
+
     // Inicializar vídeos
     inicializarVideos();
 }
@@ -601,6 +602,7 @@ function inicializarNovoPedido() {
     }
 }
 
+
 function criarPedido(e) {
     e.preventDefault();
     
@@ -644,9 +646,6 @@ function inicializarDashboard() {
             break;
         case 'favoritos':
             mostrarFavoritos();
-            break;
-        case 'progresso':
-            mostrarProgresso();
             break;
         default:
             mostrarPerfil();
@@ -692,17 +691,6 @@ function mostrarFavoritos() {
     }
 }
 
-function mostrarProgresso() {
-    const content = document.getElementById('dashboard-content');
-    if (content) {
-        content.innerHTML = `
-            <h2>Progresso dos Pedidos</h2>
-            <div class="card">
-                <p>Acompanhe o progresso dos seus pedidos aqui.</p>
-            </div>
-        `;
-    }
-}
 
 // Configurações
 function inicializarConfiguracoes() {
