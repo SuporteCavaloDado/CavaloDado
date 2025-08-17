@@ -673,3 +673,13 @@ function preencherDadosUsuario() {
     }
 }
 
+
+
+// Encaminhar Pedido para Perfil 
+document.addEventListener('click', (e) => {
+    if (e.target.classList.contains('pedido-titulo')) {
+        const pedidoId = e.target.closest('.pedido-item').dataset.id;
+        window.location.href = `dashboard.html?id=${pedidoId}`;
+    }
+});
+
