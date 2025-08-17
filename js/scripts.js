@@ -653,6 +653,94 @@ function mostrarFavoritos() {
     }
 }
 
+function mostrarHistorico() {
+    const content = document.getElementById('dashboard-content');
+    if (content) {
+        content.innerHTML = `
+            <h2>Meu Histórico</h2>
+            <div class="card">
+                <table class="historico-table">
+                    <thead><tr><th>Nome Pedido</th><th>Categoria</th><th>Data</th><th>Status</th><th></th></tr></thead>
+                    <tbody id="historico-body"></tbody>
+                </table>
+            </div>
+        `;
+        carregarHistorico();
+    }
+}
+
+// Histórico Tabela
+function carregarHistorico() {
+    const { data: user } = supabaseClient.auth.getUser();
+    if (!user) return;
+
+    supabaseClient.from('pedidos').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).then(({ data: pedidos, error }) => {
+        if (error) return console.error(error);
+
+        const tbody = document.getElementById('historico-body');
+        pedidos.forEach(pedido => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td class="historico-nome" data-id="${pedido.id}" data-creator="${pedido.user_id}">${pedido.titulo}</td>
+                <td>${pedido.categoria}</td>
+                <td>${new Date(pedido.created_at).toLocaleDateString('pt-BR')}</td>
+                <td>${pedido.status}</td>
+                <td><span class="expand-btn">▼</span></td>
+            `;
+            const expandRow = document.createElement('tr');
+            expandRow.innerHTML = `<td colspan="5"><div class="expand-content"></div></td>`;
+            tbody.appendChild(row);
+            tbody.appendChild(expandRow);
+
+            const expandContent = expandRow.querySelector('.expand-content');
+            if (pedido.status === 'Disponível') {
+                expandContent.innerHTML = '<button class="delete-btn">Excluir</button>';
+                expandContent.querySelector('.delete-btn').onclick = () => {
+                    if (confirm('Exclusão permanente. Confirmar?')) {
+                        supabaseClient.from('pedidos').delete().eq('id', pedido.id).then(() => carregarHistorico());
+                    }
+                };
+            } else if (pedido.status === 'Pendente') {
+                expandContent.innerHTML = `
+                    <div><input value="${pedido.tracking_code || ''}" readonly><button class="copy-btn">Copiar</button></div>
+                    <div><label><input type="checkbox" name="opt" value="invalido">Código Inválido</label>
+                        <label><input type="checkbox" name="opt" value="entregue">Produto Entregue</label></div>
+                    <p class="note">Conferir o código com atenção.</p>
+                    <button class="confirm-btn">Confirmar</button>
+                `;
+                const [invalido, entregue] = expandContent.querySelectorAll('input[name="opt"]');
+                const confirmBtn = expandContent.querySelector('.confirm-btn');
+                expandContent.querySelector('.copy-btn').onclick = () => navigator.clipboard.writeText(pedido.tracking_code || '');
+                [invalido, entregue].forEach(cb => cb.onchange = () => { if (cb.checked) [invalido, entregue].forEach(other => other !== cb && (other.checked = false)); });
+                confirmBtn.onclick = () => {
+                    const checked = expandContent.querySelector('input[name="opt"]:checked');
+                    if (!checked) return alert('Selecione uma opção');
+                    const updates = { status: checked.value === 'invalido' ? 'Disponível' : 'Concluído' };
+                    if (updates.status === 'Concluído') updates.completion_date = new Date().toISOString();
+                    supabaseClient.from('pedidos').update(updates).eq('id', pedido.id).then(() => carregarHistorico());
+                };
+            } else if (pedido.status === 'Concluído') {
+                expandContent.innerHTML = `<p>Finalizado em: ${new Date(pedido.completion_date).toLocaleDateString('pt-BR')}</p>`;
+            }
+        });
+
+        document.querySelectorAll('.expand-btn').forEach(btn => {
+            btn.onclick = (e) => {
+                const expand = e.target.closest('tr').nextElementSibling.querySelector('.expand-content');
+                expand.style.display = expand.style.display === 'block' ? 'none' : 'block';
+                e.target.textContent = expand.style.display === 'block' ? '▲' : '▼';
+            };
+        });
+
+        document.querySelectorAll('.historico-nome').forEach(nome => {
+            nome.onclick = () => {
+                const id = nome.dataset.id;
+                const creator = nome.dataset.creator;
+                window.location.href = `perfil.html?user=${creator}&pedido=${id}`;
+            };
+        });
+    });
+}
 
 // Configurações
 function inicializarConfiguracoes() {
