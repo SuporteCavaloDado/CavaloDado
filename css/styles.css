@@ -504,3 +504,14 @@ body {
 }
 
 
+/* Historico Tabela */
+.historico-table { width: 100%; border-collapse: collapse; }
+.historico-table td, .historico-table th { padding: 0.5rem; border-bottom: 1px solid #eee; }
+.historico-nome { color: #FFD700; cursor: pointer; }
+.expand-btn { color: #AA002A; cursor: pointer; }
+.expand-content { display: none; padding: 0.5rem; background: #f9f9f9; }
+.delete-btn { background: #AA002A; color: white; border: none; padding: 0.3rem; cursor: pointer; }
+.copy-btn { background: #FFD700; color: #AA002A; border: none; padding: 0.3rem; margin-left: 0.5rem; }
+.confirm-btn { background: #28a745; color: white; border: none; padding: 0.3rem; }
+.note { font-size: 0.7rem; color: #666; }
+
