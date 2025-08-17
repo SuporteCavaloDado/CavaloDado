@@ -323,8 +323,8 @@ body {
 
 .pedido-actions {
     position: absolute;
-    right: 1rem;
-    bottom: 6rem;
+    right: 0.6rem;
+    bottom: 8rem;
     display: flex;
     flex-direction: column;
     gap: 1rem;
