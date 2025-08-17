@@ -505,6 +505,106 @@ body {
 
 
 
+/* Tabela Histórico */
+.historico-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+    font-size: 0.9rem;
+}
+
+.historico-table th, .historico-table td {
+    padding: 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+.historico-table th {
+    background: #f8f8f8;
+    font-weight: bold;
+}
+
+.historico-nome {
+    cursor: pointer;
+    color: #FFD700;
+    text-decoration: underline;
+}
+
+.historico-expand-btn {
+    cursor: pointer;
+    font-size: 1.2rem;
+    color: #AA002A;
+}
+
+.historico-expansion {
+    display: none;
+    padding: 1rem;
+    background: #f0f0f0;
+    border-radius: 4px;
+}
+
+.historico-expansion.show {
+    display: block;
+}
+
+.historico-delete-btn {
+    background: #AA002A;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.historico-tracking {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.historico-tracking input {
+    flex: 1;
+    padding: 0.5rem;
+    margin-right: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.historico-copy-btn {
+    background: #FFD700;
+    color: #AA002A;
+    border: none;
+    padding: 0.5rem;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.historico-checkboxes {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 0.5rem;
+}
+
+.historico-note {
+    font-size: 0.8rem;
+    color: #666;
+    margin-bottom: 0.5rem;
+}
+
+.historico-confirm-btn {
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.historico-completion-date {
+    font-style: italic;
+    color: #666;
+}
+
 
 /* Modal Pedido index */
 
@@ -604,4 +704,7 @@ body {
     background: var(--cor-cinza-medio);
     color: var(--cor-branco);
 }
+
+
+
 
