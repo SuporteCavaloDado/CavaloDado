@@ -511,27 +511,16 @@ function inicializarRegistro() {
     if (form) {
         form.addEventListener('submit', fazerRegistro);
     }
-
-    
     }    
 }
 
-function aplicarMascaraCPF(e) {
-    let valor = e.target.value.replace(/\D/g, '');
-    valor = valor.replace(/(\d{3})(\d)/, '$1.$2');
-    valor = valor.replace(/(\d{3})(\d)/, '$1.$2');
-    valor = valor.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
-    e.target.value = valor;
-}
-
-function fazerRegistro(e) {
+async function fazerRegistro(e) {
     e.preventDefault();
     
     const dados = {
         nome: document.getElementById('nome').value,
         email: document.getElementById('email').value,
         username: document.getElementById('username').value,
-        cpf: document.getElementById('cpf').value,
         estado: document.getElementById('estado').value,
         senha: document.getElementById('senha').value,
         confirmarSenha: document.getElementById('confirmar-senha').value,
@@ -549,9 +538,50 @@ function fazerRegistro(e) {
         return;
     }
     
-    // Simular registro
-    alert('Cadastro realizado com sucesso!');
-    window.location.href = 'login.html';
+    try {
+        // Verificar se username já existe
+        const { data: existingUser, error: checkError } = await supabase
+            .from('usuarios')
+            .select('username')
+            .eq('username', dados.username)
+            .single();
+        
+        if (existingUser) {
+            alert('Este nome de usuário já está em uso');
+            return;
+        }
+        if (checkError && checkError.code !== 'PGRST116') {
+            throw checkError;
+        }
+        
+        // Cadastrar usuário
+        const { data, error } = await supabase.auth.signUp({
+            email: dados.email,
+            password: dados.senha,
+            options: {
+                data: {
+                    nome: dados.nome,
+                    username: dados.username,
+                    estado: dados.estado,
+                    termos: dados.termos
+                }
+            }
+        });
+        
+        if (error) {
+            if (error.message.includes('User already registered')) {
+                alert('Este e-mail já está registrado');
+            } else {
+                alert('Erro ao cadastrar: ' + error.message);
+            }
+            return;
+        }
+        
+        alert('Cadastro realizado com sucesso! Verifique seu e-mail para confirmar.');
+        window.location.href = 'login.html';
+    } catch (error) {
+        alert('Erro ao cadastrar: ' + error.message);
+    }
 }
 
 // Logout
