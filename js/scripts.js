@@ -513,18 +513,7 @@ function inicializarRegistro() {
     }
 
     
-    }
-    
-    // Preencher estados
-    const estadoSelect = document.getElementById('estado');
-    if (estadoSelect) {
-        ESTADOS_BRASIL.forEach(estado => {
-            const option = document.createElement('option');
-            option.value = estado;
-            option.textContent = estado;
-            estadoSelect.appendChild(option);
-        });
-    }
+    }    
 }
 
 function aplicarMascaraCPF(e) {
