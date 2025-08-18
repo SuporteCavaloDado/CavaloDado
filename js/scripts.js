@@ -3,14 +3,6 @@ let usuarioLogado = null;
 let pedidosCache = [];
 let filtrosAtivos = {};
 
-// Constantes (substitua pelos valores reais)
-const ESTADOS_BRASIL = [
-    'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS',
-    'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC',
-    'SP', 'SE', 'TO'
-];
-const CATEGORIAS = ['Estudos', 'Roupas', 'Alimentos', 'Móveis', 'Outros'];
-
 // Inicialização
 document.addEventListener('DOMContentLoaded', function() {
     verificarUsuarioLogado();
@@ -19,22 +11,12 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Verificar se usuário está logado
-async function verificarUsuarioLogado() {
-    const { data: { session }, error } = await supabaseClient.auth.getSession();
-    if (error) {
-        console.error('Erro ao verificar sessão:', error);
-        return;
-    }
+function verificarUsuarioLogado() {
+    const token = localStorage.getItem('cavalodado_token');
+    const usuario = localStorage.getItem('cavalodado_usuario');
     
-    if (session) {
-        const { data: { user } } = await supabaseClient.auth.getUser();
-        usuarioLogado = {
-            id: user.id,
-            email: user.email,
-            nome: user.user_metadata.nome,
-            nome_usuario: user.user_metadata.nome_usuario,
-            estado: user.user_metadata.estado
-        };
+    if (token && usuario) {
+        usuarioLogado = JSON.parse(usuario);
         atualizarMenuLogado();
     }
 }
@@ -112,121 +94,6 @@ function inicializarPagina() {
             inicializarConfiguracoes();
             break;
     }
-}
-
-// Função para validar o nome de usuário
-async function validateUsername(nome_usuario) {
-    const { data, error } = await supabaseClient
-        .from('perfis')
-        .select('nome_usuario')
-        .eq('nome_usuario', nome_usuario);
-    if (error) {
-        console.error('Erro ao validar nome de usuário:', error);
-        return false;
-    }
-    return data.length === 0; // Retorna true se o nome de usuário estiver disponível
-}
-
-// Registro
-function inicializarRegistro() {
-    const form = document.getElementById('register-form');
-    if (form) {
-        form.addEventListener('submit', fazerRegistro);
-    }
-    
-    // Preencher estados
-    const estadoSelect = document.getElementById('estado');
-    if (estadoSelect) {
-        ESTADOS_BRASIL.forEach(estado => {
-            const option = document.createElement('option');
-            option.value = estado;
-            option.textContent = estado;
-            estadoSelect.appendChild(option);
-        });
-    }
-}
-
-async function fazerRegistro(e) {
-    e.preventDefault();
-    
-    const dados = {
-        nome: document.getElementById('nome').value,
-        email: document.getElementById('email').value,
-        nome_usuario: document.getElementById('nome_usuario').value,
-        estado: document.getElementById('estado').value,
-        senha: document.getElementById('senha').value,
-        confirmarSenha: document.getElementById('confirmar-senha').value,
-        termos: document.getElementById('termos').checked
-    };
-    
-    // Validações básicas
-    if (dados.senha !== dados.confirmarSenha) {
-        alert('Senhas não conferem');
-        return;
-    }
-    
-    if (!dados.termos) {
-        alert('Você deve aceitar os termos e condições');
-        return;
-    }
-    
-    if (!/^[A-Za-z0-9_]+$/.test(dados.nome_usuario)) {
-        alert('O nome de usuário deve conter apenas letras, números e underscore.');
-        return;
-    }
-    
-    if (!(await validateUsername(dados.nome_usuario))) {
-        alert('Nome de usuário já está em uso.');
-        return;
-    }
-    
-    // Cadastro no Supabase Authentication com metadados
-    const { data: authData, error: authError } = await supabaseClient.auth.signUp({
-        email: dados.email,
-        password: dados.senha,
-        options: {
-            data: {
-                nome: dados.nome,
-                nome_usuario: dados.nome_usuario,
-                estado: dados.estado
-            }
-        }
-    });
-    
-    if (authError) {
-        console.error('Erro no cadastro:', authError);
-        alert('Erro ao criar conta. Verifique o e-mail ou tente novamente.');
-        return;
-    }
-    
-    // O trigger handle_new_user insere os dados em 'usuarios' e 'perfis'
-    alert('Cadastro realizado com sucesso! Você será redirecionado.');
-    window.location.href = 'index.html';
-}
-
-// Cadastro com Google
-async function cadastroComGoogle() {
-    const { error } = await supabaseClient.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-            redirectTo: window.location.origin + '/index.html'
-        }
-    });
-    if (error) {
-        console.error('Erro no cadastro com Google:', error);
-        alert('Erro ao realizar cadastro com Google. Tente novamente.');
-    }
-}
-
-// Logout
-async function logout() {
-    const { error } = await supabaseClient.auth.signOut();
-    if (error) {
-        console.error('Erro ao fazer logout:', error);
-        return;
-    }
-    usuarioLogado = null;
-    window.location.href = 'index.html';
 }
 
 // Feed principal
@@ -579,33 +446,96 @@ function inicializarLogin() {
     }
 }
 
-async function fazerLogin(e) {
+function fazerLogin(e) {
     e.preventDefault();
     
     const email = document.getElementById('email').value;
     const senha = document.getElementById('senha').value;
     
-    const { data, error } = await supabaseClient.auth.signInWithPassword({
-        email,
-        password: senha
-    });
+    // Simular login
+    const usuario = {
+        id: 1,
+        nome: 'Usuário Teste',
+        email: email,
+        username: 'usuario_teste',
+        estado: 'SP'
+    };
     
-    if (error) {
-        console.error('Erro no login:', error);
-        alert('Erro ao fazer login. Verifique suas credenciais.');
+    localStorage.setItem('cavalodado_token', 'token_simulado');
+    localStorage.setItem('cavalodado_usuario', JSON.stringify(usuario));
+    
+    alert('Login realizado com sucesso!');
+    window.location.href = 'index.html';
+}
+
+// Registro
+function inicializarRegistro() {
+    const form = document.getElementById('register-form');
+    if (form) {
+        form.addEventListener('submit', fazerRegistro);
+    }
+    
+    // Máscara CPF
+    const cpfInput = document.getElementById('cpf');
+    if (cpfInput) {
+        cpfInput.addEventListener('input', aplicarMascaraCPF);
+    }
+    
+    // Preencher estados
+    const estadoSelect = document.getElementById('estado');
+    if (estadoSelect) {
+        ESTADOS_BRASIL.forEach(estado => {
+            const option = document.createElement('option');
+            option.value = estado;
+            option.textContent = estado;
+            estadoSelect.appendChild(option);
+        });
+    }
+}
+
+function aplicarMascaraCPF(e) {
+    let valor = e.target.value.replace(/\D/g, '');
+    valor = valor.replace(/(\d{3})(\d)/, '$1.$2');
+    valor = valor.replace(/(\d{3})(\d)/, '$1.$2');
+    valor = valor.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+    e.target.value = valor;
+}
+
+function fazerRegistro(e) {
+    e.preventDefault();
+    
+    const dados = {
+        nome: document.getElementById('nome').value,
+        email: document.getElementById('email').value,
+        username: document.getElementById('username').value,
+        cpf: document.getElementById('cpf').value,
+        estado: document.getElementById('estado').value,
+        senha: document.getElementById('senha').value,
+        confirmarSenha: document.getElementById('confirmar-senha').value,
+        termos: document.getElementById('termos').checked
+    };
+    
+    // Validações básicas
+    if (dados.senha !== dados.confirmarSenha) {
+        alert('Senhas não conferem');
         return;
     }
     
-    const { data: { user } } = await supabaseClient.auth.getUser();
-    usuarioLogado = {
-        id: user.id,
-        email: user.email,
-        nome: user.user_metadata.nome,
-        nome_usuario: user.user_metadata.nome_usuario,
-        estado: user.user_metadata.estado
-    };
+    if (!dados.termos) {
+        alert('Você deve aceitar os termos e condições');
+        return;
+    }
     
-    alert('Login realizado com sucesso!');
+    // Simular registro
+    alert('Cadastro realizado com sucesso!');
+    window.location.href = 'login.html';
+}
+
+// Logout
+function logout() {
+    localStorage.removeItem('cavalodado_token');
+    localStorage.removeItem('cavalodado_usuario');
+    usuarioLogado = null;
     window.location.href = 'index.html';
 }
 
@@ -633,6 +563,7 @@ function inicializarNovoPedido() {
         });
     }
 }
+
 
 function criarPedido(e) {
     e.preventDefault();
@@ -690,7 +621,7 @@ function mostrarPerfil() {
             <h2>Meu Perfil</h2>
             <div class="card">
                 <h3>${usuarioLogado.nome}</h3>
-                <p>@${usuarioLogado.nome_usuario}</p>
+                <p>@${usuarioLogado.username}</p>
                 <p>Estado: ${usuarioLogado.estado}</p>
                 <a href="config.html" class="btn btn-primary">Editar Perfil</a>
             </div>
@@ -722,8 +653,25 @@ function mostrarFavoritos() {
     }
 }
 
+function mostrarHistorico() {
+    const content = document.getElementById('dashboard-content');
+    if (content) {
+        content.innerHTML = `
+            <h2>Meu Histórico</h2>
+            <div class="card">
+                <table class="historico-table">
+                    <thead><tr><th>Nome Pedido</th><th>Categoria</th><th>Data</th><th>Status</th><th></th></tr></thead>
+                    <tbody id="historico-body"></tbody>
+                </table>
+            </div>
+        `;
+        carregarHistorico();
+    }
+}
+
+// Histórico Tabela
 function carregarHistorico() {
-    const { data: { user } } = supabaseClient.auth.getUser();
+    const { data: user } = supabaseClient.auth.getUser();
     if (!user) return;
 
     supabaseClient.from('pedidos').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).then(({ data: pedidos, error }) => {
@@ -809,9 +757,11 @@ function preencherDadosUsuario() {
     if (usuarioLogado) {
         document.getElementById('nome').value = usuarioLogado.nome || '';
         document.getElementById('email').value = usuarioLogado.email || '';
-        document.getElementById('nome_usuario').value = usuarioLogado.nome_usuario || '';
+        document.getElementById('username').value = usuarioLogado.username || '';
     }
 }
+
+
 
 // Encaminhar Pedido para Perfil 
 document.addEventListener('click', (e) => {
@@ -820,3 +770,4 @@ document.addEventListener('click', (e) => {
         window.location.href = `dashboard.html?id=${pedidoId}`;
     }
 });
+
