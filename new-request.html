@@ -74,39 +74,28 @@
                             <textarea id="descricao" class="form-input" rows="4" required placeholder="Descreva por que você precisa deste produto e como ele irá ajudá-lo..."></textarea>
                         </div>
 
-                        <!-- Foto do Pedido: Mantido e ajustado para compatibilidade com Supabase Storage; JS fará upload e salvará URL em nova coluna 'foto_url' na tabela 'pedidos' -->
+ <!-- Foto Pedido -->
                         <div class="form-group">
-                            <label class="form-label">Foto do Pedido *</label>
-                            <div class="upload-area">
-                                <input 
-                                    type="file" 
-                                    id="foto-input" 
-                                    accept="image/png, image/jpeg" 
-                                    style="display: none;"
-                                    required  <!-- Adicionado 'required' para alinhar com obrigatoriedade no Supabase -->
-                                    onchange="
-                                        if (this.files.length > 0) {
-                                            document.getElementById('feedback-texto').innerHTML = this.files[0].name;
-                                            document.getElementById('preview-container').style.borderColor = '#28a745';
-                                        } else {
-                                            document.getElementById('feedback-texto').innerHTML = 'Clique para anexar uma foto';
-                                            document.getElementById('preview-container').style.borderColor = 'var(--cor-cinza-medio)';
-                                        }
-                                    "
-                                >
-                                <div 
-                                    id="preview-container" 
-                                    onclick="document.getElementById('foto-input').click()" 
-                                    style="cursor: pointer; padding: 2rem; border: 2px dashed var(--cor-cinza-medio); border-radius: var(--border-radius); text-align: center; min-height: 150px; display: flex; align-items: center; justify-content: center;"
-                                >
-                                    <p id="feedback-texto">Clique para anexar uma foto</p>
-                                </div>
-                                <!-- Novo: Hidden para armazenar URL da foto após upload no JS -->
-                                <input type="hidden" id="foto_url" name="foto_url">
-                            </div>
-                        </div>
+    <label class="form-label">Foto do Pedido *</label>
+    <div class="upload-area">
+        <input 
+            type="file" 
+            id="foto-input" 
+            accept="image/png, image/jpeg" 
+            style="display: none;" 
+            onchange="if (this.files && this.files.length > 0) { document.getElementById('feedback-texto').innerHTML = this.files[0].name; document.getElementById('preview-container').style.borderColor = '#28a745'; } else { document.getElementById('feedback-texto').innerHTML = 'Clique para anexar uma foto'; document.getElementById('preview-container').style.borderColor = 'var(--cor-cinza-medio)'; }"
+        >
+        <div 
+            id="preview-container" 
+            onclick="document.getElementById('foto-input').click()" 
+            style="cursor: pointer; padding: 2rem; border: 2px dashed var(--cor-cinza-medio); border-radius: var(--border-radius); text-align: center; min-height: 150px; display: flex; align-items: center; justify-content: center;"
+        >
+            <p id="feedback-texto">Clique para anexar uma foto</p>
+        </div>
+    </div>
+</div>
 
-                        <!-- Endereço: Removido qualquer hidden ou input; mantido apenas como mensagem estática, sem envio de dados para compatibilidade (endereco_entrega_id será tratado no JS via fetch de 'enderecos') -->
+                        <!-- Endereço -->
                         <div class="form-group">
                             <div style="padding: 1rem; background: var(--cor-cinza-claro); border-radius: var(--border-radius);">
                                 <h4 style="margin-bottom: 0.5rem;">Endereço de entrega:</h4>
