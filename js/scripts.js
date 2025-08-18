@@ -511,11 +511,8 @@ function inicializarRegistro() {
     if (form) {
         form.addEventListener('submit', fazerRegistro);
     }
+
     
-    // Máscara CPF
-    const cpfInput = document.getElementById('cpf');
-    if (cpfInput) {
-        cpfInput.addEventListener('input', aplicarMascaraCPF);
     }
     
     // Preencher estados
