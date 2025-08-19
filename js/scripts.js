@@ -501,14 +501,27 @@ function fazerRegistro(e) {
     e.preventDefault();
     
     const dados = {
-        nome: document.getElementById('nome').value,
-        email: document.getElementById('email').value,
-        username: document.getElementById('username').value,
-        estado: document.getElementById('estado').value,
-        senha: document.getElementById('senha').value,
-        confirmarSenha: document.getElementById('confirmar-senha').value,
-        termos: document.getElementById('termos').checked
+        nome: document.querySelector('#nome').value,
+        email: document.querySelector('#email').value,
+        username: document.querySelector('#username').value,
+        estado: document.querySelector('#estado').value, // Captura a sigla selecionada
+        senha: document.querySelector('#senha').value,
+        confirmarSenha: document.querySelector('#confirmar-senha').value,
+        termos: document.querySelector('#termos').checked
     };
+    
+    // Exemplo de envio ao Supabase (ajuste conforme sua lógica)
+    const { error } = await window.supabase.from('usuarios').insert({
+        id: (await window.supabase.auth.getUser()).data.user.id,
+        email: dados.email,
+        nome: dados.nome,
+        username: dados.username,
+        estado: dados.estado,
+        termos: dados.termos
+    });
+    if (error) console.error('Erro ao salvar:', error.message);
+    else alert('Cadastro realizado!');
+}
     
     // Validações básicas
     if (dados.senha !== dados.confirmarSenha) {
