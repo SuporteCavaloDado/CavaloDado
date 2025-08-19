@@ -471,30 +471,31 @@ function fazerLogin(e) {
 
 // Inicializar
 
+const ESTADOS_BRASIL = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'];
+
+// Inicialização no DOMContentLoaded
+document.addEventListener('DOMContentLoaded', () => {
+    inicializarRegistro();
+    // Outras inicializações (ex.: verificarUsuarioLogado, inicializarMenu, etc.)
+});
+
 function inicializarRegistro() {
-    const form = document.getElementById('register-form');
-    if (form) {
-        form.addEventListener('submit', fazerRegistro);
+    const form = document.querySelector('#register-form');
+    if (!form) {
+        console.error('Form #register-form não encontrado');
+        return;
     }
-    
-    const estadoSelect = document.getElementById('estado');
-    if (estadoSelect) {
-        console.log('Preenchendo estados...');
-        if (ESTADOS_BRASIL && ESTADOS_BRASIL.length > 0) {
-            ESTADOS_BRASIL.forEach(estado => {
-                const option = document.createElement('option');
-                option.value = estado;
-                option.textContent = estado;
-                estadoSelect.appendChild(option);
-            });
-            console.log('Estados carregados:', ESTADOS_BRASIL);
-        } else {
-            console.error('Array ESTADOS_BRASIL não definida ou vazia');
-        }
-    } else {
-        console.error('Elemento #estado não encontrado');
+    form.addEventListener('submit', fazerRegistro);
+
+    const estadoSelect = document.querySelector('#estado');
+    if (!estadoSelect) {
+        console.error('Select #estado não encontrado');
+        return;
     }
+    estadoSelect.innerHTML = '<option value="">Selecione seu estado</option>' + 
+        ESTADOS_BRASIL.map(estado => `<option value="${estado}">${estado}</option>`).join('');
 }
+
 
 function fazerRegistro(e) {
     e.preventDefault();
