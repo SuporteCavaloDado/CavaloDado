@@ -495,14 +495,6 @@ function inicializarRegistro() {
     }
 }
 
-function aplicarMascaraCPF(e) {
-    let valor = e.target.value.replace(/\D/g, '');
-    valor = valor.replace(/(\d{3})(\d)/, '$1.$2');
-    valor = valor.replace(/(\d{3})(\d)/, '$1.$2');
-    valor = valor.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
-    e.target.value = valor;
-}
-
 function fazerRegistro(e) {
     e.preventDefault();
     
@@ -510,7 +502,6 @@ function fazerRegistro(e) {
         nome: document.getElementById('nome').value,
         email: document.getElementById('email').value,
         username: document.getElementById('username').value,
-        cpf: document.getElementById('cpf').value,
         estado: document.getElementById('estado').value,
         senha: document.getElementById('senha').value,
         confirmarSenha: document.getElementById('confirmar-senha').value,
