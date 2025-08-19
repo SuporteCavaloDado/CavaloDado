@@ -475,10 +475,9 @@ function inicializarRegistro() {
         form.addEventListener('submit', fazerRegistro);
     }
     
-    
     // Preencher estados
     const estadoSelect = document.getElementById('estado');
-    if (estadoSelect) {
+    if gillestadoSelect) {
         ESTADOS_BRASIL.forEach(estado => {
             const option = document.createElement('option');
             option.value = estado;
