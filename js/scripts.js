@@ -475,9 +475,10 @@ function inicializarRegistro() {
         form.addEventListener('submit', fazerRegistro);
     }
     
+    
     // Preencher estados
     const estadoSelect = document.getElementById('estado');
-    if gillestadoSelect) {
+    if (estadoSelect) {
         ESTADOS_BRASIL.forEach(estado => {
             const option = document.createElement('option');
             option.value = estado;
@@ -486,6 +487,19 @@ function inicializarRegistro() {
         });
     }
 }
+
+function fazerRegistro(e) {
+    e.preventDefault();
+    
+    const dados = {
+        nome: document.getElementById('nome').value,
+        email: document.getElementById('email').value,
+        username: document.getElementById('username').value,
+        estado: document.getElementById('estado').value,
+        senha: document.getElementById('senha').value,
+        confirmarSenha: document.getElementById('confirmar-senha').value,
+        termos: document.getElementById('termos').checked
+    };
 
 function fazerRegistro(e) {
     e.preventDefault();
