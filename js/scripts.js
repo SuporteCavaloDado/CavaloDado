@@ -213,8 +213,7 @@ function inicializarFiltros() {
             filtrosContent.classList.toggle('active');
         });
     }
-
-      
+    
     // Preencher selects de filtros
     preencherFiltros();
 }
@@ -469,33 +468,38 @@ function fazerLogin(e) {
     window.location.href = 'index.html';
 }
 
-// Inicializar
-
-const ESTADOS_BRASIL = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'];
-
-// Inicialização no DOMContentLoaded
-document.addEventListener('DOMContentLoaded', () => {
-    inicializarRegistro();
-    // Outras inicializações (ex.: verificarUsuarioLogado, inicializarMenu, etc.)
-});
-
+// Registro
 function inicializarRegistro() {
-    const form = document.querySelector('#register-form');
-    if (!form) {
-        console.error('Form #register-form não encontrado');
-        return;
+    const form = document.getElementById('register-form');
+    if (form) {
+        form.addEventListener('submit', fazerRegistro);
     }
-    form.addEventListener('submit', fazerRegistro);
-
-    const estadoSelect = document.querySelector('#estado');
-    if (!estadoSelect) {
-        console.error('Select #estado não encontrado');
-        return;
+    
+    // Máscara CPF
+    const cpfInput = document.getElementById('cpf');
+    if (cpfInput) {
+        cpfInput.addEventListener('input', aplicarMascaraCPF);
     }
-    estadoSelect.innerHTML = '<option value="">Selecione seu estado</option>' + 
-        ESTADOS_BRASIL.map(estado => `<option value="${estado}">${estado}</option>`).join('');
+    
+    // Preencher estados
+    const estadoSelect = document.getElementById('estado');
+    if (estadoSelect) {
+        ESTADOS_BRASIL.forEach(estado => {
+            const option = document.createElement('option');
+            option.value = estado;
+            option.textContent = estado;
+            estadoSelect.appendChild(option);
+        });
+    }
 }
 
+function aplicarMascaraCPF(e) {
+    let valor = e.target.value.replace(/\D/g, '');
+    valor = valor.replace(/(\d{3})(\d)/, '$1.$2');
+    valor = valor.replace(/(\d{3})(\d)/, '$1.$2');
+    valor = valor.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+    e.target.value = valor;
+}
 
 function fazerRegistro(e) {
     e.preventDefault();
@@ -504,14 +508,14 @@ function fazerRegistro(e) {
         nome: document.getElementById('nome').value,
         email: document.getElementById('email').value,
         username: document.getElementById('username').value,
+        cpf: document.getElementById('cpf').value,
         estado: document.getElementById('estado').value,
         senha: document.getElementById('senha').value,
         confirmarSenha: document.getElementById('confirmar-senha').value,
         termos: document.getElementById('termos').checked
     };
-}
-
-// Validações básicas
+    
+    // Validações básicas
     if (dados.senha !== dados.confirmarSenha) {
         alert('Senhas não conferem');
         return;
@@ -521,7 +525,7 @@ function fazerRegistro(e) {
         alert('Você deve aceitar os termos e condições');
         return;
     }
-
+    
     // Simular registro
     alert('Cadastro realizado com sucesso!');
     window.location.href = 'login.html';
@@ -756,6 +760,8 @@ function preencherDadosUsuario() {
         document.getElementById('username').value = usuarioLogado.username || '';
     }
 }
+
+
 
 // Encaminhar Pedido para Perfil 
 document.addEventListener('click', (e) => {
