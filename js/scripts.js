@@ -514,7 +514,7 @@ function fazerRegistro(e) {
     // Simular registro
     alert('Cadastro realizado com sucesso!');
     window.location.href = 'login.html';
-}
+
 
 // Logout
 function logout() {
