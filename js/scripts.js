@@ -1,4 +1,4 @@
-import { supabase } from './supabase-config.js';
+Rimport { supabase } from './supabase-config.js';
 
 // Variáveis globais
 let usuarioLogado = null;
@@ -513,7 +513,18 @@ function inicializarRegistro() {
     if (form) {
         form.addEventListener('submit', fazerRegistro);
     }
-    }    
+
+    // Preencher o select de estado no formulário
+    const estadoSelect = document.getElementById('estado');
+    if (estadoSelect) {
+        estadoSelect.innerHTML = '<option value="">Selecione seu estado</option>'; // Limpa e redefine a opção padrão
+        ESTADOS_BRASIL.forEach(estado => {
+            const option = document.createElement('option');
+            option.value = estado;
+            option.textContent = estado;
+            estadoSelect.appendChild(option);
+        });
+    }
 }
 
 async function fazerRegistro(e) {
