@@ -763,12 +763,6 @@ function preencherDadosUsuario() {
     }
 }
 
-const ESTADOS_BRASIL = [
-    'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 
-    'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 
-    'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'
-];
-
 // Encaminhar Pedido para Perfil 
 document.addEventListener('click', (e) => {
     if (e.target.classList.contains('pedido-titulo')) {
