@@ -510,11 +510,22 @@ function fazerRegistro(e) {
         termos: document.getElementById('termos').checked
     };
 }
-        
+
+// Validações básicas
+    if (dados.senha !== dados.confirmarSenha) {
+        alert('Senhas não conferem');
+        return;
+    }
+    
+    if (!dados.termos) {
+        alert('Você deve aceitar os termos e condições');
+        return;
+    }
+
     // Simular registro
     alert('Cadastro realizado com sucesso!');
     window.location.href = 'login.html';
-
+}
 
 // Logout
 function logout() {
