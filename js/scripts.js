@@ -476,21 +476,28 @@ function fazerLogin(e) {
     window.location.href = 'index.html';
 }
 
+// Inicializar
+
 function inicializarRegistro() {
     const form = document.getElementById('register-form');
     if (form) {
         form.addEventListener('submit', fazerRegistro);
     }
     
-    // Preencher estados
     const estadoSelect = document.getElementById('estado');
     if (estadoSelect) {
-        ESTADOS_BRASIL.forEach(estado => {
-            const option = document.createElement('option');
-            option.value = estado;
-            option.textContent = estado; // Apenas siglas
-            estadoSelect.appendChild(option);
-        });
+        console.log('Preenchendo estados...');
+        if (ESTADOS_BRASIL && ESTADOS_BRASIL.length > 0) {
+            ESTADOS_BRASIL.forEach(estado => {
+                const option = document.createElement('option');
+                option.value = estado;
+                option.textContent = estado;
+                estadoSelect.appendChild(option);
+            });
+            console.log('Estados carregados:', ESTADOS_BRASIL);
+        } else {
+            console.error('Array ESTADOS_BRASIL não definida ou vazia');
+        }
     } else {
         console.error('Elemento #estado não encontrado');
     }
