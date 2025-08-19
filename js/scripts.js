@@ -21,6 +21,13 @@ function verificarUsuarioLogado() {
     }
 }
 
+// Estados brasileiros
+const ESTADOS_BRASIL = [
+    'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 
+    'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 
+    'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'
+];
+
 // Inicializar menu
 function inicializarMenu() {
     const menuToggle = document.querySelector('.menu-toggle');
@@ -467,13 +474,6 @@ function fazerLogin(e) {
     alert('Login realizado com sucesso!');
     window.location.href = 'index.html';
 }
-
-// Estados brasileiros
-const ESTADOS_BRASIL = [
-    'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 
-    'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 
-    'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'
-];
 
 function inicializarRegistro() {
     const form = document.getElementById('register-form');
