@@ -1,5 +1,3 @@
-Rimport { supabase } from './supabase-config.js';
-
 // Variáveis globais
 let usuarioLogado = null;
 let pedidosCache = [];
