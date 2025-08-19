@@ -26,8 +26,6 @@ const ESTADOS_BRASIL = [
     'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'
 ];
 
-window.ESTADOS_BRASIL = ESTADOS_BRASIL; // Torna global
-
 // Categorias de produtos
 const CATEGORIAS = ['Empresa', 'Estudos', 'Pessoal', 'Esportes'];
 
