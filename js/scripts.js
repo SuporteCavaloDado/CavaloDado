@@ -1,3 +1,9 @@
+import { ESTADOS_BRASIL, CATEGORIAS } from '/supabase/supabase-config.js';
+
+// Adicione esta linha para depuração
+console.log('ESTADOS_BRASIL:', ESTADOS_BRASIL);
+
+
 // Variáveis globais
 let usuarioLogado = null;
 let pedidosCache = [];
@@ -220,7 +226,8 @@ function inicializarFiltros() {
             filtrosContent.classList.toggle('active');
         });
     }
-    
+
+      
     // Preencher selects de filtros
     preencherFiltros();
 }
