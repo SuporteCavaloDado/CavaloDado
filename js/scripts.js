@@ -468,13 +468,18 @@ function fazerLogin(e) {
     window.location.href = 'index.html';
 }
 
-// Registro
+// Estados brasileiros
+const ESTADOS_BRASIL = [
+    'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 
+    'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 
+    'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'
+];
+
 function inicializarRegistro() {
     const form = document.getElementById('register-form');
     if (form) {
         form.addEventListener('submit', fazerRegistro);
     }
-    
     
     // Preencher estados
     const estadoSelect = document.getElementById('estado');
@@ -482,9 +487,11 @@ function inicializarRegistro() {
         ESTADOS_BRASIL.forEach(estado => {
             const option = document.createElement('option');
             option.value = estado;
-            option.textContent = estado;
+            option.textContent = estado; // Apenas siglas
             estadoSelect.appendChild(option);
         });
+    } else {
+        console.error('Elemento #estado não encontrado');
     }
 }
 
