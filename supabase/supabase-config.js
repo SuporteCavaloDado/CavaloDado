@@ -5,7 +5,6 @@ const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
 // Inicializar cliente Supabase
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 window.supabase = supabase;
-export { supabase, ESTADOS_BRASIL, CATEGORIAS };
 
 // Configurações globais
 const CONFIG = {
