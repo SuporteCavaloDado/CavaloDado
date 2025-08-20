@@ -1,6 +1,6 @@
 // Configuração do Supabase
-const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
+const SUPABASE_URL = '%SUPABASE_URL%';
+const SUPABASE_ANON_KEY = '%SUPABASE_ANON_KEY%';
 
 // Inicializar cliente Supabase
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
