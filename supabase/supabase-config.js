@@ -1,15 +1,11 @@
-// Configuração do Supabase
-const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
+const { createClient } = require('@supabase/supabase-js');
 
-// Verificar se as variáveis existem
-if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-    console.error('Variáveis de ambiente do Supabase não configuradas');
-}
+  const supabase = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_ANON_KEY
+  );
 
-// Inicializar cliente Supabase
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-window.supabase = supabase;
+  module.exports = { supabase };
 
 // Configurações globais
 const CONFIG = {
