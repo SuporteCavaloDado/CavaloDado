@@ -1,0 +1,7 @@
+{
+  "name": "cavalo-dado",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "node -e \"const fs=require('fs'); let c=fs.readFileSync('supabase-config.js','utf8'); c=c.replace('%SUPABASE_URL%',process.env.SUPABASE_URL).replace('%SUPABASE_ANON_KEY%',process.env.SUPABASE_ANON_KEY); fs.writeFileSync('supabase-config.js',c);\""
+  }
+}
