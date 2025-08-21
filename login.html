@@ -44,13 +44,6 @@
                 <div class="card">
                     <h1 class="text-center" style="color: var(--cor-secundaria); margin-bottom: 2rem;">Entrar</h1>
 
-                    <!-- Login com Google -->
-                    <button class="btn btn-outline" style="width: 100%; margin-bottom: 1rem;" onclick="loginComGoogle()">
-                    Entrar com Google
-                    </button>
-                    
-                    <div style="text-align: center; margin: 1rem 0; color: var(--cor-cinza-escuro);">ou</div>
-
                     <!-- Formulário de login -->
                     <form id="login-form">
                         <div class="form-group">
@@ -101,11 +94,6 @@
             const senhaInput = document.getElementById('senha');
             const tipo = senhaInput.type === 'password' ? 'text' : 'password';
             senhaInput.type = tipo;
-        }
-
-        function loginComGoogle() {
-            // Implementar login com Google OAuth
-            alert('Funcionalidade de login com Google será implementada');
         }
     </script>
 </body>
