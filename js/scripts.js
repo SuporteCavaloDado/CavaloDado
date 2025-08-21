@@ -512,7 +512,7 @@ function fazerRegistro(e) {
     }
     
     // Simular registro
-    alert('Cadastro realizado com sucesso!');
+    alert('Cadastro efetuado com sucesso, confirme seu e-mail!');
     window.location.href = 'login.html';
 }
 
