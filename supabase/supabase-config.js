@@ -1,6 +1,6 @@
 // Configuração do Supabase
-const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
+const SUPABASE_URL = 'https://ipikrqsqcjtzjuabyqkz.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlwaWtycXNxY2p0emp1YWJ5cWt6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUyNzAyODEsImV4cCI6MjA3MDg0NjI4MX0.ogW-14318G_mqAr-YSFC8n-Ob9QgxqbFEk4FoT4UVWU';
 
 // Inicializar cliente Supabase
 import { createClient } from '@supabase/supabase-js';
