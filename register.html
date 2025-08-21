@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cadastrar - CavaloDado</title>
     <link rel="stylesheet" href="css/styles.css">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
     <!-- Botão voltar -->
@@ -44,6 +43,9 @@
                 <div class="card">
                     <h1 class="text-center" style="color: var(--cor-secundaria); margin-bottom: 2rem;">Cadastrar</h1>
 
+                    <!-- Mensagem de erro -->
+                    <div id="error-message" style="color: red; text-align: center; margin-bottom: 1rem; display: none;"></div>
+
                     <!-- Cadastro com Google -->
                     <button class="btn btn-outline" style="width: 100%; margin-bottom: 1rem;" onclick="cadastroComGoogle()">
                         Cadastrar com Google
@@ -65,7 +67,7 @@
 
                         <div class="form-group">
                             <label for="username" class="form-label">Nome de usuário *</label>
-                            <input type="text" id="username" class="form-input" placeholder="@seu_usuario" pattern="[A-Za-z0-9_]+" required>
+                            <input type "text" id="username" class="form-input" placeholder="@seu_usuario" pattern="[A-Za-z0-9_]+" required>
                             <small style="color: var(--cor-cinza-escuro);">Sem espaços, apenas letras, números e underscore</small>
                         </div>
 
@@ -123,10 +125,9 @@
     </main>
 
     <!-- Scripts -->
-    <script type="module" src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script type="module" src="supabase/supabase-config.js"></script>
-    <script type="module" src="js/scripts.js"></script>
-    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase/supabase-config.js"></script>
+    <script src="js/scripts.js"></script>
     <script>
         function toggleSenha(id) {
             const senhaInput = document.getElementById(id);
@@ -135,8 +136,8 @@
         }
 
         function cadastroComGoogle() {
-            // Implementar cadastro com Google OAuth
-            alert('Funcionalidade de cadastro com Google será implementada');
+            // Chama a função definida em scripts.js
+            cadastroComGoogle();
         }
     </script>
 </body>
