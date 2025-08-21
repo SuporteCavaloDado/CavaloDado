@@ -103,7 +103,6 @@ body {
 
 .menu-header {
     padding: 2rem 1.5rem 1rem;
-    border-bottom: 1px solid var(--cor-cinza-medio);
 }
 
 .menu-close {
