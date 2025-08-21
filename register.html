@@ -46,13 +46,6 @@
                     <!-- Mensagem de erro -->
                     <div id="error-message" style="color: red; text-align: center; margin-bottom: 1rem; display: none;"></div>
 
-                    <!-- Cadastro com Google -->
-                    <button class="btn btn-outline" style="width: 100%; margin-bottom: 1rem;" onclick="cadastroComGoogle()">
-                        Cadastrar com Google
-                    </button>
-
-                    <div style="text-align: center; margin: 1rem 0; color: var(--cor-cinza-escuro);">ou</div>
-
                     <!-- Formulário de cadastro -->
                     <form id="register-form">
                         <div class="form-group">
@@ -133,11 +126,6 @@
             const senhaInput = document.getElementById(id);
             const tipo = senhaInput.type === 'password' ? 'text' : 'password';
             senhaInput.type = tipo;
-        }
-
-        function cadastroComGoogle() {
-            // Chama a função definida em scripts.js
-            cadastroComGoogle();
         }
     </script>
 </body>
