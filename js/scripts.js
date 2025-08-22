@@ -465,6 +465,13 @@ function validatePassword(senha, confirmarSenha) {
     return null;
 }
 
+// Toggle Senha
+function toggleSenha(id) {
+    const senhaInput = document.getElementById(id);
+    const tipo = senhaInput.type === 'password' ? 'text' : 'password';
+    senhaInput.type = tipo;
+}
+
 // Login
 function inicializarLogin() {
     const form = document.getElementById('login-form');
