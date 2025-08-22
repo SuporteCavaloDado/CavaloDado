@@ -445,6 +445,9 @@ function showError(message) {
     if (errorDiv) {
         errorDiv.style.display = 'block';
         errorDiv.textContent = message;
+    } else {
+        console.error('Elemento #error-message não encontrado na página.');
+        alert(message);
     }
 }
 
@@ -457,7 +460,14 @@ function clearError() {
     }
 }
 
-// Função para validar a senha (já fornecida, mantida como está)
+// Função para alternar visibilidade da senha
+function toggleSenha(id) {
+    const senhaInput = document.getElementById(id);
+    const tipo = senhaInput.type === 'password' ? 'text' : 'password';
+    senhaInput.type = tipo;
+}
+
+// Validação de senha
 function validatePassword(senha, confirmarSenha) {
     if (senha !== confirmarSenha) return 'As senhas não coincidem.';
     if (senha.length < 6) return 'A senha deve ter pelo menos 6 caracteres.';
@@ -465,34 +475,24 @@ function validatePassword(senha, confirmarSenha) {
     return null;
 }
 
-// Toggle Senha
-function toggleSenha(id) {
-    const senhaInput = document.getElementById(id);
-    const tipo = senhaInput.type === 'password' ? 'text' : 'password';
-    senhaInput.type = tipo;
-}
-
 // Login
-function inicializarLogin() {
-    const form = document.getElementById('login-form');
-    if (form) {
-        form.addEventListener('submit', fazerLogin);    
-    }
-}
-
-function fazerLogin(e) {
+document.getElementById('login-form')?.addEventListener('submit', function(e) {
     e.preventDefault();
     clearError();
 
     const email = document.getElementById('email').value;
     const senha = document.getElementById('senha').value;
 
+    console.log('Tentando login com:', { email, senha });
+
     supabase.auth.signInWithPassword({
         email,
         password: senha,
     }).then(({ data, error }) => {
         if (error) {
-            showError(error.message.includes('Invalid login credentials') ? 'E-mail ou senha incorretos.' : 'Erro ao fazer login: ' + error.message);
+            console.error('Erro no login:', error);
+            const errorMessage = error.message.includes('Invalid login credentials') ? 'E-mail ou senha incorretos.' : 'Erro ao fazer login: ' + error.message;
+            showError(errorMessage);
             return;
         }
 
@@ -507,34 +507,17 @@ function fazerLogin(e) {
         localStorage.setItem('cavalodado_token', data.session.access_token);
         localStorage.setItem('cavalodado_usuario', JSON.stringify(usuario));
         usuarioLogado = usuario;
+        console.log('Usuário logado:', usuario);
         alert('Login realizado com sucesso!');
         window.location.href = 'index.html';
     }).catch(err => {
+        console.error('Erro inesperado no login:', err);
         showError('Ocorreu um erro inesperado. Tente novamente.');
-        console.error('Erro no login:', err);
     });
-}
+});
 
 // Registro
-function inicializarRegistro() {
-    const form = document.getElementById('register-form');
-    if (form) {
-        form.addEventListener('submit', fazerRegistro);
-    }
-
-    // Preencher estados
-    const estadoSelect = document.getElementById('estado');
-    if (estadoSelect) {
-        ESTADOS_BRASIL.forEach(estado => {
-            const option = document.createElement('option');
-            option.value = estado;
-            option.textContent = estado;
-            estadoSelect.appendChild(option);
-        });
-    }
-}
-
-function fazerRegistro(e) {
+document.getElementById('register-form')?.addEventListener('submit', function(e) {
     e.preventDefault();
     clearError();
 
@@ -547,6 +530,8 @@ function fazerRegistro(e) {
         confirmarSenha: document.getElementById('confirmar-senha').value,
         termos: document.getElementById('termos').checked
     };
+
+    console.log('Tentando cadastro com:', dados);
 
     if (!dados.termos) {
         showError('Você deve aceitar os termos e condições.');
@@ -571,8 +556,8 @@ function fazerRegistro(e) {
         },
     }).then(({ data, error }) => {
         if (error) {
-            showError('Erro ao cadastrar: ' + error.message);
             console.error('Erro no cadastro:', error);
+            showError('Erro ao cadastrar: ' + error.message);
             return;
         }
 
@@ -587,13 +572,75 @@ function fazerRegistro(e) {
         localStorage.setItem('cavalodado_token', data.session.access_token);
         localStorage.setItem('cavalodado_usuario', JSON.stringify(usuario));
         usuarioLogado = usuario;
+        console.log('Usuário cadastrado:', usuario);
         alert('Cadastro realizado com sucesso!');
         window.location.href = 'index.html';
     }).catch(err => {
+        console.error('Erro inesperado no cadastro:', err);
         showError('Ocorreu um erro inesperado. Tente novamente.');
-        console.error('Erro no cadastro:', err);
+    });
+});
+
+// Redefinir senha
+function resetPassword() {
+    const email = document.getElementById('email').value;
+    if (!email) {
+        showError('Por favor, insira seu e-mail.');
+        return;
+    }
+    supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: 'http://localhost/reset-password.html', // Atualize para seu domínio em produção
+    }).then(({ error }) => {
+        if (error) {
+            showError('Erro ao enviar e-mail de redefinição: ' + error.message);
+            return;
+        }
+        alert('E-mail de redefinição enviado! Verifique sua caixa de entrada.');
+        window.location.href = 'login.html';
+    }).catch(err => {
+        showError('Ocorreu um erro inesperado. Tente novamente.');
+        console.error('Erro no reset de senha:', err);
     });
 }
+
+// Listener para o formulário de recuperação de senha
+document.getElementById('forgot-password-form')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    clearError();
+    resetPassword();
+});
+
+// Listener para o formulário de redefinição de senha
+document.getElementById('reset-password-form')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    clearError();
+
+    const senha = document.getElementById('senha').value;
+    const confirmarSenha = document.getElementById('confirmar-senha').value;
+
+    if (senha !== confirmarSenha) {
+        showError('As senhas não coincidem.');
+        return;
+    }
+
+    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/;
+    if (!passwordRegex.test(senha)) {
+        showError('A senha deve ter no mínimo 6 caracteres, com letras e números.');
+        return;
+    }
+
+    supabase.auth.updateUser({ password: senha }).then(({ data, error }) => {
+        if (error) {
+            showError('Erro ao redefinir a senha: ' + error.message);
+            return;
+        }
+        alert('Senha redefinida com sucesso! Faça login com a nova senha.');
+        window.location.href = 'login.html';
+    }).catch(err => {
+        showError('Ocorreu um erro inesperado. Tente novamente.');
+        console.error('Erro ao redefinir senha:', err);
+    });
+});
 
 // Logout
 function logout() {
