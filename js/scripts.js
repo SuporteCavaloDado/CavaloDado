@@ -96,6 +96,21 @@ function inicializarPagina() {
     }
 }
 
+function inicializarRegistro() {
+    const estadoSelect = document.getElementById('estado');
+    if (estadoSelect) {
+        estadoSelect.innerHTML = '<option value="">Selecione seu estado</option>';
+        ESTADOS_BRASIL.forEach(estado => {
+            const option = document.createElement('option');
+            option.value = estado;
+            option.textContent = estado;
+            estadoSelect.appendChild(option);
+        });
+    } else {
+        console.error('Elemento <select> de estado não encontrado. Verifique o ID "estado" no HTML.');
+    }
+}
+
 // Feed principal
 function inicializarFeed() {
     carregarPedidos();
