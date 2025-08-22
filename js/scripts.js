@@ -457,18 +457,29 @@ function compartilhar(pedidoId) {
 document.getElementById('google-login-btn')?.addEventListener('click', async () => {
     clearError();
     try {
-        const { error } = await supabase.auth.signInWithOAuth({
+        const { data, error } = await supabase.auth.signInWithOAuth({
             provider: 'google',
             options: {
-                redirectTo: 'https://cavalodado.vercel.app/config.html'
+                redirectTo: 'https://cavalodado.vercel.app/index.html'
             }
         });
-        if (error) {
-            showError('Erro ao logar com Google: ' + error.message);
-            console.error('Erro no Google Auth:', error);
-        }
+        if (error) throw error;
+        const { data: userData, error: userError } = await supabase.auth.getUser();
+        if (userError) throw userError;
+        usuarioLogado = {
+            id: userData.user.id,
+            nome: userData.user.user_metadata.nome || userData.user.user_metadata.full_name || 'Usuário',
+            email: userData.user.email,
+            username: userData.user.user_metadata.username || '',
+            estado: userData.user.user_metadata.estado || '',
+            termos: true, // Aceita termos automaticamente
+            bio: userData.user.user_metadata.bio || ''
+        };
+        localStorage.setItem('cavalodado_usuario', JSON.stringify(usuarioLogado));
+        await supabase.auth.updateUser({ data: usuarioLogado });
+        atualizarMenuLogado();
     } catch (err) {
-        showError('Ocorreu um erro inesperado. Tente novamente.');
+        showError('Erro ao logar com Google: ' + err.message);
         console.error('Erro no Google Auth:', err);
     }
 });
