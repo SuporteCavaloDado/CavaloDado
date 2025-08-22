@@ -611,7 +611,7 @@ document.getElementById('forgot-password-form')?.addEventListener('submit', func
 });
 
 // Listener para o formulário de redefinição de senha
-document.getElementById('reset-password-form')?.addEventListener('submit', function(e) {
+document.getElementById('forgot-password-form')?.addEventListener('submit', function(e) {
     e.preventDefault();
     clearError();
 
