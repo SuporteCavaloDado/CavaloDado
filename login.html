@@ -44,39 +44,40 @@
                 <div class="card">
                     <h1 class="text-center" style="color: var(--cor-secundaria); margin-bottom: 2rem;">Entrar</h1>
 
-                    <!-- Formulário de login -->
-                    <form id="login-form">
-                        <div class="form-group">
-                            <label for="email" class="form-label">E-mail *</label>
-                            <input type="email" id="email" class="form-input" required>
-                        </div>
+<!-- Formulário de login -->
+<form id="login-form">
+    <div class="form-group">
+        <label for="email" class="form-label">E-mail *</label>
+        <input type="email" id="email" class="form-input" required>
+    </div>
 
-                        <div class="form-group">
-                            <label for="senha" class="form-label">Senha *</label>
-                            <div style="position: relative;">
-                                <input type="password" id="senha" class="form-input" required>
-                                <button type="button" onclick="toggleSenha()" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer;">
-                                    👁️
-                                </button>
-                            </div>
-                        </div>
+    <div class="form-group">
+        <label for="senha" class="form-label">Senha *</label>
+        <div style="position: relative;">
+            <input type="password" id="senha" class="form-input" required>
+            <button type="button" onclick="toggleSenha('senha')" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer;">
+                👁️
+            </button>
+        </div>
+    </div>
 
-                        <div style="text-align: center; margin-bottom: 1rem;">
-                            <a href="forgot-password.html" style="color: var(--cor-secundaria); text-decoration: none;">
-                                Esqueceu sua senha?
-                            </a>
-                        </div>
+    <!-- Div para mensagens de erro -->
+    <div id="error-message" style="color: #ff4d4f; font-size: 0.9rem; text-align: center; margin-bottom: 1rem; display: none;"></div>
 
-                        <button type="submit" class="btn btn-primary" style="width: 100%;">
-                            Entrar
-                        </button>
-                    </form>
+    <div style="text-align: center; margin-bottom: 1rem;">
+        <a href="#" onclick="resetPassword()" style="color: var(--cor-secundaria); text-decoration: none;">
+            Esqueceu sua senha?
+        </a>
+    </div>
 
-                    <div style="text-align: center; margin-top: 2rem;">
-                        <p>Não tem conta? <a href="register.html" style="color: var(--cor-secundaria);">Cadastre-se</a></p>
-                    </div>
-                </div>
+    <button type="submit" class="btn btn-primary" style="width: 100%;">
+        Entrar
+    </button>
+</form>
 
+<div style="text-align: center; margin-top: 2rem;">
+    <p>Não tem conta? <a href="register.html" style="color: var(--cor-secundaria);">Cadastre-se</a></p>
+</div>
                 <!-- Anúncio -->
                 <div class="anuncio" style="margin-top: 2rem;">
                     <img src="https://placehold.co/728x90?text=CavaloDado" alt="Anúncio Leaderboard">
