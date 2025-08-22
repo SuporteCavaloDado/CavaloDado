@@ -487,6 +487,25 @@ function inicializarRegistro() {
     }
 }
 
+// Função para validar a senha
+function validatePassword(senha, confirmarSenha) {
+    // Verificar se as senhas coincidem
+    if (senha !== confirmarSenha) {
+        return 'As senhas não coincidem.';
+    }
+    // Verificar comprimento mínimo
+    if (senha.length < 6) {
+        return 'A senha deve ter pelo menos 6 caracteres.';
+    }
+    // Verificar complexidade (ex.: pelo menos uma letra e um número)
+    const hasLetter = /[a-zA-Z]/.test(senha);
+    const hasNumber = /\d/.test(senha);
+    if (!hasLetter || !hasNumber) {
+        return 'A senha deve conter pelo menos uma letra e um número.';
+    }
+    return null; // Senha válida
+}
+
 function fazerRegistro(e) {
     e.preventDefault();
     
@@ -501,19 +520,47 @@ function fazerRegistro(e) {
     };
     
     // Validações básicas
-    if (dados.senha !== dados.confirmarSenha) {
-        alert('Senhas não conferem');
-        return;
-    }
-    
     if (!dados.termos) {
-        alert('Você deve aceitar os termos e condições');
+        showError('Você deve aceitar os termos e condições.');
         return;
     }
     
-    // Simular registro
-    alert('Cadastro efetuado com sucesso, confirme seu e-mail!');
-    window.location.href = 'login.html';
+    // Validar senha
+    const passwordError = validatePassword(dados.senha, dados.confirmarSenha);
+    if (passwordError) {
+        showError(passwordError);
+        return;
+    }
+    
+    // Cadastrar usuário no Supabase
+    supabase.auth.signUp({
+        email: dados.email,
+        password: dados.senha,
+        options: {
+            emailRedirectTo: 'https://seu-dominio.com/login.html', // Substitua pelo URL desejado
+            data: {
+                nome: dados.nome,
+                username: dados.username,
+                estado: dados.estado,
+            },
+        },
+    }).then(({ data, error }) => {
+        if (error) {
+            showError('Erro ao cadastrar: ' + error.message);
+            console.error('Erro no cadastro:', error);
+            return;
+        }
+
+        // Verificar se o usuário foi criado
+        if (data.user) {
+            showError('Cadastro realizado! Verifique seu e-mail para confirmar sua conta.');
+        } else {
+            showError('Erro: Usuário não foi criado. Tente novamente.');
+        }
+    }).catch(err => {
+        showError('Ocorreu um erro inesperado. Tente novamente.');
+        console.error('Erro inesperado:', err);
+    });
 }
 
 // Logout
