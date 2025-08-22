@@ -879,15 +879,47 @@ function carregarHistorico() {
     });
 }
 
-// Configurações
 function inicializarConfiguracoes() {
     if (!usuarioLogado) {
         window.location.href = 'login.html';
         return;
     }
     
-    // Preencher formulário com dados do usuário
+    // Verificar se usuário precisa preencher dados adicionais
+    if (!usuarioLogado.username || !usuarioLogado.estado || !usuarioLogado.termos) {
+        document.getElementById('error-message')?.innerHTML = '<p style="color: red;">Complete seu perfil para continuar.</p>';
+    }
+    
     preencherDadosUsuario();
+    
+    const configForm = document.getElementById('config-form');
+    if (configForm) {
+        configForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            clearError();
+            const dados = {
+                username: document.getElementById('username').value,
+                estado: document.getElementById('estado').value,
+                termos: document.getElementById('termos')?.checked
+            };
+            if (!dados.termos) {
+                showError('Você deve aceitar os termos.');
+                return;
+            }
+            try {
+                const { error } = await supabase.auth.updateUser({
+                    data: { username: dados.username, estado: dados.estado, termos: dados.termos }
+                });
+                if (error) throw error;
+                usuarioLogado = { ...usuarioLogado, ...dados };
+                localStorage.setItem('cavalodado_usuario', JSON.stringify(usuarioLogado));
+                alert('Perfil atualizado com sucesso!');
+                window.location.href = 'index.html';
+            } catch (error) {
+                showError('Erro ao atualizar perfil: ' + error.message);
+            }
+        });
+    }
 }
 
 function preencherDadosUsuario() {
@@ -897,8 +929,6 @@ function preencherDadosUsuario() {
         document.getElementById('username').value = usuarioLogado.username || '';
     }
 }
-
-
 
 // Encaminhar Pedido para Perfil 
 document.addEventListener('click', (e) => {
