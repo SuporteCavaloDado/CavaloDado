@@ -439,6 +439,33 @@ function compartilhar(pedidoId) {
 }
 
 // Login
+// Função para exibir mensagens de erro
+function showError(message) {
+    const errorDiv = document.getElementById('error-message');
+    if (errorDiv) {
+        errorDiv.style.display = 'block';
+        errorDiv.textContent = message;
+    }
+}
+
+// Função para limpar mensagens de erro
+function clearError() {
+    const errorDiv = document.getElementById('error-message');
+    if (errorDiv) {
+        errorDiv.style.display = 'none';
+        errorDiv.textContent = '';
+    }
+}
+
+// Função para validar a senha (já fornecida, mantida como está)
+function validatePassword(senha, confirmarSenha) {
+    if (senha !== confirmarSenha) return 'As senhas não coincidem.';
+    if (senha.length < 6) return 'A senha deve ter pelo menos 6 caracteres.';
+    if (!/[a-zA-Z]/.test(senha) || !/\d/.test(senha)) return 'A senha deve conter letras e números.';
+    return null;
+}
+
+// Login
 function inicializarLogin() {
     const form = document.getElementById('login-form');
     if (form) {
@@ -448,24 +475,37 @@ function inicializarLogin() {
 
 function fazerLogin(e) {
     e.preventDefault();
-    
+    clearError();
+
     const email = document.getElementById('email').value;
     const senha = document.getElementById('senha').value;
-    
-    // Simular login
-    const usuario = {
-        id: 1,
-        nome: 'Usuário Teste',
-        email: email,
-        username: 'usuario_teste',
-        estado: 'SP'
-    };
-    
-    localStorage.setItem('cavalodado_token', 'token_simulado');
-    localStorage.setItem('cavalodado_usuario', JSON.stringify(usuario));
-    
-    alert('Login realizado com sucesso!');
-    window.location.href = 'index.html';
+
+    supabase.auth.signInWithPassword({
+        email,
+        password: senha,
+    }).then(({ data, error }) => {
+        if (error) {
+            showError(error.message.includes('Invalid login credentials') ? 'E-mail ou senha incorretos.' : 'Erro ao fazer login: ' + error.message);
+            return;
+        }
+
+        const usuario = {
+            id: data.user.id,
+            nome: data.user.user_metadata.nome || 'Usuário',
+            email: data.user.email,
+            username: data.user.user_metadata.username || 'usuário',
+            estado: data.user.user_metadata.estado || ''
+        };
+
+        localStorage.setItem('cavalodado_token', data.session.access_token);
+        localStorage.setItem('cavalodado_usuario', JSON.stringify(usuario));
+        usuarioLogado = usuario;
+        alert('Login realizado com sucesso!');
+        window.location.href = 'index.html';
+    }).catch(err => {
+        showError('Ocorreu um erro inesperado. Tente novamente.');
+        console.error('Erro no login:', err);
+    });
 }
 
 // Registro
@@ -474,7 +514,7 @@ function inicializarRegistro() {
     if (form) {
         form.addEventListener('submit', fazerRegistro);
     }
-        
+
     // Preencher estados
     const estadoSelect = document.getElementById('estado');
     if (estadoSelect) {
@@ -487,28 +527,10 @@ function inicializarRegistro() {
     }
 }
 
-// Função para validar a senha
-function validatePassword(senha, confirmarSenha) {
-    // Verificar se as senhas coincidem
-    if (senha !== confirmarSenha) {
-        return 'As senhas não coincidem.';
-    }
-    // Verificar comprimento mínimo
-    if (senha.length < 6) {
-        return 'A senha deve ter pelo menos 6 caracteres.';
-    }
-    // Verificar complexidade (ex.: pelo menos uma letra e um número)
-    const hasLetter = /[a-zA-Z]/.test(senha);
-    const hasNumber = /\d/.test(senha);
-    if (!hasLetter || !hasNumber) {
-        return 'A senha deve conter pelo menos uma letra e um número.';
-    }
-    return null; // Senha válida
-}
-
 function fazerRegistro(e) {
     e.preventDefault();
-    
+    clearError();
+
     const dados = {
         nome: document.getElementById('nome').value,
         email: document.getElementById('email').value,
@@ -518,26 +540,22 @@ function fazerRegistro(e) {
         confirmarSenha: document.getElementById('confirmar-senha').value,
         termos: document.getElementById('termos').checked
     };
-    
-    // Validações básicas
+
     if (!dados.termos) {
         showError('Você deve aceitar os termos e condições.');
         return;
     }
-    
-    // Validar senha
+
     const passwordError = validatePassword(dados.senha, dados.confirmarSenha);
     if (passwordError) {
         showError(passwordError);
         return;
     }
-    
-    // Cadastrar usuário no Supabase
+
     supabase.auth.signUp({
         email: dados.email,
         password: dados.senha,
         options: {
-            emailRedirectTo: 'https://seu-dominio.com/login.html', // Substitua pelo URL desejado
             data: {
                 nome: dados.nome,
                 username: dados.username,
@@ -551,24 +569,37 @@ function fazerRegistro(e) {
             return;
         }
 
-        // Verificar se o usuário foi criado
-        if (data.user) {
-            showError('Cadastro realizado! Verifique seu e-mail para confirmar sua conta.');
-        } else {
-            showError('Erro: Usuário não foi criado. Tente novamente.');
-        }
+        const usuario = {
+            id: data.user.id,
+            nome: dados.nome,
+            email: dados.email,
+            username: dados.username,
+            estado: dados.estado
+        };
+
+        localStorage.setItem('cavalodado_token', data.session.access_token);
+        localStorage.setItem('cavalodado_usuario', JSON.stringify(usuario));
+        usuarioLogado = usuario;
+        alert('Cadastro realizado com sucesso!');
+        window.location.href = 'index.html';
     }).catch(err => {
         showError('Ocorreu um erro inesperado. Tente novamente.');
-        console.error('Erro inesperado:', err);
+        console.error('Erro no cadastro:', err);
     });
 }
 
 // Logout
 function logout() {
-    localStorage.removeItem('cavalodado_token');
-    localStorage.removeItem('cavalodado_usuario');
-    usuarioLogado = null;
-    window.location.href = 'index.html';
+    supabase.auth.signOut().then(() => {
+        localStorage.removeItem('cavalodado_token');
+        localStorage.removeItem('cavalodado_usuario');
+        usuarioLogado = null;
+        alert('Logout realizado com sucesso!');
+        window.location.href = 'index.html';
+    }).catch(err => {
+        showError('Erro ao fazer logout. Tente novamente.');
+        console.error('Erro no logout:', err);
+    });
 }
 
 // Novo pedido
