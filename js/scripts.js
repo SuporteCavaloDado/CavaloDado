@@ -589,7 +589,7 @@ function resetPassword() {
         return;
     }
     supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: 'http://localhost/reset-password.html', // Atualize para seu domínio em produção
+        redirectTo: 'https://cavalodado.vercel.app/forgot-password.html',
     }).then(({ error }) => {
         if (error) {
             showError('Erro ao enviar e-mail de redefinição: ' + error.message);
