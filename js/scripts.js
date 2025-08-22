@@ -438,6 +438,26 @@ function compartilhar(pedidoId) {
     }
 }
 
+// Login com Google
+document.getElementById('google-login-btn')?.addEventListener('click', async () => {
+    clearError();
+    try {
+        const { error } = await supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+                redirectTo: 'https://cavalodado.vercel.app/config.html'
+            }
+        });
+        if (error) {
+            showError('Erro ao logar com Google: ' + error.message);
+            console.error('Erro no Google Auth:', error);
+        }
+    } catch (err) {
+        showError('Ocorreu um erro inesperado. Tente novamente.');
+        console.error('Erro no Google Auth:', err);
+    }
+});
+
 // Login
 // Função para exibir mensagens de erro
 function showError(message) {
