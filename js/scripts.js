@@ -905,65 +905,25 @@ function carregarHistorico() {
     });
 }
 
-function inicializarConfiguracoes() {
-    if (!usuarioLogado) {
-        window.location.href = 'login.html';
-        return;
-    }
-    preencherDadosUsuario();
-    const errorMessage = document.getElementById('error-message');
-    if (!usuarioLogado.username || !usuarioLogado.estado) {
-        errorMessage?.innerHTML = '<p style="color: red;">Complete seu perfil (usuário e endereço).</p>';
-    }
-    const perfilForm = document.getElementById('perfil-form');
-    if (perfilForm) {
-        perfilForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            clearError();
-            const dados = {
-                nome: document.getElementById('nome')?.value || '',
-                username: document.getElementById('username')?.value || '',
-                bio: document.getElementById('bio')?.value || ''
-            };
-            if (!dados.username) {
-                showError('Preencha o nome de usuário.');
-                return;
-            }
-            try {
-                const { error } = await supabase.auth.updateUser({ data: dados });
-                if (error) throw error;
-                usuarioLogado = { ...usuarioLogado, ...dados };
-                localStorage.setItem('cavalodado_usuario', JSON.stringify(usuarioLogado));
-                alert('Perfil atualizado com sucesso!');
-            } catch (error) {
-                showError('Erro ao atualizar perfil: ' + error.message);
+// Login com Google
+document.getElementById('google-login-btn')?.addEventListener('click', async () => {
+    clearError();
+    try {
+        const { error } = await supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+                redirectTo: 'https://cavalodado.vercel.app/config.html'
             }
         });
+        if (error) {
+            showError('Erro ao logar com Google: ' + error.message);
+            console.error('Erro no Google Auth:', error);
+        }
+    } catch (err) {
+        showError('Ocorreu um erro inesperado. Tente novamente.');
+        console.error('Erro no Google Auth:', err);
     }
-    const enderecoForm = document.getElementById('endereco-form');
-    if (enderecoForm) {
-        enderecoForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            clearError();
-            const dados = {
-                estado: document.getElementById('estado-endereco')?.value || ''
-            };
-            if (!dados.estado) {
-                showError('Preencha o estado no endereço.');
-                return;
-            }
-            try {
-                const { error } = await supabase.auth.updateUser({ data: dados });
-                if (error) throw error;
-                usuarioLogado = { ...usuarioLogado, ...dados };
-                localStorage.setItem('cavalodado_usuario', JSON.stringify(usuarioLogado));
-                alert('Endereço atualizado com sucesso!');
-            } catch (error) {
-                showError('Erro ao atualizar endereço: ' + error.message);
-            }
-        });
-    }
-}
+});
 
 function preencherDadosUsuario() {
     if (usuarioLogado) {
