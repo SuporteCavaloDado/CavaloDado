@@ -79,7 +79,7 @@ function inicializarPagina() {
                 if (!error && userData.user) {
                     usuarioLogado = {
                         id: userData.user.id,
-                        nome: userData.user.user_metadata.nome || userData.user.user_metadata.full_name || 'Usuário',
+                        nome: userData.user.user_metadata.name || userData.user.user_metadata.full_name || 'Usuário',
                         email: userData.user.email,
                         username: userData.user.user_metadata.username || '',
                         estado: userData.user.user_metadata.estado || '',
@@ -94,7 +94,6 @@ function inicializarPagina() {
             atualizarMenuLogado();
         }
     });
-    verificarUsuarioLogado();
     const pagina = window.location.pathname.split('/').pop() || 'index.html';
     
     switch (pagina) {
@@ -118,7 +117,6 @@ function inicializarPagina() {
             break;
     }
 }
-
 function inicializarLogin() {
     const loginForm = document.getElementById('login-form');
     if (loginForm) {
