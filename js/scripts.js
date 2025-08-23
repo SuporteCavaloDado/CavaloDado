@@ -1023,11 +1023,17 @@ document.getElementById('google-login-btn')?.addEventListener('click', async () 
 });
 
 function preencherDadosUsuario() {
-    if (usuarioLogado) {
-        document.getElementById('nome').value = usuarioLogado.nome || '';
-        document.getElementById('email').value = usuarioLogado.email || '';
-        document.getElementById('username').value = usuarioLogado.username || '';
-    }
+    if (!usuarioLogado) return;
+    const nomeInput = document.getElementById('nome');
+    const emailInput = document.getElementById('email');
+    const usernameInput = document.getElementById('username');
+    const bioInput = document.getElementById('bio');
+    const estadoInput = document.getElementById('estado-endereco');
+    if (nomeInput) nomeInput.value = usuarioLogado.nome || '';
+    if (emailInput) emailInput.value = usuarioLogado.email || '';
+    if (usernameInput) usernameInput.value = usuarioLogado.username || '';
+    if (bioInput) bioInput.value = usuarioLogado.bio || '';
+    if (estadoInput) estadoInput.value = usuarioLogado.estado || '';
 }
 
 // Encaminhar Pedido para Perfil 
