@@ -73,8 +73,28 @@ function atualizarMenuLogado() {
 // Inicializar página específica
 function inicializarPagina() {
     usuarioLogado = JSON.parse(localStorage.getItem('cavalodado_usuario')) || null;
+    supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session && !usuarioLogado) {
+            supabase.auth.getUser().then(({ data: userData, error }) => {
+                if (!error && userData.user) {
+                    usuarioLogado = {
+                        id: userData.user.id,
+                        nome: userData.user.user_metadata.nome || userData.user.user_metadata.full_name || 'Usuário',
+                        email: userData.user.email,
+                        username: userData.user.user_metadata.username || '',
+                        estado: userData.user.user_metadata.estado || '',
+                        termos: userData.user.user_metadata.termos || true,
+                        bio: userData.user.user_metadata.bio || ''
+                    };
+                    localStorage.setItem('cavalodado_usuario', JSON.stringify(usuarioLogado));
+                }
+                atualizarMenuLogado();
+            });
+        } else {
+            atualizarMenuLogado();
+        }
+    });
     verificarUsuarioLogado();
-    atualizarMenuLogado();
     const pagina = window.location.pathname.split('/').pop() || 'index.html';
     
     switch (pagina) {
