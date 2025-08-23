@@ -725,40 +725,50 @@ document.getElementById('register-form')?.addEventListener('submit', function(e)
     }
 
     supabase.auth.signUp({
-        email: dados.email,
-        password: dados.senha,
-        options: {
-            data: {
+    email: dados.email,
+    password: dados.senha,
+    options: {
+        data: {
+            nome: dados.nome,
+            username: dados.username,
+            estado: dados.estado,
+        },
+    },
+}).then(async ({ data, error }) => {
+    if (error) {
+        console.error('Erro no cadastro em auth.users:', error);
+        showError('Erro ao cadastrar: ' + error.message);
+        return;
+    }
+    console.log('Usuário criado em auth.users:', data.user);
+    // Sincroniza manualmente com a tabela usuario
+    if (data.user) {
+        console.log('Tentando sincronizar com usuario:', {
+            id: data.user.id,
+            email: data.user.email,
+            nome: dados.nome,
+            username: dados.username,
+            estado: dados.estado,
+            termos: false,
+        });
+        const { error: insertError } = await supabase
+            .from('usuario')
+            .insert({
+                id: data.user.id,
+                email: data.user.email,
                 nome: dados.nome,
                 username: dados.username,
                 estado: dados.estado,
-            },
-        },
-    }).then(({ data, error }) => {
-        if (error) {
-            console.error('Erro no cadastro:', error);
-            showError('Erro ao cadastrar: ' + error.message);
-            return;
+                termos: false,
+            });
+        if (insertError) {
+            console.error('Erro ao sincronizar com usuario:', insertError);
+        } else {
+            console.log('Sincronizado com usuario com sucesso');
         }
-
-        const usuario = {
-            id: data.user.id,
-            nome: dados.nome,
-            email: dados.email,
-            username: dados.username,
-            estado: dados.estado
-        };
-
-        localStorage.setItem('cavalodado_token', data.session.access_token);
-        localStorage.setItem('cavalodado_usuario', JSON.stringify(usuario));
-        usuarioLogado = usuario;
-        console.log('Usuário cadastrado:', usuario);
-        alert('Cadastro realizado com sucesso!');
-        window.location.href = 'index.html';
-    }).catch(err => {
-        console.error('Erro inesperado no cadastro:', err);
-        showError('Ocorreu um erro inesperado. Tente novamente.');
-    });
+    }
+}).catch(err => {
+    console.error('Erro inesperado:', err);
 });
 
 // Redefinir senha
