@@ -96,6 +96,43 @@ function inicializarPagina() {
     }
 }
 
+function inicializarLogin() {
+    const loginForm = document.getElementById('login-form');
+    if (loginForm) {
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            clearError();
+            const email = document.getElementById('email')?.value;
+            const senha = document.getElementById('senha')?.value;
+            if (!email || !senha) {
+                showError('Preencha e-mail e senha.');
+                return;
+            }
+            try {
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email,
+                    password: senha
+                });
+                if (error) throw error;
+                usuarioLogado = {
+                    id: data.user.id,
+                    nome: data.user.user_metadata.nome || 'Usuário',
+                    email: data.user.email,
+                    username: data.user.user_metadata.username || '',
+                    estado: data.user.user_metadata.estado || '',
+                    termos: data.user.user_metadata.termos || false,
+                    bio: data.user.user_metadata.bio || ''
+                };
+                localStorage.setItem('cavalodado_usuario', JSON.stringify(usuarioLogado));
+                atualizarMenuLogado();
+                window.location.href = 'index.html';
+            } catch (error) {
+                showError('Erro ao logar: ' + error.message);
+            }
+        });
+    }
+}
+
 function inicializarRegistro() {
     const estadoSelect = document.getElementById('estado');
     if (estadoSelect) {
