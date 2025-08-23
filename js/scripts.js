@@ -724,41 +724,42 @@ document.getElementById('register-form')?.addEventListener('submit', function(e)
         return;
     }
 
-    supabase.auth.signUp({
-        email: dados.email,
-        password: dados.senha,
-        options: {
-            data: {
-                nome: dados.nome,
-                username: dados.username,
-                estado: dados.estado,
-            },
-        },
-    }).then(({ data, error }) => {
-        if (error) {
-            console.error('Erro no cadastro:', error);
-            showError('Erro ao cadastrar: ' + error.message);
-            return;
-        }
-
-        const usuario = {
-            id: data.user.id,
+supabase.auth.signUp({
+    email: dados.email,
+    password: dados.senha,
+    options: {
+        data: {
             nome: dados.nome,
-            email: dados.email,
             username: dados.username,
-            estado: dados.estado
-        };
+            estado: dados.estado,
+        },
+    },
+}).then(({ data, error }) => {
+    if (error) {
+        console.error('Erro no cadastro:', error);
+        console.log('Detalhes do erro:', error.message, error.status, error.code);
+        showError('Erro ao cadastrar: ' + error.message);
+        return;
+    }
 
-        localStorage.setItem('cavalodado_token', data.session.access_token);
-        localStorage.setItem('cavalodado_usuario', JSON.stringify(usuario));
-        usuarioLogado = usuario;
-        console.log('Usuário cadastrado:', usuario);
-        alert('Cadastro realizado com sucesso!');
-        window.location.href = 'index.html';
-    }).catch(err => {
-        console.error('Erro inesperado no cadastro:', err);
-        showError('Ocorreu um erro inesperado. Tente novamente.');
-    });
+    const usuario = {
+        id: data.user.id,
+        nome: dados.nome,
+        email: dados.email,
+        username: dados.username,
+        estado: dados.estado
+    };
+
+    localStorage.setItem('cavalodado_token', data.session.access_token);
+    localStorage.setItem('cavalodado_usuario', JSON.stringify(usuario));
+    usuarioLogado = usuario;
+    console.log('Usuário cadastrado:', usuario);
+    alert('Cadastro realizado com sucesso!');
+    window.location.href = 'index.html';
+}).catch(err => {
+    console.error('Erro inesperado no cadastro:', err);
+    console.log('Detalhes do erro inesperado:', err.message, err.stack);
+    showError('Ocorreu um erro inesperado. Tente novamente.');
 });
 
 // Redefinir senha
