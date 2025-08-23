@@ -79,7 +79,7 @@ function inicializarPagina() {
                 if (!error && userData.user) {
                     usuarioLogado = {
                         id: userData.user.id,
-                        nome: userData.user.user_metadata.name || userData.user.user_metadata.full_name || 'Usuário',
+                        nome: userData.user.user_metadata.nome || 'Usuário',
                         email: userData.user.email,
                         username: userData.user.user_metadata.username || '',
                         estado: userData.user.user_metadata.estado || '',
@@ -137,7 +137,7 @@ function inicializarLogin() {
                 if (error) throw error;
                 usuarioLogado = {
                     id: data.user.id,
-                    nome: data.user.user_metadata.name || data.user.user_metadata.full_name || 'Usuário',
+                    nome: userData.user.user_metadata.nome || 'Usuário',
                     email: data.user.email,
                     username: data.user.user_metadata.username || '',
                     estado: data.user.user_metadata.estado || '',
@@ -594,7 +594,7 @@ supabase.auth.onAuthStateChange(async (event, session) => {
             if (error) throw error;
             usuarioLogado = {
                 id: userData.user.id,
-                nome: userData.user.user_metadata.name || userData.user.user_metadata.full_name || 'Usuário',
+                nome: userData.user.user_metadata.nome || 'Usuário',
                 email: userData.user.email,
                 username: userData.user.user_metadata.username || '',
                 estado: userData.user.user_metadata.estado || '',
