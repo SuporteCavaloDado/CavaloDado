@@ -137,7 +137,7 @@ function inicializarLogin() {
                 if (error) throw error;
                 usuarioLogado = {
                     id: data.user.id,
-                    nome: data.user.user_metadata.nome || 'Usuário',
+                    nome: data.user.user_metadata.name || data.user.user_metadata.full_name || 'Usuário',
                     email: data.user.email,
                     username: data.user.user_metadata.username || '',
                     estado: data.user.user_metadata.estado || '',
@@ -146,7 +146,7 @@ function inicializarLogin() {
                 };
                 localStorage.setItem('cavalodado_usuario', JSON.stringify(usuarioLogado));
                 atualizarMenuLogado();
-                window.location.href = 'index.html';
+                window.location.href = '/index.html';
             } catch (error) {
                 showError('Erro ao logar: ' + error.message);
             }
