@@ -72,6 +72,9 @@ function atualizarMenuLogado() {
 
 // Inicializar página específica
 function inicializarPagina() {
+    usuarioLogado = JSON.parse(localStorage.getItem('cavalodado_usuario')) || null;
+    verificarUsuarioLogado();
+    atualizarMenuLogado();
     const pagina = window.location.pathname.split('/').pop() || 'index.html';
     
     switch (pagina) {
