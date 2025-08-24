@@ -723,22 +723,6 @@ function compartilhar(pedidoId) {
     }
 }
 
-// Login com Google
-document.getElementById('google-login-btn')?.addEventListener('click', async () => {
-    try {
-        const { error } = await supabase.auth.signInWithOAuth({
-            provider: 'google',
-            options: {
-                redirectTo: window.location.origin + '/index.html'
-            }
-        });
-        if (error) throw error;
-    } catch (err) {
-        showError('Erro ao iniciar login com Google: ' + err.message);
-        console.error('Erro no Google Auth:', err);
-    }
-});
-
 supabase.auth.onAuthStateChange(async (event, session) => {
     try {
         if (event === 'SIGNED_IN' && session) {
