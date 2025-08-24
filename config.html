@@ -209,22 +209,6 @@
             e.preventDefault();
             alert('Endereço salvo com sucesso!');
         });
-
-        // Alterar senha
-        document.getElementById('senha-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const novaSenha = document.getElementById('nova-senha').value;
-            const confirmarSenha = document.getElementById('confirmar-nova-senha').value;
-            
-            if (novaSenha !== confirmarSenha) {
-                alert('As senhas não conferem');
-                return;
-            }
-            
-            alert('Senha alterada com sucesso!');
-            e.target.reset();
-        });
     </script>
 </body>
 </html>
