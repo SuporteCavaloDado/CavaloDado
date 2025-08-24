@@ -235,14 +235,27 @@ async function salvarEndereco(event) {
     event.preventDefault();
     console.log('Salvando endereço...');
     try {
-        const { data: session } = await supabase.auth.getSession();
-        if (!session.session) {
-            console.log('Nenhuma sessão encontrada, redirecionando para login');
+        const { data: session, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) {
+            console.error('Erro ao obter sessão:', sessionError.message);
+            alert('Erro ao obter sessão: ' + sessionError.message);
+            return;
+        }
+        if (!session || !session.session) {
+            console.error('Nenhuma sessão encontrada');
+            alert('Nenhuma sessão encontrada. Faça login novamente.');
             window.location.href = 'login.html';
             return;
         }
 
         const userId = session.session.user.id;
+        console.log('Usuário ID:', userId);
+        if (!userId) {
+            console.error('ID de usuário inválido');
+            alert('ID de usuário inválido. Tente novamente.');
+            return;
+        }
+
         const cep = document.getElementById('cep').value.trim();
         const rua = document.getElementById('rua').value.trim();
         const numero = document.getElementById('numero').value.trim();
@@ -251,7 +264,7 @@ async function salvarEndereco(event) {
         const cidade = document.getElementById('cidade').value.trim();
         const estado_endereco = document.getElementById('estado-endereco').value;
 
-        console.log('Dados do endereço:', { cep, rua, numero, complemento, bairro, cidade, estado_endereco });
+        console.log('Dados do endereço:', { userId, cep, rua, numero, complemento, bairro, cidade, estado_endereco });
 
         if (!cep.match(/^\d{5}-\d{3}$/)) {
             console.log('CEP inválido');
@@ -269,37 +282,48 @@ async function salvarEndereco(event) {
             return;
         }
 
-        const { data: existingAddress } = await supabase
+        let result, error;
+        const { data: existingAddress, error: selectError } = await supabase
             .from('endereco')
             .select('id')
             .eq('usuario_id', userId)
             .single();
 
-        let error;
-        if (existingAddress) {
-            console.log('Atualizando endereço existente');
-            ({ error } = await supabase
-                .from('endereco')
-                .update({ cep, rua, numero, complemento, bairro, cidade, estado_endereco })
-                .eq('usuario_id', userId));
-        } else {
-            console.log('Inserindo novo endereço');
-            ({ error } = await supabase
-                .from('endereco')
-                .insert({ usuario_id: userId, cep, rua, numero, complemento, bairro, cidade, estado_endereco }));
-        }
-
-        if (error) {
-            console.error('Erro ao salvar endereço:', error.message);
-            alert('Erro ao salvar endereço. Tente novamente.');
+        if (selectError && selectError.code !== 'PGRST116') { // PGRST116 = no rows found
+            console.error('Erro ao verificar endereço existente:', selectError.message);
+            alert('Erro ao verificar endereço: ' + selectError.message);
             return;
         }
 
-        console.log('Endereço salvo com sucesso');
+        if (existingAddress) {
+            console.log('Atualizando endereço existente');
+            ({ data: result, error } = await supabase
+                .from('endereco')
+                .update({ cep, rua, numero, complemento, bairro, cidade, estado_endereco, updated_at: new Date() })
+                .eq('usuario_id', userId)
+                .select()
+                .single());
+        } else {
+            console.log('Inserindo novo endereço');
+            ({ data: result, error } = await supabase
+                .from('endereco')
+                .insert({ usuario_id: userId, cep, rua, numero, complemento, bairro, cidade, estado_endereco })
+                .select()
+                .single());
+        }
+
+        if (error) {
+            console.error('Erro ao salvar endereço:', error.message, error.details, error.code);
+            alert('Erro ao salvar endereço: ' + error.message + ' (Código: ' + error.code + ')');
+            return;
+        }
+
+        console.log('Endereço salvo com sucesso:', result);
         alert('Endereço salvo com sucesso!');
+        carregarEndereco(); // Recarrega os dados
     } catch (err) {
-        console.error('Erro inesperado ao salvar endereço:', err);
-        alert('Erro ao salvar endereço. Tente novamente.');
+        console.error('Erro inesperado ao salvar endereço:', err.message, err.stack);
+        alert('Erro inesperado ao salvar endereço: ' + err.message);
     }
 }
 
