@@ -168,46 +168,67 @@
     <script src="js/scripts.js"></script>
     
     <script>
-        // Preencher estados no select de endereço
-        document.addEventListener('DOMContentLoaded', function() {
-            const estadoSelect = document.getElementById('estado-endereco');
-            ESTADOS_BRASIL.forEach(estado => {
-                const option = document.createElement('option');
-                option.value = estado;
-                option.textContent = estado;
-                estadoSelect.appendChild(option);
-            });
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Página config.html carregada');
+
+        // Carregar dados
+        if (typeof carregarPerfil === 'function') carregarPerfil();
+        if (typeof carregarEndereco === 'function') carregarEndereco();
+
+        // Máscara CEP
+        document.getElementById('cep').addEventListener('input', function(e) {
+            let valor = e.target.value.replace(/\D/g, '');
+            valor = valor.replace(/(\d{5})(\d)/, '$1-$2');
+            e.target.value = valor;
+            console.log('CEP formatado:', e.target.value);
         });
-        
+
         // Buscar CEP
         document.getElementById('cep').addEventListener('blur', function(e) {
             const cep = e.target.value.replace(/\D/g, '');
+            console.log('Buscando CEP:', cep);
             if (cep.length === 8) {
                 fetch(`https://viacep.com.br/ws/${cep}/json/`)
                     .then(response => response.json())
                     .then(data => {
+                        console.log('Resposta ViaCEP:', data);
                         if (!data.erro) {
-                            document.getElementById('rua').value = data.logradouro;
-                            document.getElementById('bairro').value = data.bairro;
-                            document.getElementById('cidade').value = data.localidade;
-                            document.getElementById('estado-endereco').value = data.uf;
+                            document.getElementById('rua').value = data.logradouro || '';
+                            document.getElementById('bairro').value = data.bairro || '';
+                            document.getElementById('cidade').value = data.localidade || '';
+                            document.getElementById('estado-endereco').value = data.uf || '';
+                        } else {
+                            alert('CEP inválido. Verifique o valor digitado.');
                         }
                     })
-                    .catch(error => console.log('Erro ao buscar CEP:', error));
+                    .catch(error => {
+                        console.error('Erro ao buscar CEP:', error);
+                        alert('Erro ao buscar CEP. Verifique sua conexão.');
+                    });
             }
-        });
-
-        // Salvar perfil
-        document.getElementById('perfil-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            alert('Perfil atualizado com sucesso!');
         });
 
         // Salvar endereço
         document.getElementById('endereco-form').addEventListener('submit', function(e) {
             e.preventDefault();
-            alert('Endereço salvo com sucesso!');
+            console.log('Formulário de endereço enviado');
+            if (typeof salvarEndereco === 'function') {
+                salvarEndereco(e);
+            } else {
+                console.error('Função salvarEndereco não encontrada');
+                alert('Função de salvar endereço não encontrada.');
+            }
         });
+
+        // Salvar perfil
+        const perfilForm = document.getElementById('perfil-form');
+        if (perfilForm) {
+            perfilForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                if (typeof salvarPerfil === 'function') salvarPerfil(e);
+            });
+        }
+    });
     </script>
 </body>
 </html>
