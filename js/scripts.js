@@ -231,6 +231,12 @@ function inicializarConfiguracoes() {
 }
 
 // Salvar Endereço
+const ESTADOS_BRASIL = [
+    'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 
+    'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 
+    'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'
+];
+
 async function salvarEndereco(event) {
     event.preventDefault();
     console.log('Salvando endereço...');
@@ -320,10 +326,64 @@ async function salvarEndereco(event) {
 
         console.log('Endereço salvo com sucesso:', result);
         alert('Endereço salvo com sucesso!');
-        carregarEndereco(); // Recarrega os dados
+        carregarEndereco(); // Recarrega os dados após salvar
     } catch (err) {
         console.error('Erro inesperado ao salvar endereço:', err.message, err.stack);
         alert('Erro inesperado ao salvar endereço: ' + err.message);
+    }
+}
+
+async function carregarEndereco() {
+    console.log('Carregando endereço...');
+    try {
+        const { data: session, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) {
+            console.error('Erro ao obter sessão:', sessionError.message);
+            alert('Erro ao verificar sessão. Tente novamente.');
+            return;
+        }
+        if (!session.session) {
+            console.log('Nenhuma sessão encontrada, redirecionando para login');
+            window.location.href = 'login.html';
+            return;
+        }
+
+        const userId = session.session.user.id;
+        console.log('Usuário ID:', userId);
+        const { data, error } = await supabase
+            .from('endereco')
+            .select('cep, rua, numero, complemento, bairro, cidade, estado_endereco')
+            .eq('usuario_id', userId)
+            .single();
+
+        if (error && error.code !== 'PGRST116') { // PGRST116 = no rows found
+            console.error('Erro ao carregar endereço:', error.message);
+            alert('Erro ao carregar endereço: ' + error.message);
+            return;
+        }
+
+        if (data) {
+            console.log('Endereço carregado:', data);
+            document.getElementById('cep').value = data.cep || '';
+            document.getElementById('rua').value = data.rua || '';
+            document.getElementById('numero').value = data.numero || '';
+            document.getElementById('complemento').value = data.complemento || '';
+            document.getElementById('bairro').value = data.bairro || '';
+            document.getElementById('cidade').value = data.cidade || '';
+            document.getElementById('estado-endereco').value = data.estado_endereco || '';
+        } else {
+            console.log('Nenhum endereço encontrado para o usuário');
+            document.getElementById('cep').value = '';
+            document.getElementById('rua').value = '';
+            document.getElementById('numero').value = '';
+            document.getElementById('complemento').value = '';
+            document.getElementById('bairro').value = '';
+            document.getElementById('cidade').value = '';
+            document.getElementById('estado-endereco').value = '';
+        }
+    } catch (err) {
+        console.error('Erro inesperado ao carregar endereço:', err.message, err.stack);
+        alert('Erro ao carregar endereço: ' + err.message);
     }
 }
 
