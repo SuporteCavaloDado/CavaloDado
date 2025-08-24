@@ -128,17 +128,6 @@
                         </form>
                     </div>
 
-                    
-                    <!-- Ações da conta -->
-                    <div class="card">
-                        <h3 style="color: var(--cor-secundaria); margin-bottom: 1rem;">Gerenciar Conta</h3>
-                        
-                        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                            <button class="btn btn-outline" onclick="logout()">Sair da Conta</button>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- Anúncio -->
                 <div class="anuncio" style="margin-top: 2rem;">
                     <img src="https://placehold.co/728x90?text=Anuncio+Leaderboard" alt="Anúncio Leaderboard">
@@ -163,14 +152,7 @@
                 estadoSelect.appendChild(option);
             });
         });
-
-        // Máscara CEP
-        document.getElementById('cep').addEventListener('input', function(e) {
-            let valor = e.target.value.replace(/\D/g, '');
-            valor = valor.replace(/(\d{5})(\d)/, '$1-$2');
-            e.target.value = valor;
-        });
-
+        
         // Buscar CEP
         document.getElementById('cep').addEventListener('blur', function(e) {
             const cep = e.target.value.replace(/\D/g, '');
