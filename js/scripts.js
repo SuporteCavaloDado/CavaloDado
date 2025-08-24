@@ -169,8 +169,7 @@ function inicializarRegistro() {
     }
 }
 
-// Configuração Perfil
-
+// Configuração
 function inicializarConfiguracoes() {
     if (!usuarioLogado) {
         window.location.href = 'login.html';
