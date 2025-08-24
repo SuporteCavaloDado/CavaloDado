@@ -171,39 +171,65 @@ function inicializarRegistro() {
 
 // Configuração Perfil
 
-async function carregarEndereco() {
-    console.log('Carregando endereço...');
-    const { data: session } = await supabase.auth.getSession();
-    if (!session.session) {
-        console.log('Nenhuma sessão encontrada, redirecionando para login');
+function inicializarConfiguracoes() {
+    if (!usuarioLogado) {
         window.location.href = 'login.html';
         return;
     }
-
-    const userId = session.session.user.id;
-    const { data, error } = await supabase
-        .from('endereco')
-        .select('cep, rua, numero, complemento, bairro, cidade, estado')
-        .eq('usuario_id', userId)
-        .single();
-
-    if (error && error.code !== 'PGRST116') {
-        console.error('Erro ao carregar endereço:', error.message);
-        alert('Erro ao carregar endereço. Tente novamente.');
-        return;
+    preencherDadosUsuario();
+    const errorMessage = document.getElementById('error-message');
+    if (!usuarioLogado.username || !usuarioLogado.estado) {
+        if (errorMessage) errorMessage.innerHTML = '<p style="color: red;">Complete seu perfil (usuário e endereço).</p>';
     }
-
-    if (data) {
-        document.getElementById('cep').value = data.cep || '';
-        document.getElementById('rua').value = data.rua || '';
-        document.getElementById('numero').value = data.numero || '';
-        document.getElementById('complemento').value = data.complemento || '';
-        document.getElementById('bairro').value = data.bairro || '';
-        document.getElementById('cidade').value = data.cidade || '';
-        document.getElementById('estado-endereco').value = data.estado || '';
+    const perfilForm = document.getElementById('perfil-form');
+    if (perfilForm) {
+        perfilForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            clearError();
+            const dados = {
+                nome: document.getElementById('nome')?.value || '',
+                username: document.getElementById('username')?.value || '',
+                bio: document.getElementById('bio')?.value || ''
+            };
+            if (!dados.username) {
+                showError('Preencha o nome de usuário.');
+                return;
+            }
+            try {
+                const { error } = await supabase.auth.updateUser({ data: dados });
+                if (error) throw error;
+                Object.assign(usuarioLogado, dados);
+                localStorage.setItem('cavalodado_usuario', JSON.stringify(usuarioLogado));
+                alert('Perfil atualizado com sucesso!');
+            } catch (error) {
+                showError('Erro ao atualizar perfil: ' + error.message);
+            }
+        });
+    }
+    const enderecoForm = document.getElementById('endereco-form');
+    if (enderecoForm) {
+        enderecoForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            clearError();
+            const dados = {
+                estado: document.getElementById('estado-endereco')?.value || ''
+            };
+            if (!dados.estado) {
+                showError('Preencha o estado no endereço.');
+                return;
+            }
+            try {
+                const { error } = await supabase.auth.updateUser({ data: dados });
+                if (error) throw error;
+                Object.assign(usuarioLogado, dados);
+                localStorage.setItem('cavalodado_usuario', JSON.stringify(usuarioLogado));
+                alert('Endereço atualizado com sucesso!');
+            } catch (error) {
+                showError('Erro ao atualizar endereço: ' + error.message);
+            }
+        });
     }
 }
-
 async function salvarEndereco(event) {
     event.preventDefault();
     console.log('Salvando endereço...');
