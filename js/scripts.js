@@ -823,17 +823,20 @@ document.getElementById('forgot-password-form')?.addEventListener('submit', func
 });
 
 // Logout
-function logout() {
-    supabase.auth.signOut().then(() => {
-        localStorage.removeItem('cavalodado_token');
-        localStorage.removeItem('cavalodado_usuario');
-        usuarioLogado = null;
-        alert('Logout realizado com sucesso!');
-        window.location.href = 'index.html';
-    }).catch(err => {
-        showError('Erro ao fazer logout. Tente novamente.');
-        console.error('Erro no logout:', err);
-    });
+async function logout() {
+    console.log('Tentando logout...');
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+        console.error('Erro ao fazer logout:', error.message);
+        alert('Erro ao sair. Tente novamente.');
+        return;
+    }
+    console.log('Logout bem-sucedido!');
+    localStorage.removeItem('cavalodado_token');
+    localStorage.removeItem('cavalodado_usuario');
+    usuarioLogado = null;
+    alert('Logout realizado com sucesso!');
+    window.location.href = 'index.html';
 }
 
 // Novo pedido
