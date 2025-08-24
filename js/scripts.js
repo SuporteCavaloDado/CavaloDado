@@ -229,63 +229,78 @@ function inicializarConfiguracoes() {
         });
     }
 }
+
+// Salvar Endereço
 async function salvarEndereco(event) {
     event.preventDefault();
     console.log('Salvando endereço...');
-    const { data: session } = await supabase.auth.getSession();
-    if (!session.session) {
-        console.log('Nenhuma sessão encontrada, redirecionando para login');
-        window.location.href = 'login.html';
-        return;
-    }
+    try {
+        const { data: session } = await supabase.auth.getSession();
+        if (!session.session) {
+            console.log('Nenhuma sessão encontrada, redirecionando para login');
+            window.location.href = 'login.html';
+            return;
+        }
 
-    const userId = session.session.user.id;
-    const cep = document.getElementById('cep').value.trim();
-    const rua = document.getElementById('rua').value.trim();
-    const numero = document.getElementById('numero').value.trim();
-    const complemento = document.getElementById('complemento').value.trim();
-    const bairro = document.getElementById('bairro').value.trim();
-    const cidade = document.getElementById('cidade').value.trim();
-    const estado = document.getElementById('estado-endereco').value;
+        const userId = session.session.user.id;
+        const cep = document.getElementById('cep').value.trim();
+        const rua = document.getElementById('rua').value.trim();
+        const numero = document.getElementById('numero').value.trim();
+        const complemento = document.getElementById('complemento').value.trim();
+        const bairro = document.getElementById('bairro').value.trim();
+        const cidade = document.getElementById('cidade').value.trim();
+        const estado_endereco = document.getElementById('estado-endereco').value;
 
-    if (!cep.match(/^\d{5}-\d{3}$/)) {
-        alert('CEP inválido. Use o formato 00000-000.');
-        return;
-    }
-    if (!rua || !numero || !bairro || !cidade) {
-        alert('Preencha todos os campos obrigatórios.');
-        return;
-    }
-    if (!ESTADOS_BRASIL.includes(estado)) {
-        alert('Selecione um estado válido.');
-        return;
-    }
+        console.log('Dados do endereço:', { cep, rua, numero, complemento, bairro, cidade, estado_endereco });
 
-    const { data: existingAddress } = await supabase
-        .from('endereco')
-        .select('id')
-        .eq('usuario_id', userId)
-        .single();
+        if (!cep.match(/^\d{5}-\d{3}$/)) {
+            console.log('CEP inválido');
+            alert('CEP inválido. Use o formato 00000-000.');
+            return;
+        }
+        if (!rua || !numero || !bairro || !cidade) {
+            console.log('Campos obrigatórios não preenchidos');
+            alert('Preencha todos os campos obrigatórios.');
+            return;
+        }
+        if (!ESTADOS_BRASIL.includes(estado_endereco)) {
+            console.log('Estado inválido');
+            alert('Selecione um estado válido.');
+            return;
+        }
 
-    let error;
-    if (existingAddress) {
-        ({ error } = await supabase
+        const { data: existingAddress } = await supabase
             .from('endereco')
-            .update({ cep, rua, numero, complemento, bairro, cidade, estado })
-            .eq('usuario_id', userId));
-    } else {
-        ({ error } = await supabase
-            .from('endereco')
-            .insert({ usuario_id: userId, cep, rua, numero, complemento, bairro, cidade, estado }));
-    }
+            .select('id')
+            .eq('usuario_id', userId)
+            .single();
 
-    if (error) {
-        console.error('Erro ao salvar endereço:', error.message);
+        let error;
+        if (existingAddress) {
+            console.log('Atualizando endereço existente');
+            ({ error } = await supabase
+                .from('endereco')
+                .update({ cep, rua, numero, complemento, bairro, cidade, estado_endereco })
+                .eq('usuario_id', userId));
+        } else {
+            console.log('Inserindo novo endereço');
+            ({ error } = await supabase
+                .from('endereco')
+                .insert({ usuario_id: userId, cep, rua, numero, complemento, bairro, cidade, estado_endereco }));
+        }
+
+        if (error) {
+            console.error('Erro ao salvar endereço:', error.message);
+            alert('Erro ao salvar endereço. Tente novamente.');
+            return;
+        }
+
+        console.log('Endereço salvo com sucesso');
+        alert('Endereço salvo com sucesso!');
+    } catch (err) {
+        console.error('Erro inesperado ao salvar endereço:', err);
         alert('Erro ao salvar endereço. Tente novamente.');
-        return;
     }
-
-    alert('Endereço salvo com sucesso!');
 }
 
 // Feed principal
