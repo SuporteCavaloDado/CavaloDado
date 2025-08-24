@@ -58,7 +58,7 @@ function atualizarMenuLogado() {
             <a href="new-request.html" class="menu-item">Novo Pedido</a>
             <a href="config.html" class="menu-item">Configurações</a>
             <a href="regras.html" class="menu-item">Termos e Regras</a>
-            <a href="#" class="menu-item" onclick="logout()">Sair</a>
+            <a href="javascript:void(0)" class="menu-item" onclick="logout()">Sair</a>
         `;
     } else {
         menuItems.innerHTML = `
