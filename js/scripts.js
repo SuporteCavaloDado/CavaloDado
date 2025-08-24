@@ -1178,8 +1178,28 @@ function carregarHistorico() {
     });
 }
 
+// Google abaixo
+
+// Funções de erro (mantidas como você forneceu, assumindo que já existem)
+function showError(message) {
+    const errorDiv = document.getElementById('error-message');
+    if (errorDiv) errorDiv.innerText = message;
+}
+
+function clearError() {
+    const errorDiv = document.getElementById('error-message');
+    if (errorDiv) errorDiv.innerText = '';
+}
+
+// Verificar se o Supabase está inicializado
+if (!supabase) {
+    console.error('Erro: Supabase não inicializado. Verifique se supabase-config.js foi carregado.');
+    showError('Erro interno: Supabase não carregado.');
+}
+
 // Login com Google
 document.getElementById('google-login-btn')?.addEventListener('click', async () => {
+    console.log('Botão "Entrar com Google" clicado. Iniciando autenticação...');
     clearError();
     try {
         const { error } = await supabase.auth.signInWithOAuth({
@@ -1191,6 +1211,8 @@ document.getElementById('google-login-btn')?.addEventListener('click', async () 
         if (error) {
             showError('Erro ao logar com Google: ' + error.message);
             console.error('Erro no Google Auth:', error);
+        } else {
+            console.log('Autenticação com Google iniciada. Redirecionando para config.html...');
         }
     } catch (err) {
         showError('Ocorreu um erro inesperado. Tente novamente.');
@@ -1198,8 +1220,14 @@ document.getElementById('google-login-btn')?.addEventListener('click', async () 
     }
 });
 
+// Função preencherDadosUsuario (mantida como você forneceu, para compatibilidade)
 function preencherDadosUsuario() {
-    if (!usuarioLogado) return;
+    if (!usuarioLogado) {
+        console.error('Erro: usuarioLogado não definido.');
+        showError('Nenhum usuário logado.');
+        return;
+    }
+    console.log('Preenchendo dados do usuário:', usuarioLogado);
     const nomeInput = document.getElementById('nome');
     const emailInput = document.getElementById('email');
     const usernameInput = document.getElementById('username');
@@ -1211,6 +1239,36 @@ function preencherDadosUsuario() {
     if (bioInput) bioInput.value = usuarioLogado.bio || '';
     if (estadoInput) estadoInput.value = usuarioLogado.estado || '';
 }
+
+// Verificar usuário logado ao carregar a página
+document.addEventListener('DOMContentLoaded', async () => {
+    console.log('Página carregada. Verificando usuário logado...');
+    const { data: { user }, error } = await supabase.auth.getUser();
+    if (error || !user) {
+        console.error('Nenhum usuário logado:', error);
+        return;
+    }
+    console.log('Usuário logado encontrado:', user);
+    // Buscar dados na tabela 'usuario'
+    const { data, error: dbError } = await supabase
+        .from('usuario')
+        .select('nome, email, username, bio, estado')
+        .eq('id', user.id)
+        .single();
+    if (dbError) {
+        console.error('Erro ao buscar dados do usuário:', dbError);
+        return;
+    }
+    window.usuarioLogado = data || {
+        nome: user.user_metadata.full_name || '',
+        email: user.email || '',
+        username: '',
+        bio: '',
+        estado: ''
+    };
+    console.log('Dados do usuário carregados:', window.usuarioLogado);
+    preencherDadosUsuario();
+});
 
 // Encaminhar Pedido para Perfil 
 document.addEventListener('click', (e) => {
