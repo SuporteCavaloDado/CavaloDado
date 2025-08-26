@@ -1066,18 +1066,6 @@ function mostrarPerfil() {
     }
 }
 
-function mostrarHistorico() {
-    const content = document.getElementById('dashboard-content');
-    if (content) {
-        content.innerHTML = `
-            <h2>Meu Histórico</h2>
-            <div class="card">
-                <p>Seus pedidos e doações aparecerão aqui.</p>
-            </div>
-        `;
-    }
-}
-
 function mostrarFavoritos() {
     const content = document.getElementById('dashboard-content');
     if (content) {
