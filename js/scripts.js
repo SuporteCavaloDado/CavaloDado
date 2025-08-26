@@ -1058,7 +1058,7 @@ function mostrarPerfil() {
             <div class="card">
                 <h3>${usuarioLogado.nome}</h3>
                 <p>@${usuarioLogado.username}</p>
-                <p>Estado: ${usuarioLogado.estado}</p>
+                <p>${usuarioLogado.estado}</p>
                 <a href="config.html" class="btn btn-primary">Editar Perfil</a>
             </div>
         `;
