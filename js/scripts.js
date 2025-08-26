@@ -1179,49 +1179,7 @@ function carregarHistorico() {
     });
 }
 
-// Google abaixo
-
-// Funções de erro (mantidas como você forneceu, assumindo que já existem)
-function showError(message) {
-    const errorDiv = document.getElementById('error-message');
-    if (errorDiv) errorDiv.innerText = message;
-}
-
-function clearError() {
-    const errorDiv = document.getElementById('error-message');
-    if (errorDiv) errorDiv.innerText = '';
-}
-
-// Verificar se o Supabase está inicializado
-if (!supabase) {
-    console.error('Erro: Supabase não inicializado. Verifique se supabase-config.js foi carregado.');
-    showError('Erro interno: Supabase não carregado.');
-}
-
-// Login com Google
-document.getElementById('google-login-btn')?.addEventListener('click', async () => {
-    console.log('Botão "Entrar com Google" clicado. Iniciando autenticação...');
-    clearError();
-    try {
-        const { error } = await supabase.auth.signInWithOAuth({
-            provider: 'google',
-            options: {
-                redirectTo: 'https://cavalodado.vercel.app/config.html'
-            }
-        });
-        if (error) {
-            showError('Erro ao logar com Google: ' + error.message);
-            console.error('Erro no Google Auth:', error);
-        } else {
-            console.log('Autenticação com Google iniciada. Redirecionando para config.html...');
-        }
-    } catch (err) {
-        showError('Ocorreu um erro inesperado. Tente novamente.');
-        console.error('Erro no Google Auth:', err);
-    }
-});
-
-// Função preencherDadosUsuario (mantida como você forneceu, para compatibilidade)
+// Função preencherDadosUsuario
 function preencherDadosUsuario() {
     if (!usuarioLogado) {
         console.error('Erro: usuarioLogado não definido.');
