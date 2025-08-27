@@ -388,50 +388,51 @@ function inicializarFeed() {
     inicializarPesquisa();
 }
 
-function carregarPedidos() {
-    // Simular dados para demonstração
-    const pedidosDemo = [
-        {
-            id: 1,
-            titulo: 'Notebook para estudos',
-            descricao: 'Preciso de um notebook para continuar meus estudos em programação',
-            categoria: 'Estudos',
-            estado: 'SP',
-            status: 'Disponível',
-            usuario: 'João Silva',
-            data: '2025-08-15',
-            media: { tipo: 'imagem', url: 'https://placehold.co/400x600?text=Notebook' },
-            endereco: {
-                nome: 'João Silva',
-                rua: 'Rua das Flores, 123',
-                bairro: 'Centro',
-                cidade: 'São Paulo',
-                estado: 'SP',
-                cep: '01234-567'
-            }
-        },
-        {
-            id: 2,
-            titulo: 'Material escolar',
-            descricao: 'Cadernos, lápis e canetas para o ano letivo',
-            categoria: 'Estudos',
-            estado: 'RJ',
-            status: 'Disponível',
-            usuario: 'Maria Santos',
-            data: '2025-08-14',
-            media: { tipo: 'imagem', url: 'https://placehold.co/400x600?text=Material' },
-            endereco: {
-                nome: 'Maria Santos',
-                rua: 'Av. Copacabana, 456',
-                bairro: 'Copacabana',
-                cidade: 'Rio de Janeiro',
-                estado: 'RJ',
-                cep: '22070-001'
-            }
+async function carregarPedidos() {
+    const { data: pedidos, error } = await supabase
+        .from('pedido')
+        .select(`
+            id,
+            user_id,
+            titulo,
+            categoria,
+            descricao,
+            foto_url,
+            status,
+            created_at,
+            endereco (cep, rua, numero, complemento, bairro, cidade, estado_endereco),
+            auth.users (user_metadata)
+        `)
+        .eq('status', STATUS_PEDIDOS.DISPONIVEL)
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error('Erro ao carregar pedidos:', error);
+        alert('Erro ao carregar feed: ' + error.message);
+        return;
+    }
+
+    // Mapear dados para o formato esperado por renderizarFeed
+    pedidosCache = pedidos.map(pedido => ({
+        id: pedido.id,
+        titulo: pedido.titulo,
+        descricao: pedido.descricao,
+        categoria: pedido.categoria,
+        estado: pedido.endereco?.estado_endereco || pedido.auth_users?.user_metadata?.estado || 'N/A',
+        status: pedido.status,
+        usuario: pedido.auth_users?.user_metadata?.nome || 'Anônimo',
+        data: pedido.created_at,
+        media: { tipo: 'imagem', url: pedido.foto_url || 'https://placehold.co/400x600?text=Sem+Imagem' },
+        endereco: pedido.endereco || {
+            nome: pedido.auth_users?.user_metadata?.nome || 'Anônimo',
+            rua: 'N/A',
+            bairro: 'N/A',
+            cidade: 'N/A',
+            estado: 'N/A',
+            cep: 'N/A'
         }
-    ];
-    
-    pedidosCache = pedidosDemo;
+    }));
+
     renderizarFeed(pedidosCache);
 }
 
