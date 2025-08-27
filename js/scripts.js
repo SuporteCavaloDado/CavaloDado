@@ -1159,75 +1159,120 @@ function mostrarHistorico() {
 }
 
 // Histórico Tabela
-function carregarHistorico() {
-    const { data: user } = supabaseClient.auth.getUser();
-    if (!user) return;
+async function carregarHistorico() {
+    if (!usuarioLogado) {
+        alert('Faça login para ver o histórico');
+        window.location.href = 'login.html';
+        return;
+    }
 
-    supabaseClient.from('pedidos').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).then(({ data: pedidos, error }) => {
-        if (error) return console.error(error);
+    const { data: pedidos, error } = await supabase
+        .from('pedido')
+        .select('*')
+        .eq('user_id', usuarioLogado.id)
+        .order('created_at', { ascending: false });
 
-        const tbody = document.getElementById('historico-body');
-        pedidos.forEach(pedido => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td class="historico-nome" data-id="${pedido.id}" data-creator="${pedido.user_id}">${pedido.titulo}</td>
-                <td>${pedido.categoria}</td>
-                <td>${new Date(pedido.created_at).toLocaleDateString('pt-BR')}</td>
-                <td>${pedido.status}</td>
-                <td><span class="expand-btn">▼</span></td>
+    if (error) {
+        console.error('Erro ao carregar histórico:', error);
+        alert('Erro ao carregar histórico: ' + error.message);
+        return;
+    }
+
+    const tbody = document.getElementById('historico-body');
+    if (!tbody) return;
+
+    tbody.innerHTML = ''; // Limpar tabela antes de renderizar
+
+    pedidos.forEach(pedido => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td class="historico-nome" data-id="${pedido.id}" data-creator="${pedido.user_id}">${pedido.titulo}</td>
+            <td>${pedido.categoria}</td>
+            <td>${new Date(pedido.created_at).toLocaleDateString('pt-BR')}</td>
+            <td>${pedido.status}</td>
+            <td><span class="expand-btn">▼</span></td>
+        `;
+        const expandRow = document.createElement('tr');
+        expandRow.innerHTML = `<td colspan="5"><div class="expand-content"></div></td>`;
+        tbody.appendChild(row);
+        tbody.appendChild(expandRow);
+
+        const expandContent = expandRow.querySelector('.expand-content');
+        // Adicionar foto no expand
+        const fotoHtml = pedido.foto_url ? `<img src="${pedido.foto_url}" alt="Foto do pedido" style="max-width: 200px; margin-bottom: 10px;">` : '';
+        
+        if (pedido.status === STATUS_PEDIDOS.DISPONIVEL) {
+            expandContent.innerHTML = `
+                ${fotoHtml}
+                <button class="delete-btn">Excluir</button>
             `;
-            const expandRow = document.createElement('tr');
-            expandRow.innerHTML = `<td colspan="5"><div class="expand-content"></div></td>`;
-            tbody.appendChild(row);
-            tbody.appendChild(expandRow);
-
-            const expandContent = expandRow.querySelector('.expand-content');
-            if (pedido.status === 'Disponível') {
-                expandContent.innerHTML = '<button class="delete-btn">Excluir</button>';
-                expandContent.querySelector('.delete-btn').onclick = () => {
-                    if (confirm('Exclusão permanente. Confirmar?')) {
-                        supabaseClient.from('pedidos').delete().eq('id', pedido.id).then(() => carregarHistorico());
+            expandContent.querySelector('.delete-btn').onclick = async () => {
+                if (confirm('Exclusão permanente. Confirmar?')) {
+                    const { error } = await supabase
+                        .from('pedido')
+                        .delete()
+                        .eq('id', pedido.id);
+                    if (error) {
+                        alert('Erro ao excluir: ' + error.message);
+                        return;
                     }
-                };
-            } else if (pedido.status === 'Pendente') {
-                expandContent.innerHTML = `
-                    <div><input value="${pedido.tracking_code || ''}" readonly><button class="copy-btn">Copiar</button></div>
-                    <div><label><input type="checkbox" name="opt" value="invalido">Código Inválido</label>
-                        <label><input type="checkbox" name="opt" value="entregue">Produto Entregue</label></div>
-                    <p class="note">Conferir o código com atenção.</p>
-                    <button class="confirm-btn">Confirmar</button>
-                `;
-                const [invalido, entregue] = expandContent.querySelectorAll('input[name="opt"]');
-                const confirmBtn = expandContent.querySelector('.confirm-btn');
-                expandContent.querySelector('.copy-btn').onclick = () => navigator.clipboard.writeText(pedido.tracking_code || '');
-                [invalido, entregue].forEach(cb => cb.onchange = () => { if (cb.checked) [invalido, entregue].forEach(other => other !== cb && (other.checked = false)); });
-                confirmBtn.onclick = () => {
-                    const checked = expandContent.querySelector('input[name="opt"]:checked');
-                    if (!checked) return alert('Selecione uma opção');
-                    const updates = { status: checked.value === 'invalido' ? 'Disponível' : 'Concluído' };
-                    if (updates.status === 'Concluído') updates.completion_date = new Date().toISOString();
-                    supabaseClient.from('pedidos').update(updates).eq('id', pedido.id).then(() => carregarHistorico());
-                };
-            } else if (pedido.status === 'Concluído') {
-                expandContent.innerHTML = `<p>Finalizado em: ${new Date(pedido.completion_date).toLocaleDateString('pt-BR')}</p>`;
-            }
-        });
-
-        document.querySelectorAll('.expand-btn').forEach(btn => {
-            btn.onclick = (e) => {
-                const expand = e.target.closest('tr').nextElementSibling.querySelector('.expand-content');
-                expand.style.display = expand.style.display === 'block' ? 'none' : 'block';
-                e.target.textContent = expand.style.display === 'block' ? '▲' : '▼';
+                    carregarHistorico();
+                }
             };
-        });
-
-        document.querySelectorAll('.historico-nome').forEach(nome => {
-            nome.onclick = () => {
-                const id = nome.dataset.id;
-                const creator = nome.dataset.creator;
-                window.location.href = `perfil.html?user=${creator}&pedido=${id}`;
+        } else if (pedido.status === STATUS_PEDIDOS.PENDENTE) {
+            expandContent.innerHTML = `
+                ${fotoHtml}
+                <div><input value="${pedido.codigo_rastreio || ''}" readonly><button class="copy-btn">Copiar</button></div>
+                <div>
+                    <label><input type="checkbox" name="opt" value="invalido">Código Inválido</label>
+                    <label><input type="checkbox" name="opt" value="entregue">Produto Entregue</label>
+                </div>
+                <p class="note">Conferir o código com atenção.</p>
+                <button class="confirm-btn">Confirmar</button>
+            `;
+            const [invalido, entregue] = expandContent.querySelectorAll('input[name="opt"]');
+            const confirmBtn = expandContent.querySelector('.confirm-btn');
+            expandContent.querySelector('.copy-btn').onclick = () => navigator.clipboard.writeText(pedido.codigo_rastreio || '');
+            [invalido, entregue].forEach(cb => cb.onchange = () => {
+                if (cb.checked) [invalido, entregue].forEach(other => other !== cb && (other.checked = false));
+            });
+            confirmBtn.onclick = async () => {
+                const checked = expandContent.querySelector('input[name="opt"]:checked');
+                if (!checked) return alert('Selecione uma opção');
+                const updates = { status: checked.value === 'invalido' ? STATUS_PEDIDOS.DISPONIVEL : STATUS_PEDIDOS.CONCLUIDO };
+                if (updates.status === STATUS_PEDIDOS.CONCLUIDO) updates.completion_date = new Date().toISOString();
+                const { error } = await supabase
+                    .from('pedido')
+                    .update(updates)
+                    .eq('id', pedido.id);
+                if (error) {
+                    alert('Erro ao atualizar status: ' + error.message);
+                    return;
+                }
+                carregarHistorico();
             };
-        });
+        } else if (pedido.status === STATUS_PEDIDOS.CONCLUIDO) {
+            expandContent.innerHTML = `
+                ${fotoHtml}
+                <p>Finalizado em: ${new Date(pedido.completion_date).toLocaleDateString('pt-BR')}</p>
+            `;
+        }
+    });
+
+    document.querySelectorAll('.expand-btn').forEach(btn => {
+        btn.onclick = (e) => {
+            const expand = e.target.closest('tr').nextElementSibling.querySelector('.expand-content');
+            expand.style.display = expand.style.display === 'block' ? 'none' : 'block';
+            e.target.textContent = expand.style.display === 'block' ? '▲' : '▼';
+        };
+    });
+
+    document.querySelectorAll('.historico-nome').forEach(nome => {
+        nome.onclick = () => {
+            const id = nome.dataset.id;
+            const creator = nome.dataset.creator;
+            window.location.href = `perfil.html?user=${creator}&pedido=${id}`;
+        };
     });
 }
 
