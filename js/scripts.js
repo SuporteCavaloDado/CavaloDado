@@ -1066,10 +1066,11 @@ async function criarPedido(e) {
         .from('pedidos')
         .upload(fileName, fotoInput, { upsert: false });
     
-    if (uploadError) {
-        alert('Erro ao fazer upload da foto: ' + uploadError.message);
-        return;
-    }
+if (uploadError) {
+    console.error('Detalhes do erro de upload:', uploadError);
+    alert('Erro ao fazer upload da foto: ' + uploadError.message);
+    return;
+}
     
     const fotoUrl = `${SUPABASE_URL}/storage/v1/object/public/pedidos/${fileName}`;
     
