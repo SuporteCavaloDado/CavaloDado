@@ -1038,7 +1038,7 @@ async function criarPedido(e) {
     const categoria = document.getElementById('categoria').value;
     const descricao = document.getElementById('descricao').value.trim();
     const fotoInput = document.getElementById('foto-input').files[0];
-    const termos = document.getElementById('aceito-termos').checked;
+    const termos = document.getElementById('termos-pedido').checked;
     
     // Validações
     if (!titulo || !categoria || !descricao || !fotoInput || !termos) {
