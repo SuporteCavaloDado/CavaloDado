@@ -401,7 +401,7 @@ async function carregarPedidos() {
             status,
             created_at,
             endereco (cep, rua, numero, complemento, bairro, cidade, estado_endereco),
-            auth.users (user_metadata)
+            users:user_id!inner (user_metadata)
         `)
         .eq('status', STATUS_PEDIDOS.DISPONIVEL)
         .order('created_at', { ascending: false });
@@ -412,19 +412,18 @@ async function carregarPedidos() {
         return;
     }
 
-    // Mapear dados para o formato esperado por renderizarFeed
     pedidosCache = pedidos.map(pedido => ({
         id: pedido.id,
         titulo: pedido.titulo,
         descricao: pedido.descricao,
         categoria: pedido.categoria,
-        estado: pedido.endereco?.estado_endereco || pedido.auth_users?.user_metadata?.estado || 'N/A',
+        estado: pedido.endereco?.estado_endereco || pedido.users?.user_metadata?.estado || 'N/A',
         status: pedido.status,
-        usuario: pedido.auth_users?.user_metadata?.nome || 'Anônimo',
+        usuario: pedido.users?.user_metadata?.nome || 'Anônimo',
         data: pedido.created_at,
         media: { tipo: 'imagem', url: pedido.foto_url || 'https://placehold.co/400x600?text=Sem+Imagem' },
         endereco: pedido.endereco || {
-            nome: pedido.auth_users?.user_metadata?.nome || 'Anônimo',
+            nome: pedido.users?.user_metadata?.nome || 'Anônimo',
             rua: 'N/A',
             bairro: 'N/A',
             cidade: 'N/A',
