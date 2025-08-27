@@ -76,24 +76,24 @@
 
  <!-- Foto Pedido -->
                         <div class="form-group">
-    <label class="form-label">Foto do Pedido *</label>
-    <div class="upload-area">
-        <input 
-            type="file" 
-            id="foto-input" 
-            accept="image/png, image/jpeg" 
-            style="display: none;" 
-            onchange="if (this.files && this.files.length > 0) { document.getElementById('feedback-texto').innerHTML = this.files[0].name; document.getElementById('preview-container').style.borderColor = '#28a745'; } else { document.getElementById('feedback-texto').innerHTML = 'Clique para anexar uma foto'; document.getElementById('preview-container').style.borderColor = 'var(--cor-cinza-medio)'; }"
-        >
-        <div 
-            id="preview-container" 
-            onclick="document.getElementById('foto-input').click()" 
-            style="cursor: pointer; padding: 2rem; border: 2px dashed var(--cor-cinza-medio); border-radius: var(--border-radius); text-align: center; min-height: 150px; display: flex; align-items: center; justify-content: center;"
-        >
-            <p id="feedback-texto">Clique para anexar uma foto</p>
-        </div>
-    </div>
-</div>
+                            <label class="form-label">Foto do Pedido *</label>
+                                <div class="upload-area">
+                                    <input 
+                                        type="file" 
+                                        id="foto-input" 
+                                        accept="image/png, image/jpeg" 
+                                        style="display: none;" 
+                                        onchange="if (this.files && this.files.length > 0) { document.getElementById('feedback-texto').innerHTML = this.files[0].name; document.getElementById('preview-container').style.borderColor = '#28a745'; } else { document.getElementById('feedback-texto').innerHTML = 'Clique para anexar uma foto'; document.getElementById('preview-container').style.borderColor = 'var(--cor-cinza-medio)'; }"
+                                        >
+                                    <div 
+                                        id="preview-container" 
+                                        onclick="document.getElementById('foto-input').click()" 
+                                        style="cursor: pointer; padding: 2rem; border: 2px dashed var(--cor-cinza-medio); border-radius: var(--border-radius); text-align: center; min-height: 150px; display: flex; align-items: center; justify-content: center;"
+                                        >
+                                    <p id="feedback-texto">Clique para anexar uma foto</p>
+                                </div>
+                            </div>
+                        </div>
 
                         <!-- Endereço -->
                         <div class="form-group">
