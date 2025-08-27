@@ -1000,32 +1000,96 @@ function inicializarNovoPedido() {
     }
 }
 
-
-function criarPedido(e) {
+    // Criar Pedido
+async function criarPedido(e) {
     e.preventDefault();
     
-    // Verificar limite de tempo
-    const ultimoPedido = localStorage.getItem('cavalodado_ultimo_pedido');
-    if (ultimoPedido) {
+    if (!usuarioLogado) {
+        alert('Faça login para criar pedidos');
+        return;
+    }
+    
+    // Cooldown: checar último pedido no Supabase
+    const { data: ultimoPedido, error: checkError } = await supabase
+        .from('pedido')
+        .select('created_at')
+        .eq('user_id', usuarioLogado.id)
+        .order('created_at', { ascending: false })
+        .limit(1);
+    
+    if (checkError) {
+        alert('Erro ao verificar limite: ' + checkError.message);
+        return;
+    }
+    
+    if (ultimoPedido && ultimoPedido.length > 0) {
         const agora = new Date().getTime();
-        const ultimo = new Date(ultimoPedido).getTime();
+        const ultimo = new Date(ultimoPedido[0].created_at).getTime();
         const diferencaHoras = (agora - ultimo) / (1000 * 60 * 60);
         
         if (diferencaHoras < CONFIG.INTERVALO_PEDIDOS_HORAS) {
-            alert(`Você deve aguardar ${CONFIG.INTERVALO_PEDIDOS_HORAS} horas entre pedidos`);
+            alert(`Aguarde ${CONFIG.INTERVALO_PEDIDOS_HORAS} horas para novo pedido.`);
             return;
         }
     }
     
-    const dados = {
-        titulo: document.getElementById('titulo').value,
-        categoria: document.getElementById('categoria').value,
-        descricao: document.getElementById('descricao').value
-    };
+    // Coletar dados do form
+    const titulo = document.getElementById('titulo').value.trim();
+    const categoria = document.getElementById('categoria').value;
+    const descricao = document.getElementById('descricao').value.trim();
+    const fotoInput = document.getElementById('foto-input').files[0];
+    const termos = document.getElementById('aceito-termos').checked;
     
-    // Simular criação
-    localStorage.setItem('cavalodado_ultimo_pedido', new Date().toISOString());
-    alert('Pedido criado com sucesso!');
+    // Validações
+    if (!titulo || !categoria || !descricao || !fotoInput || !termos) {
+        alert('Preencha todos os campos obrigatórios e aceite os termos.');
+        return;
+    }
+    if (titulo.length > CONFIG.MAX_CARACTERES_PRODUTO) {
+        alert('Título excede 60 caracteres.');
+        return;
+    }
+    if (!['image/png', 'image/jpeg'].includes(fotoInput.type)) {
+        alert('Apenas PNG ou JPEG são permitidos.');
+        return;
+    }
+    if (fotoInput.size > 5 * 1024 * 1024) {
+        alert('Foto deve ter no máximo 5MB.');
+        return;
+    }
+    
+    // Upload foto para Storage
+    const fileName = `${usuarioLogado.id}/${Date.now()}_${fotoInput.name}`;
+    const { error: uploadError } = await supabase.storage
+        .from('pedidos')
+        .upload(fileName, fotoInput);
+    
+    if (uploadError) {
+        alert('Erro ao fazer upload da foto: ' + uploadError.message);
+        return;
+    }
+    
+    const fotoUrl = `${SUPABASE_URL}/storage/v1/object/public/pedidos/${fileName}`;
+    
+    // Inserir pedido no Supabase
+    const { error } = await supabase
+        .from('pedido')
+        .insert({
+            user_id: usuarioLogado.id,
+            titulo,
+            categoria,
+            descricao,
+            foto_url: fotoUrl,
+            termos_pedido: termos,
+            status: STATUS_PEDIDOS.DISPONIVEL
+        });
+    
+    if (error) {
+        alert('Erro ao criar pedido: ' + error.message);
+        return;
+    }
+    
+    alert('Pedido criado! Aguarde 2 horas para o próximo.');
     window.location.href = 'index.html';
 }
 
