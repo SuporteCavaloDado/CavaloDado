@@ -1010,26 +1010,6 @@ async function criarPedido(e) {
         return;
     }
     
-    // Verificar e criar bucket 'pedidos' se necessário
-    const { data: buckets, error: bucketError } = await supabase.storage.listBuckets();
-    if (bucketError) {
-        console.error('Erro ao listar buckets:', bucketError);
-        alert('Erro ao verificar Storage: ' + bucketError.message);
-        return;
-    }
-    if (!buckets?.find(b => b.name === 'pedidos')) {
-        const { error: createError } = await supabase.storage.createBucket('pedidos', {
-            public: true,
-            fileSizeLimit: 5 * 1024 * 1024, // 5MB
-            allowedMimeTypes: ['image/png', 'image/jpeg']
-        });
-        if (createError) {
-            console.error('Erro ao criar bucket pedidos:', createError);
-            alert('Erro ao configurar Storage: ' + createError.message);
-            return;
-        }
-    }
-    
     // Cooldown: checar último pedido no Supabase
     const { data: ultimoPedido, error: checkError } = await supabase
         .from('pedido')
