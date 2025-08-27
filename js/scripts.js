@@ -1064,7 +1064,7 @@ async function criarPedido(e) {
     const fileName = `${usuarioLogado.id}/${Date.now()}_${safeFileName}`;
     const { error: uploadError } = await supabase.storage
         .from('pedidos')
-        .upload(fileName, fotoInput);
+        .upload(fileName, fotoInput, { upsert: false });
     
     if (uploadError) {
         alert('Erro ao fazer upload da foto: ' + uploadError.message);
