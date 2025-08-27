@@ -1060,7 +1060,8 @@ async function criarPedido(e) {
     }
     
     // Upload foto para Storage
-    const fileName = `${usuarioLogado.id}/${Date.now()}_${fotoInput.name}`;
+    const safeFileName = fotoInput.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+    const fileName = `${usuarioLogado.id}/${Date.now()}_${safeFileName}`;
     const { error: uploadError } = await supabase.storage
         .from('pedidos')
         .upload(fileName, fotoInput);
