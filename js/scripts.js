@@ -1078,17 +1078,19 @@ async function criarPedido(e) {
     const fotoUrl = `${SUPABASE_URL}/storage/v1/object/public/pedidos/${fileName}`;
     
     // Inserir pedido no Supabase
-    const { error } = await supabase
-        .from('pedido')
-        .insert({
-            user_id: usuarioLogado.id,
-            titulo,
-            categoria,
-            descricao,
-            foto_url: fotoUrl,
-            termos_pedido: termos,
-            status: STATUS_PEDIDOS.DISPONIVEL
-        });
+const { error } = await supabase
+    .from('pedido')
+    .insert({
+        user_id: usuarioLogado.id,
+        titulo,
+        categoria,
+        descricao,
+        foto_url: fotoUrl,
+        termos_pedido: termos,
+        status: STATUS_PEDIDOS.DISPONIVEL,
+        user_nome: usuarioLogado.nome || 'Anônimo',  // CORRIGIDO: Salva nome do usuário
+        user_estado: usuarioLogado.estado || 'N/A'  // CORRIGIDO: Salva estado do usuário
+    });
     
     if (error) {
         alert('Erro ao criar pedido: ' + error.message);
