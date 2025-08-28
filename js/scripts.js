@@ -117,6 +117,7 @@ function inicializarPagina() {
             break;
     }
 }
+
 function inicializarLogin() {
     const loginForm = document.getElementById('login-form');
     if (loginForm) {
@@ -137,12 +138,12 @@ function inicializarLogin() {
                 if (error) throw error;
                 usuarioLogado = {
                     id: data.user.id,
-                    nome: userData.user.user_metadata.nome || 'Usuário',
+                    nome: data.user.user_metadata.nome || 'Usuário',  // CORRIGIDO: data.user em vez de userData
                     email: data.user.email,
                     username: data.user.user_metadata.username || '',
                     estado: data.user.user_metadata.estado || '',
-                    termos: data.user.user_metadata.termos || false,
-                    bio: data.user.user_metadata.bio || ''
+                    termos: data.user.user_metadata.termos || true,  // Ajustado para default true, como em outros lugares
+                    bio: data.user.user_metadata.bio || ''  // Garantido: bio é carregada aqui
                 };
                 localStorage.setItem('cavalodado_usuario', JSON.stringify(usuarioLogado));
                 atualizarMenuLogado();
