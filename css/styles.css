@@ -278,17 +278,17 @@ body {
 }
 
 .pedido-image {
-    width: 100%; /* Preenche toda a largura do contêiner */
-    height: 100%; /* Preenche toda a altura do contêiner */
-    object-fit: cover; /* Cobre o espaço, mantendo proporção */
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
     display: block;
-    border: 1px solid var(--cor-cinza-medio); /* Opcional: mantém borda */
+    border: 1px solid var(--cor-cinza-medio);
 }
 
 .pedido-media {
-    width: 100%; /* Garante que o contêiner da imagem use toda a largura */
-    aspect-ratio: 4/3; /* Proporção para evitar distorção (ajuste se necessário) */
-    overflow: hidden; /* Remove partes que excedem o contêiner */
+    width: 100%;
+    aspect-ratio: 9/16;
+    overflow: hidden;
 }
 
 .pedido-video {
