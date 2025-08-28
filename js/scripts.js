@@ -1511,49 +1511,33 @@ async function preencherDadosUsuario() {
         showError('Nenhum usuário logado.');
         return;
     }
-    console.log('Carregando dados do usuário do Supabase...');
+    console.log('Sincronizando dados do perfil com Supabase...');
     try {
-        // Buscar dados do usuário diretamente do Supabase
-        const { data: userData, error } = await supabase
-            .from('usuario')
-            .select('nome, email, username, bio, estado')
-            .eq('id', usuarioLogado.id)
-            .single();
-
-        if (error) {
-            console.error('Erro ao carregar dados do usuário:', error);
-            showError('Erro ao carregar dados do perfil: ' + error.message);
-            return;
-        }
-
-        // Atualizar usuarioLogado com os dados do Supabase
+        const { data: { user }, error } = await supabase.auth.getUser();
+        if (error || !user) throw new Error('Usuário não encontrado no Supabase.');
+        
+        // Atualiza usuarioLogado com metadata fresco do Supabase
         usuarioLogado = {
             ...usuarioLogado,
-            nome: userData.nome || usuarioLogado.nome || '',
-            email: userData.email || usuarioLogado.email || '',
-            username: userData.username || usuarioLogado.username || '',
-            bio: userData.bio || '',
-            estado: userData.estado || usuarioLogado.estado || ''
+            nome: user.user_metadata.nome || usuarioLogado.nome || 'Usuário',
+            username: user.user_metadata.username || usuarioLogado.username || '',
+            bio: user.user_metadata.bio || '',  // Foco: bio sempre sincronizada
+            estado: user.user_metadata.estado || usuarioLogado.estado || '',
+            termos: user.user_metadata.termos || true
         };
         localStorage.setItem('cavalodado_usuario', JSON.stringify(usuarioLogado));
-
-        // Preencher formulário
-        const nomeInput = document.getElementById('nome');
-        const emailInput = document.getElementById('email');
-        const usernameInput = document.getElementById('username');
-        const bioInput = document.getElementById('bio');
-        const estadoInput = document.getElementById('estado-endereco');
-
-        if (nomeInput) nomeInput.value = usuarioLogado.nome || '';
-        if (emailInput) emailInput.value = usuarioLogado.email || '';
-        if (usernameInput) usernameInput.value = usuarioLogado.username || '';
-        if (bioInput) bioInput.value = usuarioLogado.bio || '';
-        if (estadoInput) estadoInput.value = usuarioLogado.estado || '';
-
-        console.log('Dados do usuário preenchidos:', usuarioLogado);
+        
+        // Preenche formulário
+        document.getElementById('nome').value = usuarioLogado.nome;
+        document.getElementById('email').value = usuarioLogado.email;
+        document.getElementById('username').value = usuarioLogado.username;
+        document.getElementById('bio').value = usuarioLogado.bio;
+        document.getElementById('estado-endereco').value = usuarioLogado.estado;
+        
+        console.log('Perfil sincronizado com sucesso, incluindo bio:', usuarioLogado.bio);
     } catch (err) {
-        console.error('Erro inesperado ao carregar dados do usuário:', err);
-        showError('Erro inesperado ao carregar perfil.');
+        console.error('Erro ao sincronizar perfil:', err);
+        showError('Falha ao carregar bio e perfil. Tente recarregar.');
     }
 }
 
