@@ -277,20 +277,22 @@ body {
     scroll-snap-type: y mandatory;
 }
 
-.pedido-item {
-    height: calc(70vh - 80px);
-    scroll-snap-align: start;
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    background: var(--cor-preto);
-    margin-bottom: 2px;
+.pedido-image {
+    width: 100%;
+    height: auto; /* Altura ajusta à proporção da imagem */
+    object-fit: contain; /* Mostra imagem inteira sem cortes */
+    display: block;
+    border: 1px solid var(--cor-cinza-medio); /* Opcional: mantém borda */
 }
 
 .pedido-media {
-    flex: 1;
-    position: relative;
-    overflow: hidden;
+    width: 100%;
+    max-height: 300px; /* Limite de altura para evitar imagens muito grandes */
+    overflow: hidden; /* Remove excessos */
+    display: flex;
+    justify-content: center; /* Centraliza imagem */
+    align-items: center; /* Centraliza verticalmente */
+    background-color: transparent; /* Remove fundo preto */
 }
 
 .pedido-video {
