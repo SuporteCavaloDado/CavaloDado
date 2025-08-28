@@ -400,8 +400,8 @@ async function carregarPedidos() {
             foto_url,
             status,
             created_at,
-            user_nome,  // CORRIGIDO: Usa coluna nova
-            user_estado,  // CORRIGIDO: Usa coluna nova
+            user_nome,
+            user_estado,
             endereco (cep, rua, numero, complemento, bairro, cidade, estado_endereco)
         `)
         .eq('status', STATUS_PEDIDOS.DISPONIVEL)
@@ -418,13 +418,13 @@ async function carregarPedidos() {
         titulo: pedido.titulo,
         descricao: pedido.descricao,
         categoria: pedido.categoria,
-        estado: pedido.user_estado || pedido.endereco?.estado_endereco || 'N/A',  // CORRIGIDO: Usa user_estado
+        estado: pedido.user_estado || pedido.endereco?.estado_endereco || 'N/A',
         status: pedido.status,
-        usuario: pedido.user_nome || 'Anônimo',  // CORRIGIDO: Usa user_nome
+        usuario: pedido.user_nome || 'Anônimo',
         data: pedido.created_at,
         media: { tipo: 'imagem', url: pedido.foto_url || 'https://placehold.co/400x600?text=Sem+Imagem' },
         endereco: pedido.endereco || {
-            nome: pedido.user_nome || 'Anônimo',  // CORRIGIDO: Usa user_nome
+            nome: pedido.user_nome || 'Anônimo',
             rua: 'N/A',
             bairro: 'N/A',
             cidade: 'N/A',
