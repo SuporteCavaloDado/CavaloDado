@@ -694,24 +694,47 @@ function verPerfil(usuario) {
     window.location.href = `dashboard.html?usuario=${encodeURIComponent(usuario)}`;
 }
 
-function toggleFavorito(pedidoId) {
+// Favorito
+async function toggleFavorito(pedidoId) {
     if (!usuarioLogado) {
         alert('Faça login para favoritar pedidos');
         return;
     }
     
-    let favoritos = JSON.parse(localStorage.getItem('cavalodado_favoritos') || '[]');
-    const index = favoritos.indexOf(pedidoId);
-    
-    if (index === -1) {
-        favoritos.push(pedidoId);
-        alert('Adicionado aos favoritos!');
-    } else {
-        favoritos.splice(index, 1);
-        alert('Removido dos favoritos!');
+    const { data: favoritoExistente, error: checkError } = await supabase
+        .from('favoritos')
+        .select('id')
+        .eq('user_id', usuarioLogado.id)
+        .eq('pedido_id', pedidoId)
+        .single();
+
+    if (checkError && checkError.code !== 'PGRST116') {
+        alert('Erro ao verificar favoritos: ' + checkError.message);
+        return;
     }
-    
-    localStorage.setItem('cavalodado_favoritos', JSON.stringify(favoritos));
+
+    if (favoritoExistente) {
+        const { error } = await supabase
+            .from('favoritos')
+            .delete()
+            .eq('id', favoritoExistente.id);
+        
+        if (error) {
+            alert('Erro ao remover favorito: ' + error.message);
+            return;
+        }
+        alert('Removido dos favoritos!');
+    } else {
+        const { error } = await supabase
+            .from('favoritos')
+            .insert({ user_id: usuarioLogado.id, pedido_id: pedidoId });
+        
+        if (error) {
+            alert('Erro ao adicionar favorito: ' + error.message);
+            return;
+        }
+        alert('Adicionado aos favoritos!');
+    }
 }
 
 function compartilhar(pedidoId) {
