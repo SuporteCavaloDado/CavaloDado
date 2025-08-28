@@ -306,10 +306,17 @@ body {
 }
 
 .pedido-image {
-    max-width: 100%;
-    height: auto;
+    width: 100%; /* Preenche toda a largura do contêiner */
+    height: 100%; /* Preenche toda a altura do contêiner */
+    object-fit: cover; /* Cobre o espaço, mantendo proporção */
     display: block;
-    border: 1px solid var(--cor-cinza-medio);  /* Opcional: borda para depuração */
+    border: 1px solid var(--cor-cinza-medio); /* Opcional: mantém borda */
+}
+
+.pedido-media {
+    width: 100%; /* Garante que o contêiner da imagem use toda a largura */
+    aspect-ratio: 4/3; /* Proporção para evitar distorção (ajuste se necessário) */
+    overflow: hidden; /* Remove partes que excedem o contêiner */
 }
 
 .pedido-image.active {
