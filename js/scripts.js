@@ -1285,7 +1285,7 @@ function renderPerfil(content, profile) {
     content.innerHTML = `
         <h2>Perfil</h2>
         <div class="card perfil-card">
-            <p class="perfil-nome">Nome: ${profile.nome || 'Anônimo'}</p>
+            <p class="perfil-nome"> ${profile.nome || 'Anônimo'}</p>
             <p> ${profile.estado || 'N/A'}</p>
             <p> ${profile.username || 'N/A'}</p>
         </div>
