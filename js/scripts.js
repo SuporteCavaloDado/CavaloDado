@@ -1227,6 +1227,8 @@ async function inicializarDashboard() {
 }
 
     // Mostrar Perfil
+let profileCache = null; // Cache para perfil
+
 async function mostrarPerfil(username) {
     const content = document.getElementById('dashboard-content');
     if (!content) {
@@ -1234,7 +1236,13 @@ async function mostrarPerfil(username) {
         return;
     }
 
-    // Buscar perfil do usuário por username
+    // Usar cache se disponível
+    if (profileCache && profileCache.username === username) {
+        renderPerfil(content, profileCache);
+        return;
+    }
+
+    // Buscar perfil
     const { data: profile, error } = await supabase
         .from('usuario')
         .select('id, nome, estado, username')
@@ -1247,11 +1255,11 @@ async function mostrarPerfil(username) {
         return;
     }
 
-    // Atualizar URL para username
-    if (window.location.pathname === '/dashboard.html' && profile.username) {
-        window.history.replaceState(null, '', `/dashboard.html/${profile.username}`);
-    }
+    profileCache = profile; // Armazenar no cache
+    renderPerfil(content, profile);
+}
 
+function renderPerfil(content, profile) {
     content.innerHTML = `
         <h2>Perfil</h2>
         <div class="card perfil-card">
