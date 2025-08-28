@@ -1167,40 +1167,67 @@ function mostrarPerfil() {
 }
 
     // Mostrar Favoritos
-async function mostrarFavoritos() {
-    const content = document.getElementById('dashboard-content');
-    if (content) {
-        content.innerHTML = `
-            <h2>Meus Favoritos</h2>
-            <div class="favoritos-grid"></div>
-        `;
-    }
-
-    const { data: favoritos, error } = await supabase
-        .from('favoritos')
-        .select('pedido (id, foto_url)')
-        .eq('user_id', usuarioLogado.id)
-        .order('created_at', { ascending: false });
-
-    if (error) {
-        console.error('Erro ao carregar favoritos:', error);
-        alert('Erro ao carregar favoritos: ' + error.message);
+async function toggleFavorito(pedidoId) {
+    if (!usuarioLogado) {
+        alert('Faça login para favoritar pedidos');
         return;
     }
 
-    const grid = document.querySelector('.favoritos-grid');
-    if (!grid) return;
+    try {
+        // Verificar se o pedido existe
+        const { data: pedidoExiste, error: pedidoError } = await supabase
+            .from('pedido')
+            .select('id')
+            .eq('id', pedidoId)
+            .single();
 
-    grid.innerHTML = '';
+        if (pedidoError || !pedidoExiste) {
+            console.error('Erro: Pedido não encontrado:', pedidoError);
+            alert('Erro: Pedido inválido.');
+            return;
+        }
 
-    favoritos.forEach(fav => {
-        const imgDiv = document.createElement('div');
-        imgDiv.className = 'favorito-item';
-        imgDiv.innerHTML = `
-            <img src="${fav.pedido.foto_url || 'https://placehold.co/200x200?text=Sem+Imagem'}" alt="Foto do pedido favorito" class="favorito-image">
-        `;
-        grid.appendChild(imgDiv);
-    });
+        const { data: favoritoExistente, error: checkError } = await supabase
+            .from('favoritos')
+            .select('id')
+            .eq('user_id', usuarioLogado.id)
+            .eq('pedido_id', pedidoId)
+            .maybeSingle();
+
+        if (checkError) {
+            console.error('Erro ao verificar favorito:', checkError);
+            alert('Erro ao verificar favoritos: ' + checkError.message);
+            return;
+        }
+
+        if (favoritoExistente) {
+            const { error } = await supabase
+                .from('favoritos')
+                .delete()
+                .eq('id', favoritoExistente.id);
+            
+            if (error) {
+                console.error('Erro ao remover favorito:', error);
+                alert('Erro ao remover favorito: ' + error.message);
+                return;
+            }
+            alert('Removido dos favoritos!');
+        } else {
+            const { error } = await supabase
+                .from('favoritos')
+                .insert({ user_id: usuarioLogado.id, pedido_id: pedidoId });
+            
+            if (error) {
+                console.error('Erro ao adicionar favorito:', error);
+                alert('Erro ao adicionar favorito: ' + error.message);
+                return;
+            }
+            alert('Adicionado aos favoritos!');
+        }
+    } catch (err) {
+        console.error('Erro inesperado em toggleFavorito:', err);
+        alert('Erro inesperado ao gerenciar favoritos.');
+    }
 }
 
 function mostrarHistorico() {
