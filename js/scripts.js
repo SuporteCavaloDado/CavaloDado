@@ -443,6 +443,11 @@ function renderizarFeed(pedidos) {
     feedContainer.innerHTML = '';
     
     pedidos.forEach(pedido => {
+        console.log('Carregando pedido no feed:', {
+            titulo: pedido.titulo,
+            fotoUrl: pedido.media.url
+        });  // CORRIGIDO: Log para depuração
+        
         const pedidoElement = criarElementoPedido(pedido);
         feedContainer.appendChild(pedidoElement);
     });
@@ -455,9 +460,9 @@ function criarElementoPedido(pedido) {
     
     const mediaHtml = `
         <div class="pedido-media">
-            <img src="${pedido.media.url}" alt="Imagem do pedido" class="pedido-image">
+            <img src="${pedido.media.url}" alt="Imagem do pedido" class="pedido-image" onerror="this.src = 'https://placehold.co/400x600?text=Erro+na+Imagem'; console.error('Erro ao carregar imagem:', '${pedido.media.url}');">
         </div>
-    `;
+    `;  // CORRIGIDO: Adiciona onerror para fallback e log
     
     div.innerHTML = `
         ${mediaHtml}
