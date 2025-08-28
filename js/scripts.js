@@ -1289,6 +1289,7 @@ function renderPerfil(content, profile) {
             <p class="perfil-nome"> ${profile.nome || 'Anônimo'}</p>
             <p> ${profile.estado || 'N/A'}</p>
             <p> ${profile.username || 'N/A'}</p>
+            <p>${profile.bio || 'Sem bio disponível'}</p>
         </div>
     `;
 }
