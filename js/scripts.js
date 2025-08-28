@@ -1515,25 +1515,31 @@ async function preencherDadosUsuario() {
     try {
         const { data: { user }, error } = await supabase.auth.getUser();
         if (error || !user) throw new Error('Usuário não encontrado no Supabase.');
-        
-        // Atualiza usuarioLogado com metadata fresco do Supabase
+
+        // Atualiza usuarioLogado com user_metadata
         usuarioLogado = {
             ...usuarioLogado,
+            id: user.id,
             nome: user.user_metadata.nome || usuarioLogado.nome || 'Usuário',
+            email: user.email || usuarioLogado.email || '',
             username: user.user_metadata.username || usuarioLogado.username || '',
-            bio: user.user_metadata.bio || '',  // Foco: bio sempre sincronizada
-            estado: user.user_metadata.estado || usuarioLogado.estado || '',
+            bio: user.user_metadata.bio || '', // Garantir bio
             termos: user.user_metadata.termos || true
+            // Nota: Removido 'estado' pois vem da tabela 'endereco', não user_metadata
         };
         localStorage.setItem('cavalodado_usuario', JSON.stringify(usuarioLogado));
-        
-        // Preenche formulário
-        document.getElementById('nome').value = usuarioLogado.nome;
-        document.getElementById('email').value = usuarioLogado.email;
-        document.getElementById('username').value = usuarioLogado.username;
-        document.getElementById('bio').value = usuarioLogado.bio;
-        document.getElementById('estado-endereco').value = usuarioLogado.estado;
-        
+
+        // Preenche formulário com verificação de null
+        const nomeInput = document.getElementById('nome');
+        const emailInput = document.getElementById('email');
+        const usernameInput = document.getElementById('username');
+        const bioInput = document.getElementById('bio');
+
+        if (nomeInput) nomeInput.value = usuarioLogado.nome || '';
+        if (emailInput) emailInput.value = usuarioLogado.email || '';
+        if (usernameInput) usernameInput.value = usuarioLogado.username || '';
+        if (bioInput) bioInput.value = usuarioLogado.bio || '';
+
         console.log('Perfil sincronizado com sucesso, incluindo bio:', usuarioLogado.bio);
     } catch (err) {
         console.error('Erro ao sincronizar perfil:', err);
