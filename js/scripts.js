@@ -1138,7 +1138,6 @@ function mostrarPerfil() {
                 <p>@${usuarioLogado.username}</p>
                 <p>${usuarioLogado.estado}</p>
                 <p>${usuarioLogado.bio}</p>
-                <a href="config.html" class="btn btn-primary">Editar Perfil</a>
             </div>
         `;
     }
