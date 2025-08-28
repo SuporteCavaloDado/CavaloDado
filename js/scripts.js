@@ -1210,15 +1210,28 @@ async function mostrarPerfil(username) {
 }
 
     // Mostrar Favoritos
-async function mostrarFavoritos() {
+async function mostrarFavoritos(username) {
     const content = document.getElementById('dashboard-content');
     if (!content) {
         console.error('Erro: dashboard-content não encontrado');
         return;
     }
 
+    // Buscar user_id pelo username
+    const { data: user, error: userError } = await supabase
+        .from('usuario')
+        .select('id')
+        .eq('username', username || usuarioLogado?.username)
+        .single();
+
+    if (userError || !user) {
+        console.error('Erro ao buscar usuário:', userError);
+        content.innerHTML = '<p>Erro ao carregar usuário.</p>';
+        return;
+    }
+
     content.innerHTML = `
-        <h2>Meus Favoritos</h2>
+        <h2>Favoritos</h2>
         <div class="favoritos-grid"></div>
     `;
 
@@ -1229,25 +1242,22 @@ async function mostrarFavoritos() {
                 pedido_id,
                 pedido:pedido_id (id, foto_url)
             `)
-            .eq('user_id', usuarioLogado.id)
+            .eq('user_id', user.id)
             .order('created_at', { ascending: false });
 
         if (error) {
             console.error('Erro ao carregar favoritos:', error);
-            alert('Erro ao carregar favoritos: ' + error.message);
+            content.innerHTML = '<p>Erro ao carregar favoritos: ' + error.message + '</p>';
             return;
         }
 
         const grid = document.querySelector('.favoritos-grid');
-        if (!grid) {
-            console.error('Erro: favoritos-grid não encontrado');
-            return;
-        }
+        if (!grid) return;
 
         grid.innerHTML = favoritos.length ? '' : '<p>Nenhum favorito encontrado.</p>';
 
         favoritos.forEach(fav => {
-            if (fav.pedido) { // Verifica se pedido existe
+            if (fav.pedido) {
                 const imgDiv = document.createElement('div');
                 imgDiv.className = 'favorito-item';
                 imgDiv.innerHTML = `
@@ -1258,10 +1268,11 @@ async function mostrarFavoritos() {
         });
     } catch (err) {
         console.error('Erro inesperado em mostrarFavoritos:', err);
-        alert('Erro inesperado ao carregar favoritos.');
+        content.innerHTML = '<p>Erro inesperado ao carregar favoritos.</p>';
     }
 }
 
+    // Mostrar Historico
 function mostrarHistorico() {
     const content = document.getElementById('dashboard-content');
     if (content) {
