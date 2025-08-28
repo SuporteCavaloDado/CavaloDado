@@ -1174,56 +1174,79 @@ async function inicializarDashboard() {
         return;
     }
 
-    // Extrair username da URL (ex.: /dashboard.html/usuarioteste)
+    // Extrair username da URL
     const path = window.location.pathname.split('/');
-    const username = path[path.length - 1] !== 'dashboard.html' ? path[path.length - 1] : null;
+    const username = path[path.length - 1] !== 'dashboard.html' ? path[path.length - 1] : usuarioLogado?.username || '';
 
     // Determinar se é o próprio perfil
     const isOwnProfile = usuarioLogado && username === usuarioLogado.username;
 
     // Configurar navegação do dashboard
     nav.innerHTML = `
-        <button class="btn btn-outline ${!window.location.hash ? 'active' : ''}" onclick="window.location.hash = ''; mostrarPerfil('${username}')">Perfil</button>
-        <button class="btn btn-outline ${window.location.hash === '#favoritos' ? 'active' : ''}" onclick="window.location.hash = 'favoritos'; mostrarFavoritos('${username}')">Favoritos</button>
+        <button class="btn btn-outline ${!window.location.hash ? 'active' : ''}" onclick="navigateTo('perfil', '${username}')">Perfil</button>
+        <button class="btn btn-outline ${window.location.hash === '#favoritos' ? 'active' : ''}" onclick="navigateTo('favoritos', '${username}')">Favoritos</button>
         ${isOwnProfile ? `
-            <button class="btn btn-outline ${window.location.hash === '#historico' ? 'active' : ''}" onclick="window.location.hash = 'historico'; mostrarHistorico()">Histórico</button>
+            <button class="btn btn-outline ${window.location.hash === '#historico' ? 'active' : ''}" onclick="navigateTo('historico', '${username}')">Histórico</button>
         ` : ''}
     `;
 
     // Configurar menu lateral
     menuItems.innerHTML = `
         <a href="index.html" class="menu-item">Início</a>
-        <a href="dashboard.html/${username || usuarioLogado?.username || ''}" class="menu-item">Perfil</a>
+        <a href="/dashboard.html/${username}" class="menu-item">Perfil</a>
         <a href="new-request.html" class="menu-item">Novo Pedido</a>
         ${isOwnProfile ? `
-            <a href="dashboard.html/${username}#historico" class="menu-item">Histórico</a>
-            <a href="dashboard.html/${username}#progresso" class="menu-item">Progresso</a>
-            <a href="dashboard.html/${username}#favoritos" class="menu-item">Favoritos</a>
+            <a href="/dashboard.html/${username}#historico" class="menu-item">Histórico</a>
+            <a href="/dashboard.html/${username}#progresso" class="menu-item">Progresso</a>
+            <a href="/dashboard.html/${username}#favoritos" class="menu-item">Favoritos</a>
         ` : `
-            <a href="dashboard.html/${username}#favoritos" class="menu-item">Favoritos</a>
+            <a href="/dashboard.html/${username}#favoritos" class="menu-item">Favoritos</a>
         `}
         <a href="regras.html" class="menu-item">Termos e Regras</a>
         ${usuarioLogado ? `<a href="#" class="menu-item" onclick="logout()">Sair</a>` : ''}
     `;
 
-    // Lógica de navegação
-    const hash = window.location.hash.slice(1);
-    if (hash === 'historico') {
-        if (!usuarioLogado) {
-            content.innerHTML = '<p>Faça login para ver o histórico.</p>';
-            return;
+    // Função de navegação no lado do cliente
+    window.navigateTo = function(section, username) {
+        history.pushState({ section, username }, '', `/dashboard.html/${username}${section === 'perfil' ? '' : `#${section}`}`);
+        updateContent(section, username);
+    };
+
+    // Lidar com evento popstate
+    window.addEventListener('popstate', (event) => {
+        const { section, username } = event.state || { section: 'perfil', username };
+        updateContent(section, username);
+    });
+
+    // Atualizar conteúdo
+    function updateContent(section, username) {
+        nav.querySelectorAll('.btn').forEach(btn => btn.classList.remove('active'));
+        const activeBtn = nav.querySelector(`button[onclick*="navigateTo('${section}'"]`);
+        if (activeBtn) activeBtn.classList.add('active');
+
+        if (section === 'historico') {
+            if (!usuarioLogado) {
+                content.innerHTML = '<p>Faça login para ver o histórico.</p>';
+                return;
+            }
+            if (!isOwnProfile) {
+                content.innerHTML = '<p>Acesso restrito ao seu próprio histórico.</p>';
+                history.pushState({ section: 'perfil', username }, '', `/dashboard.html/${username}`);
+                mostrarPerfil(username);
+                return;
+            }
+            mostrarHistorico();
+        } else if (section === 'favoritos') {
+            mostrarFavoritos(username);
+        } else {
+            mostrarPerfil(username);
         }
-        if (!isOwnProfile) {
-            content.innerHTML = '<p>Acesso restrito ao seu próprio histórico.</p>';
-            window.history.replaceState(null, '', `/dashboard.html/${username}`);
-            return;
-        }
-        mostrarHistorico();
-    } else if (hash === 'favoritos') {
-        mostrarFavoritos(username);
-    } else {
-        mostrarPerfil(username);
     }
+
+    // Inicializar conteúdo
+    const hash = window.location.hash.slice(1);
+    const section = hash || 'perfil';
+    updateContent(section, username);
 }
 
     // Mostrar Perfil
