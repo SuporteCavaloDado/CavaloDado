@@ -1504,23 +1504,56 @@ async function carregarHistorico() {
 }
 
 // Função preencherDadosUsuario
-function preencherDadosUsuario() {
+async function preencherDadosUsuario() {
     if (!usuarioLogado) {
         console.error('Erro: usuarioLogado não definido.');
         showError('Nenhum usuário logado.');
         return;
     }
-    console.log('Preenchendo dados do usuário:', usuarioLogado);
-    const nomeInput = document.getElementById('nome');
-    const emailInput = document.getElementById('email');
-    const usernameInput = document.getElementById('username');
-    const bioInput = document.getElementById('bio');
-    const estadoInput = document.getElementById('estado-endereco');
-    if (nomeInput) nomeInput.value = usuarioLogado.nome || '';
-    if (emailInput) emailInput.value = usuarioLogado.email || '';
-    if (usernameInput) usernameInput.value = usuarioLogado.username || '';
-    if (bioInput) bioInput.value = usuarioLogado.bio || '';
-    if (estadoInput) estadoInput.value = usuarioLogado.estado || '';
+    console.log('Carregando dados do usuário do Supabase...');
+    try {
+        // Buscar dados do usuário diretamente do Supabase
+        const { data: userData, error } = await supabase
+            .from('usuario')
+            .select('nome, email, username, bio, estado')
+            .eq('id', usuarioLogado.id)
+            .single();
+
+        if (error) {
+            console.error('Erro ao carregar dados do usuário:', error);
+            showError('Erro ao carregar dados do perfil: ' + error.message);
+            return;
+        }
+
+        // Atualizar usuarioLogado com os dados do Supabase
+        usuarioLogado = {
+            ...usuarioLogado,
+            nome: userData.nome || usuarioLogado.nome || '',
+            email: userData.email || usuarioLogado.email || '',
+            username: userData.username || usuarioLogado.username || '',
+            bio: userData.bio || '',
+            estado: userData.estado || usuarioLogado.estado || ''
+        };
+        localStorage.setItem('cavalodado_usuario', JSON.stringify(usuarioLogado));
+
+        // Preencher formulário
+        const nomeInput = document.getElementById('nome');
+        const emailInput = document.getElementById('email');
+        const usernameInput = document.getElementById('username');
+        const bioInput = document.getElementById('bio');
+        const estadoInput = document.getElementById('estado-endereco');
+
+        if (nomeInput) nomeInput.value = usuarioLogado.nome || '';
+        if (emailInput) emailInput.value = usuarioLogado.email || '';
+        if (usernameInput) usernameInput.value = usuarioLogado.username || '';
+        if (bioInput) bioInput.value = usuarioLogado.bio || '';
+        if (estadoInput) estadoInput.value = usuarioLogado.estado || '';
+
+        console.log('Dados do usuário preenchidos:', usuarioLogado);
+    } catch (err) {
+        console.error('Erro inesperado ao carregar dados do usuário:', err);
+        showError('Erro inesperado ao carregar perfil.');
+    }
 }
 
 // Verificar usuário logado ao carregar a página
