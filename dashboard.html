@@ -29,15 +29,8 @@
         <div class="menu-header">
             <button class="menu-close">&times;</button>
         </div>
-        <div class="menu-items">
-            <a href="index.html" class="menu-item">Início</a>
-            <a href="dashboard.html" class="menu-item">Perfil</a>
-            <a href="new-request.html" class="menu-item">Novo Pedido</a>
-            <a href="dashboard.html#historico" class="menu-item">Histórico</a>
-            <a href="dashboard.html#progresso" class="menu-item">Progresso</a>
-            <a href="dashboard.html#favoritos" class="menu-item">Favoritos</a>
-            <a href="regras.html" class="menu-item">Termos e Regras</a>
-            <a href="#" class="menu-item" onclick="logout()">Sair</a>
+        <div class="menu-items" id="menu-items">
+            <!-- Menu será gerado dinamicamente -->
         </div>
     </nav>
 
@@ -45,16 +38,10 @@
     <main class="main-content">
         <div class="container">
             <!-- Navegação do dashboard -->
-            <div class="dashboard-nav" style="display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap;">
-                <button class="btn btn-outline" onclick="window.location.hash = ''; mostrarPerfil()">Perfil</button>
-                <button class="btn btn-outline" onclick="window.location.hash = 'historico'; mostrarHistorico()">Histórico</button>
-                <button class="btn btn-outline" onclick="window.location.hash = 'favoritos'; mostrarFavoritos()">Favoritos</button>
-            </div>
+            <div class="dashboard-nav" id="dashboard-nav"></div>
 
             <!-- Conteúdo dinâmico -->
-            <div id="dashboard-content">
-                <!-- Conteúdo será carregado via JavaScript -->
-            </div>
+            <div id="dashboard-content"></div>
             
             <!-- Anúncio -->
             <div class="anuncio" style="margin-top: 2rem;">
@@ -68,4 +55,3 @@
     <script src="js/scripts.js"></script>
 </body>
 </html>
-
