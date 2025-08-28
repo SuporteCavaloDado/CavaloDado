@@ -488,6 +488,34 @@ body {
     margin-bottom: 1rem;
 }
 
+/* Favoritos */
+.favoritos-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr); /* 4 por linha em mobile */
+    gap: 10px;
+    max-width: 100%;
+    margin: 0 auto;
+}
+
+.favorito-item {
+    width: 100%;
+    aspect-ratio: 1/1; /* Retangular padrão (quadrado para simplicidade, ajuste para 16:9 se horizontal) */
+    overflow: hidden;
+}
+
+.favorito-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Preenche sem partes pretas */
+    display: block;
+}
+
+@media (min-width: 768px) {
+    .favoritos-grid {
+        grid-template-columns: repeat(6, 1fr); /* Mais colunas em PC */
+    }
+}
+
 /* Historico Tabela */
 .historico-table { width: 100%; border-collapse: collapse; }
 .historico-table td, .historico-table th { padding: 0.5rem; border-bottom: 1px solid #eee; }
