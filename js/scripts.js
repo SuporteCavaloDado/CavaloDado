@@ -1286,9 +1286,8 @@ function renderPerfil(content, profile) {
         <h2>Perfil</h2>
         <div class="card perfil-card">
             <p class="perfil-nome">Nome: ${profile.nome || 'Anônimo'}</p>
-            <p>Estado: ${profile.estado || 'N/A'}</p>
-            <p>Username: ${profile.username || 'N/A'}</p>
-            <p>Para denúncias, entre em contato: <a href="mailto:suporte.cavalodado@gmail.com">suporte.cavalodado@gmail.com</a></p>
+            <p> ${profile.estado || 'N/A'}</p>
+            <p> ${profile.username || 'N/A'}</p>
         </div>
     `;
 }
