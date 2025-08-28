@@ -492,9 +492,10 @@ body {
 .favoritos-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr); /* 4 por linha em mobile */
-    gap: 8px;
+    gap: 1rem;
     max-width: 100%;
     margin: 0 auto;
+    margin-top: 1rem;
     padding: 10px;
     box-sizing: border-box;
 }
@@ -504,26 +505,19 @@ body {
     aspect-ratio: 1/1; /* Quadrado padrão */
     overflow: hidden;
     border-radius: 8px; /* Bordas suaves */
-    background-color: transparent; /* Sem fundo preto */
+    background: var(--cor-branco, #fff); /* Fundo branco */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .favorito-image {
     width: 100%;
-    height: 100%;
+    height: 150px;
     object-fit: cover; /* Preenche sem partes pretas */
     display: block;
-    border: 1px solid var(--cor-cinza-medio); /* Opcional */
+    border: 1px solid var(--cor-cinza-medio, #ccc); /* Borda opcional */
 }
 
-@media (min-width: 768px) {
-    .favoritos-grid {
-        grid-template-columns: repeat(6, 1fr); /* 6 por linha em PC */
-        gap: 12px;
-        max-width: 1200px; /* Limite para desktop */
-    }
-}
-
- /* Dashboard */
+/* Dashboard */
 .dashboard-nav {
     display: flex;
     gap: 1rem;
@@ -537,6 +531,7 @@ body {
     font-weight: bold;
     border-radius: 5px;
     transition: background 0.2s;
+    cursor: pointer;
 }
 
 .dashboard-nav .btn.active {
@@ -568,6 +563,31 @@ body {
 
 .perfil-card a:hover {
     text-decoration: underline;
+}
+
+@media (min-width: 768px) {
+    .favoritos-grid {
+        grid-template-columns: repeat(6, 1fr); /* 6 por linha em PC */
+        gap: 12px;
+        max-width: 1200px; /* Limite para desktop */
+    }
+}
+
+@media (max-width: 480px) {
+    .dashboard-nav {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .perfil-card {
+        max-width: 100%;
+        margin: 0.5rem;
+        padding: 1rem;
+    }
+
+    .favoritos-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
             /* Endereço Modal Doação */
