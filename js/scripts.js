@@ -460,9 +460,9 @@ function criarElementoPedido(pedido) {
     
     const mediaHtml = `
         <div class="pedido-media">
-            <img src="${pedido.media.url}" alt="Imagem do pedido" class="pedido-image" onerror="this.src = 'https://placehold.co/400x600?text=Erro+na+Imagem'; console.error('Erro ao carregar imagem:', '${pedido.media.url}');">
+            <img src="${pedido.media.url}" alt="Imagem do pedido" class="pedido-image">
         </div>
-    `;  // CORRIGIDO: Adiciona onerror para fallback e log
+    `;
     
     div.innerHTML = `
         ${mediaHtml}
@@ -470,13 +470,13 @@ function criarElementoPedido(pedido) {
             <button class="action-btn" onclick="verPerfil('${pedido.usuario}')">
                 <span>👤</span>
             </button>
-            <button class="action-btn btn-doar" onclick="abrirModalDoacao(${pedido.id})">
+            <button class="action-btn btn-doar" onclick="abrirModalDoacao('${pedido.id}')">
                 <span>❤️</span>
             </button>
-            <button class="action-btn" onclick="toggleFavorito(${pedido.id})">
+            <button class="action-btn" onclick="toggleFavorito('${pedido.id}')">
                 <span>⭐</span>
             </button>
-            <button class="action-btn" onclick="compartilhar(${pedido.id})">
+            <button class="action-btn" onclick="compartilhar('${pedido.id}')">
                 <span>📤</span>
             </button>
         </div>
