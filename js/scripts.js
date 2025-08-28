@@ -1173,18 +1173,18 @@ function inicializarDashboard() {
 }
 
     // Mostrar Perfil
-async function mostrarPerfil(userId) {
+async function mostrarPerfil(username) {
     const content = document.getElementById('dashboard-content');
     if (!content) {
         console.error('Erro: dashboard-content não encontrado');
         return;
     }
 
-    // Buscar perfil do usuário (público)
+    // Buscar perfil do usuário por username
     const { data: profile, error } = await supabase
         .from('usuario')
-        .select('id, nome, estado')
-        .eq('id', userId || usuarioLogado?.id)
+        .select('id, nome, estado, username')
+        .eq('username', username || usuarioLogado?.username)
         .single();
 
     if (error || !profile) {
@@ -1193,26 +1193,20 @@ async function mostrarPerfil(userId) {
         return;
     }
 
+    // Atualizar URL para username
+    if (window.location.pathname === '/dashboard.html' && profile.username) {
+        window.history.replaceState(null, '', `/dashboard.html/${profile.username}`);
+    }
+
     content.innerHTML = `
         <h2>Perfil</h2>
         <div class="card perfil-card">
             <p class="perfil-nome">Nome: ${profile.nome || 'Anônimo'}</p>
             <p>Estado: ${profile.estado || 'N/A'}</p>
+            <p>Username: ${profile.username || 'N/A'}</p>
+            <p>Para denúncias, entre em contato: <a href="mailto:suporte.cavalodado@gmail.com">suporte.cavalodado@gmail.com</a></p>
         </div>
     `;
-}
-
-function abrirModalDenuncia(userId) {
-    const modal = document.getElementById('modal-denuncia');
-    if (modal) modal.style.display = 'block';
-}
-
-function fecharModalDenuncia() {
-    const modal = document.getElementById('modal-denuncia');
-    if (modal) {
-        modal.style.display = 'none';
-        document.getElementById('form-denuncia')?.reset();
-    }
 }
 
     // Mostrar Favoritos
