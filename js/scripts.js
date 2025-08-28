@@ -1198,7 +1198,6 @@ async function mostrarPerfil(userId) {
         <div class="card perfil-card">
             <p class="perfil-nome">Nome: ${profile.nome || 'Anônimo'}</p>
             <p>Estado: ${profile.estado || 'N/A'}</p>
-            <p>Para denúncias, entre em contato: <a href="mailto:suporte.cavalodado@gmail.com">suporte.cavalodado@gmail.com</a></p>
         </div>
     `;
 }
