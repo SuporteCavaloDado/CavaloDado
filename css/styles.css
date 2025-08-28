@@ -492,15 +492,19 @@ body {
 .favoritos-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr); /* 4 por linha em mobile */
-    gap: 10px;
+    gap: 8px;
     max-width: 100%;
     margin: 0 auto;
+    padding: 10px;
+    box-sizing: border-box;
 }
 
 .favorito-item {
     width: 100%;
-    aspect-ratio: 1/1; /* Retangular padrão (quadrado para simplicidade, ajuste para 16:9 se horizontal) */
+    aspect-ratio: 1/1; /* Quadrado padrão */
     overflow: hidden;
+    border-radius: 8px; /* Bordas suaves */
+    background-color: transparent; /* Sem fundo preto */
 }
 
 .favorito-image {
@@ -508,11 +512,14 @@ body {
     height: 100%;
     object-fit: cover; /* Preenche sem partes pretas */
     display: block;
+    border: 1px solid var(--cor-cinza-medio); /* Opcional */
 }
 
 @media (min-width: 768px) {
     .favoritos-grid {
-        grid-template-columns: repeat(6, 1fr); /* Mais colunas em PC */
+        grid-template-columns: repeat(6, 1fr); /* 6 por linha em PC */
+        gap: 12px;
+        max-width: 1200px; /* Limite para desktop */
     }
 }
 
