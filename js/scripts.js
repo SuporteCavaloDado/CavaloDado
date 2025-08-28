@@ -691,7 +691,6 @@ function fecharModal() {
 
 // Funções de ação
 async function verPerfil(userId) {
-    // Buscar username pelo userId
     const { data: user, error } = await supabase
         .from('usuario')
         .select('username')
@@ -704,7 +703,8 @@ async function verPerfil(userId) {
         return;
     }
 
-    window.location.href = `dashboard.html/${user.username}`;
+    history.pushState({ section: 'perfil', username: user.username }, '', `/dashboard.html/${user.username}`);
+    inicializarDashboard();
 }
 
 // Favorito
