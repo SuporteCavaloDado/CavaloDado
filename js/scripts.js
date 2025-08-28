@@ -1193,76 +1193,14 @@ async function mostrarPerfil(userId) {
         return;
     }
 
-    // Botão de denúncia só para logados
-    const denunciaButton = usuarioLogado
-        ? `<button class="action-btn btn-denunciar" onclick="abrirModalDenuncia('${profile.id}')">Denunciar</button>`
-        : '';
-
     content.innerHTML = `
         <h2>Perfil</h2>
         <div class="card perfil-card">
-            ${denunciaButton}
             <p class="perfil-nome">Nome: ${profile.nome || 'Anônimo'}</p>
             <p>Estado: ${profile.estado || 'N/A'}</p>
-        </div>
-        <div id="modal-denuncia" class="modal" style="display: none;">
-            <div class="modal-content">
-                <h3>Denunciar Usuário</h3>
-                <form id="form-denuncia">
-                    <input type="hidden" id="denuncia-user-id" value="${profile.id}">
-                    <label for="denuncia-titulo">Título (máx. 150 caracteres):</label>
-                    <input type="text" id="denuncia-titulo" maxlength="150" required>
-                    <label for="denuncia-descricao">Descrição (máx. 1000 caracteres):</label>
-                    <textarea id="denuncia-descricao" maxlength="1000" required></textarea>
-                    <button type="submit">Enviar Denúncia</button>
-                    <button type="button" onclick="fecharModalDenuncia()">Cancelar</button>
-                </form>
-            </div>
+            <p>Para denúncias, entre em contato: <a href="mailto:suporte.cavalodado@gmail.com">suporte.cavalodado@gmail.com</a></p>
         </div>
     `;
-
-    // Listener para envio de denúncia
-    const formDenuncia = document.getElementById('form-denuncia');
-    if (formDenuncia) {
-        formDenuncia.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const titulo = document.getElementById('denuncia-titulo').value.trim();
-            const descricao = document.getElementById('denuncia-descricao').value.trim();
-            const denunciadoId = document.getElementById('denuncia-user-id').value;
-
-            if (!titulo || !descricao) {
-                alert('Preencha todos os campos.');
-                return;
-            }
-
-            try {
-                // Enviar e-mail via EmailJS
-                const response = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        service_id: 'YOUR_EMAILJS_SERVICE_ID', // Configure no EmailJS
-                        template_id: 'YOUR_EMAILJS_TEMPLATE_ID', // Configure no EmailJS
-                        user_id: 'YOUR_EMAILJS_USER_ID', // Configure no EmailJS
-                        template_params: {
-                            to_email: 'suporte.cavalodado@gmail.com',
-                            from_name: usuarioLogado?.nome || 'Anônimo',
-                            user_id: denunciadoId,
-                            titulo: titulo,
-                            descricao: descricao
-                        }
-                    })
-                });
-
-                if (!response.ok) throw new Error('Falha ao enviar denúncia');
-                alert('Denúncia enviada com sucesso!');
-                fecharModalDenuncia();
-            } catch (err) {
-                console.error('Erro ao enviar denúncia:', err);
-                alert('Erro ao enviar denúncia.');
-            }
-        });
-    }
 }
 
 function abrirModalDenuncia(userId) {
