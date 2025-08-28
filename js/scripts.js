@@ -1197,7 +1197,6 @@ async function inicializarDashboard() {
         <a href="new-request.html" class="menu-item">Novo Pedido</a>
         ${isOwnProfile ? `
             <a href="/dashboard.html/${username}#historico" class="menu-item">Histórico</a>
-            <a href="/dashboard.html/${username}#progresso" class="menu-item">Progresso</a>
             <a href="/dashboard.html/${username}#favoritos" class="menu-item">Favoritos</a>
         ` : `
             <a href="/dashboard.html/${username}#favoritos" class="menu-item">Favoritos</a>
