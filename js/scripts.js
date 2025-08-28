@@ -690,8 +690,21 @@ function fecharModal() {
 }
 
 // Funções de ação
-function verPerfil(usuario) {
-    window.location.href = `dashboard.html?usuario=${encodeURIComponent(usuario)}`;
+async function verPerfil(userId) {
+    // Buscar username pelo userId
+    const { data: user, error } = await supabase
+        .from('usuario')
+        .select('username')
+        .eq('id', userId)
+        .single();
+
+    if (error || !user?.username) {
+        console.error('Erro ao buscar username:', error);
+        window.location.href = 'dashboard.html';
+        return;
+    }
+
+    window.location.href = `dashboard.html/${user.username}`;
 }
 
 // Favorito
