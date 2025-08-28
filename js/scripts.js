@@ -700,40 +700,61 @@ async function toggleFavorito(pedidoId) {
         alert('Faça login para favoritar pedidos');
         return;
     }
-    
-    const { data: favoritoExistente, error: checkError } = await supabase
-        .from('favoritos')
-        .select('id')
-        .eq('user_id', usuarioLogado.id)
-        .eq('pedido_id', pedidoId)
-        .single();
 
-    if (checkError && checkError.code !== 'PGRST116') {
-        alert('Erro ao verificar favoritos: ' + checkError.message);
-        return;
-    }
+    try {
+        // Verificar se o pedido existe
+        const { data: pedidoExiste, error: pedidoError } = await supabase
+            .from('pedido')
+            .select('id')
+            .eq('id', pedidoId)
+            .single();
 
-    if (favoritoExistente) {
-        const { error } = await supabase
-            .from('favoritos')
-            .delete()
-            .eq('id', favoritoExistente.id);
-        
-        if (error) {
-            alert('Erro ao remover favorito: ' + error.message);
+        if (pedidoError || !pedidoExiste) {
+            console.error('Erro: Pedido não encontrado:', pedidoError);
+            alert('Erro: Pedido inválido.');
             return;
         }
-        alert('Removido dos favoritos!');
-    } else {
-        const { error } = await supabase
+
+        const { data: favoritoExistente, error: checkError } = await supabase
             .from('favoritos')
-            .insert({ user_id: usuarioLogado.id, pedido_id: pedidoId });
-        
-        if (error) {
-            alert('Erro ao adicionar favorito: ' + error.message);
+            .select('id')
+            .eq('user_id', usuarioLogado.id)
+            .eq('pedido_id', pedidoId)
+            .maybeSingle();
+
+        if (checkError) {
+            console.error('Erro ao verificar favorito:', checkError);
+            alert('Erro ao verificar favoritos: ' + checkError.message);
             return;
         }
-        alert('Adicionado aos favoritos!');
+
+        if (favoritoExistente) {
+            const { error } = await supabase
+                .from('favoritos')
+                .delete()
+                .eq('id', favoritoExistente.id);
+            
+            if (error) {
+                console.error('Erro ao remover favorito:', error);
+                alert('Erro ao remover favorito: ' + error.message);
+                return;
+            }
+            alert('Removido dos favoritos!');
+        } else {
+            const { error } = await supabase
+                .from('favoritos')
+                .insert({ user_id: usuarioLogado.id, pedido_id: pedidoId });
+            
+            if (error) {
+                console.error('Erro ao adicionar favorito:', error);
+                alert('Erro ao adicionar favorito: ' + error.message);
+                return;
+            }
+            alert('Adicionado aos favoritos!');
+        }
+    } catch (err) {
+        console.error('Erro inesperado em toggleFavorito:', err);
+        alert('Erro inesperado ao gerenciar favoritos.');
     }
 }
 
