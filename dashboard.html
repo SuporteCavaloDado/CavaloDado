@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Perfil - CavaloDado</title>
-    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="/css/styles.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -13,8 +13,8 @@
 
     <!-- Header fixo -->
     <header class="header">
-        <a href="index.html" class="logo">
-            <img src="assets/logo.svg" alt="CavaloDado" style="height: 30px;">
+        <a href="/index.html" class="logo">
+            <img src="/assets/logo.svg" alt="CavaloDado" style="height: 30px;">
         </a>
         <button class="menu-toggle">
             <span></span>
@@ -29,9 +29,7 @@
         <div class="menu-header">
             <button class="menu-close">&times;</button>
         </div>
-        <div class="menu-items" id="menu-items">
-            <!-- Menu será gerado dinamicamente -->
-        </div>
+        <div class="menu-items" id="menu-items"></div>
     </nav>
 
     <!-- Conteúdo principal -->
@@ -51,7 +49,7 @@
     </main>
 
     <!-- Scripts -->
-    <script src="supabase/supabase-config.js"></script>
-    <script src="js/scripts.js"></script>
+    <script src="/supabase/supabase-config.js"></script>
+    <script src="/js/scripts.js"></script>
 </body>
 </html>
