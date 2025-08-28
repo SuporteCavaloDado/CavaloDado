@@ -1166,16 +1166,41 @@ function mostrarPerfil() {
     }
 }
 
-function mostrarFavoritos() {
+    // Mostrar Favoritos
+async function mostrarFavoritos() {
     const content = document.getElementById('dashboard-content');
     if (content) {
         content.innerHTML = `
             <h2>Meus Favoritos</h2>
-            <div class="card">
-                <p>Seus pedidos favoritos aparecerão aqui.</p>
-            </div>
+            <div class="favoritos-grid"></div>
         `;
     }
+
+    const { data: favoritos, error } = await supabase
+        .from('favoritos')
+        .select('pedido (id, foto_url)')
+        .eq('user_id', usuarioLogado.id)
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error('Erro ao carregar favoritos:', error);
+        alert('Erro ao carregar favoritos: ' + error.message);
+        return;
+    }
+
+    const grid = document.querySelector('.favoritos-grid');
+    if (!grid) return;
+
+    grid.innerHTML = '';
+
+    favoritos.forEach(fav => {
+        const imgDiv = document.createElement('div');
+        imgDiv.className = 'favorito-item';
+        imgDiv.innerHTML = `
+            <img src="${fav.pedido.foto_url || 'https://placehold.co/200x200?text=Sem+Imagem'}" alt="Foto do pedido favorito" class="favorito-image">
+        `;
+        grid.appendChild(imgDiv);
+    });
 }
 
 function mostrarHistorico() {
