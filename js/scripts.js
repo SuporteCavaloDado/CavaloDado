@@ -1272,6 +1272,8 @@ function renderPerfil(content, profile) {
 }
 
     // Mostrar Favoritos
+let favoritosCache = null; // Cache para favoritos
+
 async function mostrarFavoritos(username) {
     const content = document.getElementById('dashboard-content');
     if (!content) {
@@ -1289,6 +1291,12 @@ async function mostrarFavoritos(username) {
     if (userError || !user) {
         console.error('Erro ao buscar usuário:', userError);
         content.innerHTML = '<p>Erro ao carregar usuário.</p>';
+        return;
+    }
+
+    // Usar cache se disponível
+    if (favoritosCache && favoritosCache.userId === user.id) {
+        renderFavoritos(content, favoritosCache.data);
         return;
     }
 
@@ -1313,25 +1321,30 @@ async function mostrarFavoritos(username) {
             return;
         }
 
-        const grid = document.querySelector('.favoritos-grid');
-        if (!grid) return;
-
-        grid.innerHTML = favoritos.length ? '' : '<p>Nenhum favorito encontrado.</p>';
-
-        favoritos.forEach(fav => {
-            if (fav.pedido) {
-                const imgDiv = document.createElement('div');
-                imgDiv.className = 'favorito-item';
-                imgDiv.innerHTML = `
-                    <img src="${fav.pedido.foto_url || 'https://placehold.co/200x200?text=Sem+Imagem'}" alt="Foto do pedido favorito" class="favorito-image" onerror="this.src='https://placehold.co/200x200?text=Erro+na+Imagem';">
-                `;
-                grid.appendChild(imgDiv);
-            }
-        });
+        favoritosCache = { userId: user.id, data: favoritos }; // Armazenar no cache
+        renderFavoritos(content, favoritos);
     } catch (err) {
         console.error('Erro inesperado em mostrarFavoritos:', err);
         content.innerHTML = '<p>Erro inesperado ao carregar favoritos.</p>';
     }
+}
+
+function renderFavoritos(content, favoritos) {
+    const grid = content.querySelector('.favoritos-grid');
+    if (!grid) return;
+
+    grid.innerHTML = favoritos.length ? '' : '<p>Nenhum favorito encontrado.</p>';
+
+    favoritos.forEach(fav => {
+        if (fav.pedido) {
+            const imgDiv = document.createElement('div');
+            imgDiv.className = 'favorito-item';
+            imgDiv.innerHTML = `
+                <img src="${fav.pedido.foto_url || 'https://placehold.co/200x200?text=Sem+Imagem'}" alt="Foto do pedido favorito" class="favorito-image" onerror="this.src='https://placehold.co/200x200?text=Erro+na+Imagem';">
+            `;
+            grid.appendChild(imgDiv);
+        }
+    });
 }
 
     // Mostrar Historico
