@@ -597,11 +597,12 @@ async function abrirModalDoacao(pedidoId) {
     try {
         const { data, error } = await supabase
             .from('pedido')
-            .select('id, titulo, user_id, user_nome')
+            .select('id, titulo, user_id, user_nome, endereco_id')
             .eq('id', pedidoId)
             .single();
         if (error || !data) throw error;
         pedidoData = data;
+        console.log('Dados do pedido:', pedidoData); // Depuração
     } catch (err) {
         console.error('Erro ao carregar pedido:', err);
         alert('Erro ao carregar dados do pedido.');
@@ -628,36 +629,56 @@ async function abrirModalDoacao(pedidoId) {
     // Buscar endereço diretamente via usuario_id do criador
     let enderecoData = null;
     let nomeUsuario = pedidoData.user_nome;
+    let estadoFallback = 'N/A';
     try {
         const { data: addrData, error: addrError } = await supabase
             .from('endereco')
-            .select('cep, rua, numero, complemento, bairro, cidade, estado_endereco')
+            .select('id, cep, rua, numero, complemento, bairro, cidade, estado_endereco')
             .eq('usuario_id', pedidoData.user_id)
             .order('created_at', { ascending: false }) // Pegar o mais recente
             .limit(1)
             .single();
         if (!addrError && addrData) {
             enderecoData = addrData;
+            console.log('Endereço encontrado:', enderecoData); // Depuração
+            // Vincular se não estiver ligado
+            if (!pedidoData.endereco_id) {
+                try {
+                    const { error: updateError } = await supabase
+                        .from('pedido')
+                        .update({ endereco_id: addrData.id })
+                        .eq('id', pedidoId);
+                    if (updateError) throw updateError;
+                    console.log('Endereço vinculado ao pedido com sucesso.');
+                } catch (updateErr) {
+                    console.error('Erro ao vincular endereço ao pedido:', updateErr);
+                    alert('Erro ao vincular endereço ao pedido.');
+                }
+            }
         } else {
-            console.error('Erro ao carregar endereço:', addrError);
+            console.error('Nenhum endereço encontrado:', addrError);
+            alert('O criador do pedido não possui endereço cadastrado. Peça para cadastrar em Configurações.');
         }
     } catch (addrErr) {
         console.error('Erro ao consultar endereço:', addrErr);
+        alert('Erro ao consultar endereço. Verifique o banco de dados.');
     }
 
-    // Buscar nome do usuário na tabela usuario se user_nome for null
-    if (!nomeUsuario) {
+    // Buscar nome e estado na tabela usuario se necessário
+    if (!nomeUsuario || estadoFallback === 'N/A') {
         try {
             const { data: usuarioData, error: usuarioError } = await supabase
                 .from('usuario')
-                .select('nome')
+                .select('nome, estado')
                 .eq('id', pedidoData.user_id)
                 .single();
             if (!usuarioError && usuarioData) {
-                nomeUsuario = usuarioData.nome;
+                nomeUsuario = nomeUsuario || usuarioData.nome;
+                estadoFallback = usuarioData.estado || 'N/A';
+                console.log('Dados do usuário:', usuarioData); // Depuração
             }
         } catch (usuarioErr) {
-            console.error('Erro ao carregar nome do usuário:', usuarioErr);
+            console.error('Erro ao carregar dados do usuário:', usuarioErr);
         }
     }
 
@@ -669,7 +690,7 @@ async function abrirModalDoacao(pedidoId) {
         complemento: enderecoData.complemento || '',
         bairro: enderecoData.bairro,
         cidade: enderecoData.cidade,
-        estado_endereco: enderecoData.estado_endereco
+        estado_endereco: enderecoData.estado_endereco || estadoFallback
     } : {
         nome: nomeUsuario || 'Anônimo',
         cep: 'N/A',
@@ -678,7 +699,7 @@ async function abrirModalDoacao(pedidoId) {
         complemento: '',
         bairro: 'N/A',
         cidade: 'N/A',
-        estado_endereco: 'N/A'
+        estado_endereco: estadoFallback
     };
 
     const modal = document.createElement('div');
