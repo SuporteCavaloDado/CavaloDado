@@ -856,7 +856,7 @@ async function confirmarDoacao(pedidoId) {
 // Atualizar Interface
 async function atualizarInterface() {
     try {
-        // Carregar todos os pedidos, independentemente do status
+        // Atualizar lista de pedidos no index (mantido para compatibilidade)
         const { data: pedidos, error } = await supabase
             .from('pedido')
             .select('id, titulo, user_id, user_nome, status, categoria, descricao, foto_url, created_at')
@@ -880,7 +880,7 @@ async function atualizarInterface() {
             });
         }
 
-        // Atualizar histórico do criador
+        // Atualizar histórico do criador com código de rastreio
         try {
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
@@ -909,15 +909,17 @@ async function atualizarInterface() {
                         item.innerHTML = `
                             <h3>${pedido.titulo}</h3>
                             <p>Status: ${pedido.status}</p>
-                            <p>Código de Rastreio: ${codigoRastreio}</p>
+                            <p>Código de Rastreio: <span class="codigo-rastreio">${codigoRastreio}</span></p>
                             <p>Criado em: ${new Date(pedido.created_at).toLocaleDateString()}</p>
                         `;
                         historico.appendChild(item);
                     });
                 }
+            } else {
+                console.warn('Nenhum usuário logado para atualizar histórico');
             }
         } catch (authErr) {
-            console.warn('Nenhum usuário logado para atualizar histórico:', authErr);
+            console.warn('Erro ao verificar usuário para histórico:', authErr);
         }
     } catch (err) {
         console.error('Erro ao atualizar interface:', err);
