@@ -873,67 +873,51 @@ async function confirmarDoacao(pedidoId) {
 // Atualizar Interface
 async function atualizarInterface() {
     try {
-        // Atualizar lista de pedidos no index (mantido para compatibilidade)
-        const { data: pedidos, error } = await supabase
-            .from('pedido')
-            .select('id, titulo, user_id, user_nome, status, categoria, descricao, foto_url, created_at')
-            .order('created_at', { ascending: false });
-        if (error) throw error;
-
-        const listaPedidos = document.getElementById('lista-pedidos'); // Ajuste o ID
-        if (listaPedidos) {
-            listaPedidos.innerHTML = '';
-            pedidos.forEach(pedido => {
-                const item = document.createElement('div');
-                item.className = 'pedido-item';
-                item.innerHTML = `
-                    <h3>${pedido.titulo}</h3>
-                    <p>Criador: ${pedido.user_nome || 'Anônimo'}</p>
-                    <p>Status: ${pedido.status}</p>
-                    <button onclick="abrirModalDoacao('${pedido.id}')" 
-                            ${pedido.status !== 'Disponível' ? 'disabled' : ''}>Doar</button>
-                `;
-                listaPedidos.appendChild(item);
-            });
-        }
-
-        // Atualizar histórico do criador com código de rastreio
+        // Atualizar histórico do criador
         try {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (user) {
-                const { data: pedidosCriador, error: criadorError } = await supabase
-                    .from('pedido')
-                    .select(`
-                        id, 
-                        titulo, 
-                        status, 
-                        created_at,
-                        doacao:c_doacao (codigo_rastreio)
-                    `)
-                    .eq('user_id', user.id)
-                    .order('created_at', { ascending: false });
-                if (criadorError) throw criadorError;
-
-                const historico = document.getElementById('historico-pedidos'); // Ajuste o ID
-                if (historico) {
-                    historico.innerHTML = '';
-                    pedidosCriador.forEach(pedido => {
-                        const codigoRastreio = pedido.doacao && pedido.doacao.length > 0 
-                            ? pedido.doacao[0].codigo_rastreio 
-                            : 'Nenhum código registrado';
-                        const item = document.createElement('div');
-                        item.className = 'historico-item';
-                        item.innerHTML = `
-                            <h3>${pedido.titulo}</h3>
-                            <p>Status: ${pedido.status}</p>
-                            <p>Código de Rastreio: <span class="codigo-rastreio">${codigoRastreio}</span></p>
-                            <p>Criado em: ${new Date(pedido.created_at).toLocaleDateString()}</p>
-                        `;
-                        historico.appendChild(item);
-                    });
-                }
-            } else {
+            const { data: { user }, error: authError } = await supabase.auth.getUser();
+            if (authError || !user) {
                 console.warn('Nenhum usuário logado para atualizar histórico');
+                return;
+            }
+
+            console.log('Carregando histórico para usuário:', user.id);
+            const { data: pedidosCriador, error: criadorError } = await supabase
+                .from('pedido')
+                .select(`
+                    id, 
+                    titulo, 
+                    status, 
+                    created_at,
+                    doacao:c_doacao (codigo_rastreio)
+                `)
+                .eq('user_id', user.id)
+                .order('created_at', { ascending: false });
+            if (criadorError) {
+                console.error('Erro ao carregar pedidos do criador:', criadorError);
+                throw criadorError;
+            }
+
+            const historico = document.getElementById('historico-pedidos'); // Ajuste o ID
+            if (historico) {
+                console.log('Renderizando histórico:', pedidosCriador);
+                historico.innerHTML = '';
+                pedidosCriador.forEach(pedido => {
+                    const codigoRastreio = pedido.doacao && pedido.doacao.length > 0 
+                        ? pedido.doacao[0].codigo_rastreio 
+                        : 'Nenhum código registrado';
+                    const item = document.createElement('div');
+                    item.className = 'historico-item';
+                    item.innerHTML = `
+                        <h3>${pedido.titulo}</h3>
+                        <p>Status: ${pedido.status}</p>
+                        <p>Código de Rastreio: <span class="codigo-rastreio">${codigoRastreio}</span></p>
+                        <p>Criado em: ${new Date(pedido.created_at).toLocaleDateString()}</p>
+                    `;
+                    historico.appendChild(item);
+                });
+            } else {
+                console.warn('Elemento historico-pedidos não encontrado');
             }
         } catch (authErr) {
             console.warn('Erro ao verificar usuário para histórico:', authErr);
