@@ -674,12 +674,13 @@ async function abrirModalDoacao(pedidoId) {
     document.body.appendChild(modal);
 }
 
-function confirmarDoacao(pedidoId) {
-    const codigo = document.getElementById('codigo-rastreio').value;
+// Confirmar Doação
+async function confirmarDoacao(pedidoId) {
+    const codigo = document.getElementById('codigo-rastreio').value.trim();
     const aceito = document.getElementById('aceito-responsabilidade').checked;
     
-    if (!codigo || codigo.length < 13) {
-        alert('Código de rastreio deve ter pelo menos 13 caracteres');
+    if (codigo.length !== 13) {
+        alert('Código de rastreio deve ter exatamente 13 caracteres');
         return;
     }
     
@@ -688,16 +689,31 @@ function confirmarDoacao(pedidoId) {
         return;
     }
     
-    // Atualizar status do pedido
-    const pedido = pedidosCache.find(p => p.id === pedidoId);
-    if (pedido) {
-        pedido.status = 'Pendente';
-        pedido.codigoRastreio = codigo;
+    const { error: insertError } = await supabase
+        .from('doacao')
+        .insert({
+            pedido_id: pedidoId,
+            doador_id: usuarioLogado ? usuarioLogado.id : null,
+            codigo_rastreio: codigo,
+            termos_doacao: aceito
+        });
+    if (insertError) {
+        alert('Erro ao registrar doação: ' + insertError.message);
+        return;
     }
     
-    alert('Doação confirmada! Obrigado por ajudar.');
+    const { error: updateError } = await supabase
+        .from('pedido')
+        .update({ status: 'Pendente' })
+        .eq('id', pedidoId);
+    if (updateError) {
+        alert('Erro ao atualizar status: ' + updateError.message);
+        return;
+    }
+    
+    alert('Doação confirmada! Obrigado por ajudar. O status agora é Pendente.');
     fecharModal();
-    renderizarFeed(pedidosCache);
+    carregarPedidos(); // Recarrega feed do BD para atualizar status
 }
 
 function copiarTexto(texto) {
