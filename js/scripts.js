@@ -637,8 +637,8 @@ function abrirModalDoacao(pedidoId) {
                 </div>
                 
                 <div class="form-checkbox">
-                    <input type="checkbox" id="aceito-responsabilidade" required>
-                    <label for="aceito-responsabilidade">
+                    <input type="checkbox" id="termos_doacao" required>
+                    <label for="termos_doacao">
                         Concordo com as responsabilidades da doação
                     </label>
                 </div>
