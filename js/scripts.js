@@ -48,50 +48,25 @@ function inicializarMenu() {
 
 // Atualizar menu baseado no login
 function atualizarMenuLogado() {
-    const loginItem = document.getElementById('nav-login');
-    const cadastroItem = document.getElementById('nav-cadastro');
-    const logoutItem = document.getElementById('nav-logout');
-    const perfilItem = document.getElementById('nav-perfil');
-    const historicoItem = document.getElementById('nav-historico');
-    const favoritosItem = document.getElementById('nav-favoritos');
-    const configItem = document.getElementById('nav-config');
-
+    const menuItems = document.querySelector('.menu-items');
+    if (!menuItems) return;
+    
     if (usuarioLogado) {
-        if (loginItem) loginItem.style.display = 'none';
-        if (cadastroItem) cadastroItem.style.display = 'none';
-        if (logoutItem) logoutItem.style.display = 'block';
-        if (perfilItem) {
-            perfilItem.style.display = 'block';
-            const perfilLink = perfilItem.querySelector('a');
-            perfilLink.textContent = 'Perfil';
-            perfilLink.href = `/dashboard.html/${usuarioLogado.username}`;
-        }
-        if (historicoItem) {
-            historicoItem.style.display = 'block';
-            const historicoLink = historicoItem.querySelector('a');
-            historicoLink.textContent = 'Histórico';
-            historicoLink.href = '/dashboard.html/historico';
-        }
-        if (favoritosItem) {
-            favoritosItem.style.display = 'block';
-            const favoritosLink = favoritosItem.querySelector('a');
-            favoritosLink.textContent = 'Favoritos';
-            favoritosLink.href = `/dashboard.html/${usuarioLogado.username}/favoritos`;
-        }
-        if (configItem) {
-            configItem.style.display = 'block';
-            const configLink = configItem.querySelector('a');
-            configLink.textContent = 'Configurações';
-            configLink.href = '/config.html';
-        }
+        menuItems.innerHTML = `
+            <a href="index.html" class="menu-item">Início</a>
+            <a href="dashboard.html" class="menu-item">Perfil</a>
+            <a href="new-request.html" class="menu-item">Novo Pedido</a>
+            <a href="config.html" class="menu-item">Configurações</a>
+            <a href="regras.html" class="menu-item">Termos e Regras</a>
+            <a href="javascript:void(0)" class="menu-item" onclick="logout()">Sair</a>
+        `;
     } else {
-        if (loginItem) loginItem.style.display = 'block';
-        if (cadastroItem) cadastroItem.style.display = 'block';
-        if (logoutItem) logoutItem.style.display = 'none';
-        if (perfilItem) perfilItem.style.display = 'none';
-        if (historicoItem) historicoItem.style.display = 'none';
-        if (favoritosItem) favoritosItem.style.display = 'none';
-        if (configItem) configItem.style.display = 'none';
+        menuItems.innerHTML = `
+            <a href="index.html" class="menu-item">Início</a>
+            <a href="login.html" class="menu-item">Entrar</a>
+            <a href="register.html" class="menu-item">Cadastrar</a>
+            <a href="regras.html" class="menu-item">Termos e Regras</a>
+        `;
     }
 }
 
