@@ -597,19 +597,19 @@ async function abrirModalDoacao(pedidoId) {
     try {
         const { data, error } = await supabase
             .from('pedido')
-            .select('id, titulo, user_id, user_nome, user_estado, endereco_id')
+            .select('id, titulo, user_id, user_nome')
             .eq('id', pedidoId)
             .single();
         if (error || !data) throw error;
         pedidoData = data;
     } catch (err) {
         console.error('Erro ao carregar pedido:', err);
-        alert('Erro ao carregar dados do pedido. Usando cache como fallback.');
+        alert('Erro ao carregar dados do pedido.');
         pedidoData = pedidosCache.find(p => p.id === pedidoId); // Fallback cache
         if (!pedidoData) return;
     }
 
-    // Carregar usuarioLogado de forma segura se não estiver definido
+    // Carregar usuarioLogado de forma segura
     if (typeof usuarioLogado === 'undefined' || !usuarioLogado) {
         try {
             const { data: { user } } = await supabase.auth.getUser();
@@ -625,14 +625,15 @@ async function abrirModalDoacao(pedidoId) {
         return;
     }
 
-    // Fetch endereço diretamente via usuario_id do criador (pedido.user_id), assumindo um endereço por usuário
+    // Buscar endereço diretamente via usuario_id do criador
     let enderecoData = null;
+    let nomeUsuario = pedidoData.user_nome;
     try {
         const { data: addrData, error: addrError } = await supabase
             .from('endereco')
             .select('cep, rua, numero, complemento, bairro, cidade, estado_endereco')
             .eq('usuario_id', pedidoData.user_id)
-            .order('created_at', { ascending: false }) // Pega o mais recente se múltiplos
+            .order('created_at', { ascending: false }) // Pegar o mais recente
             .limit(1)
             .single();
         if (!addrError && addrData) {
@@ -644,25 +645,40 @@ async function abrirModalDoacao(pedidoId) {
         console.error('Erro ao consultar endereço:', addrErr);
     }
 
-    // Use dados reais ou fallback
+    // Buscar nome do usuário na tabela usuario se user_nome for null
+    if (!nomeUsuario) {
+        try {
+            const { data: usuarioData, error: usuarioError } = await supabase
+                .from('usuario')
+                .select('nome')
+                .eq('id', pedidoData.user_id)
+                .single();
+            if (!usuarioError && usuarioData) {
+                nomeUsuario = usuarioData.nome;
+            }
+        } catch (usuarioErr) {
+            console.error('Erro ao carregar nome do usuário:', usuarioErr);
+        }
+    }
+
     const endereco = enderecoData ? {
-        nome: pedidoData.user_nome || 'Anônimo',
+        nome: nomeUsuario || 'Anônimo',
         cep: enderecoData.cep,
         rua: enderecoData.rua,
         numero: enderecoData.numero,
         complemento: enderecoData.complemento || '',
         bairro: enderecoData.bairro,
         cidade: enderecoData.cidade,
-        estado_endereco: enderecoData.estado_endereco || pedidoData.user_estado || 'N/A'
+        estado_endereco: enderecoData.estado_endereco
     } : {
-        nome: pedidoData.user_nome || 'Anônimo',
+        nome: nomeUsuario || 'Anônimo',
         cep: 'N/A',
         rua: 'N/A',
         numero: 'N/A',
         complemento: '',
         bairro: 'N/A',
         cidade: 'N/A',
-        estado_endereco: pedidoData.user_estado || 'N/A'
+        estado_endereco: 'N/A'
     };
 
     const modal = document.createElement('div');
