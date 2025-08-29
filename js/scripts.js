@@ -592,58 +592,79 @@ function realizarPesquisa() {
 }
 
 // Modal de doação
-function abrirModalDoacao(pedidoId) {
-    const pedido = pedidosCache.find(p => p.id === pedidoId);
-    if (!pedido) return;
-    
+async function abrirModalDoacao(pedidoId) {
+    let pedidoData;
+    try {
+        const { data, error } = await supabase
+            .from('pedido')
+            .select('id, titulo, user_id, endereco(*)')
+            .eq('id', pedidoId)
+            .single();
+        if (error || !data) throw error;
+        pedidoData = data;
+    } catch (err) {
+        console.error('Erro ao carregar pedido/endereço:', err);
+        alert('Erro ao carregar dados. Usando cache como fallback.');
+        pedidoData = pedidosCache.find(p => p.id === pedidoId); // Fallback cache
+        if (!pedidoData) return;
+    }
+    if (usuarioLogado && pedidoData.user_id === usuarioLogado.id) {
+        alert('Você não pode doar para seu próprio pedido.');
+        return;
+    }
+    const endereco = pedidoData.endereco || { nome: 'Anônimo', rua: 'N/A', numero: 'N/A', complemento: 'N/A', bairro: 'N/A', cidade: 'N/A', estado: pedidoData.user_estado || 'N/A', cep: 'N/A' };
     const modal = document.createElement('div');
     modal.className = 'modal-overlay';
     modal.innerHTML = `
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Doar para: ${pedido.titulo}</h3>
+                <h3>Doar para: ${pedidoData.titulo}</h3>
                 <button class="modal-close" onclick="fecharModal()">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="endereco-completo">
                     <h4>Endereço de entrega:</h4>
                     <div class="endereco-linha">
-                        <span>${pedido.endereco.nome}</span>
-                        <button onclick="copiarTexto('${pedido.endereco.nome}')">Copiar</button>
+                        <span>${endereco.nome}</span>
+                        <button onclick="copiarTexto('${endereco.nome}')">Copiar</button>
                     </div>
                     <div class="endereco-linha">
-                        <span>${pedido.endereco.rua}</span>
-                        <button onclick="copiarTexto('${pedido.endereco.rua}')">Copiar</button>
+                        <span>${endereco.rua}</span>
+                        <button onclick="copiarTexto('${endereco.rua}')">Copiar</button>
                     </div>
                     <div class="endereco-linha">
-                        <span>${pedido.endereco.bairro}</span>
-                        <button onclick="copiarTexto('${pedido.endereco.bairro}')">Copiar</button>
+                        <span>${endereco.numero} ${endereco.complemento ? '- ' + endereco.complemento : ''}</span>
+                        <button onclick="copiarTexto('${endereco.numero} ${endereco.complemento ? '- ' + endereco.complemento : ''}')">Copiar</button>
                     </div>
                     <div class="endereco-linha">
-                        <span>${pedido.endereco.cidade} - ${pedido.endereco.estado}</span>
-                        <button onclick="copiarTexto('${pedido.endereco.cidade} - ${pedido.endereco.estado}')">Copiar</button>
+                        <span>${endereco.bairro}</span>
+                        <button onclick="copiarTexto('${endereco.bairro}')">Copiar</button>
                     </div>
                     <div class="endereco-linha">
-                        <span>${pedido.endereco.cep}</span>
-                        <button onclick="copiarTexto('${pedido.endereco.cep}')">Copiar</button>
+                        <span>${endereco.cidade} - ${endereco.estado_endereco || endereco.estado}</span>
+                        <button onclick="copiarTexto('${endereco.cidade} - ${endereco.estado_endereco || endereco.estado}')">Copiar</button>
+                    </div>
+                    <div class="endereco-linha">
+                        <span>${endereco.cep}</span>
+                        <button onclick="copiarTexto('${endereco.cep}')">Copiar</button>
                     </div>
                 </div>
                 
                 <div class="form-group">
                     <label class="form-label">Código de rastreio *</label>
                     <input type="text" id="codigo-rastreio" class="form-input" 
-                           placeholder="Digite o código de rastreio (mín. 13 caracteres)" 
-                           minlength="13" required>
+                           placeholder="Digite o código de rastreio (exatamente 13 caracteres)" 
+                           maxlength="13" minlength="13" required>
                 </div>
                 
                 <div class="form-checkbox">
-                    <input type="checkbox" id="termos_doacao" required>
-                    <label for="termos_doacao">
+                    <input type="checkbox" id="aceito-responsabilidade" required>
+                    <label for="aceito-responsabilidade">
                         Concordo com as responsabilidades da doação
                     </label>
                 </div>
                 
-                <button class="btn btn-primary" onclick="confirmarDoacao(${pedidoId})">
+                <button class="btn btn-primary" onclick="confirmarDoacao('${pedidoId}')">
                     Confirmar Doação
                 </button>
             </div>
