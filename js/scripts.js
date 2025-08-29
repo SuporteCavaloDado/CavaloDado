@@ -1268,7 +1268,7 @@ async function mostrarPerfil(username) {
     // Buscar perfil
     const { data: profile, error } = await supabase
         .from('usuario')
-        .select('id, nome, estado, username')
+        .select('id, nome, estado, username, bio')
         .eq('username', username || usuarioLogado?.username)
         .single();
 
