@@ -878,34 +878,28 @@ async function atualizarInterface() {
             const { data: { user }, error: authError } = await supabase.auth.getUser();
             if (authError || !user) {
                 console.warn('Nenhum usuário logado para atualizar histórico');
+                alert('Faça login para visualizar o histórico.');
                 return;
             }
 
             console.log('Carregando histórico para usuário:', user.id);
             const { data: pedidosCriador, error: criadorError } = await supabase
-                .from('pedido')
-                .select(`
-                    id, 
-                    titulo, 
-                    status, 
-                    created_at,
-                    doacao:c_doacao (codigo_rastreio)
-                `)
-                .eq('user_id', user.id)
-                .order('created_at', { ascending: false });
+                .rpc('get_pedidos_with_latest_doacao', { user_id_param: user.id });
             if (criadorError) {
                 console.error('Erro ao carregar pedidos do criador:', criadorError);
                 throw criadorError;
             }
 
+            console.log('Pedidos carregados:', JSON.stringify(pedidosCriador, null, 2));
+
             const historico = document.getElementById('historico-pedidos'); // Ajuste o ID
             if (historico) {
-                console.log('Renderizando histórico:', pedidosCriador);
                 historico.innerHTML = '';
                 pedidosCriador.forEach(pedido => {
-                    const codigoRastreio = pedido.doacao && pedido.doacao.length > 0 
-                        ? pedido.doacao[0].codigo_rastreio 
+                    const codigoRastreio = pedido.codigo_rastreio 
+                        ? pedido.codigo_rastreio 
                         : 'Nenhum código registrado';
+                    console.log(`Renderizando pedido ${pedido.id} com código de rastreio: ${codigoRastreio}`);
                     const item = document.createElement('div');
                     item.className = 'historico-item';
                     item.innerHTML = `
@@ -917,13 +911,15 @@ async function atualizarInterface() {
                     historico.appendChild(item);
                 });
             } else {
-                console.warn('Elemento historico-pedidos não encontrado');
+                console.error('Elemento historico-pedidos não encontrado');
+                alert('Erro: elemento historico-pedidos não encontrado no HTML.');
             }
         } catch (authErr) {
             console.warn('Erro ao verificar usuário para histórico:', authErr);
         }
     } catch (err) {
         console.error('Erro ao atualizar interface:', err);
+        alert('Erro ao carregar o histórico. Verifique o console.');
     }
 }
 
