@@ -596,8 +596,8 @@ async function abrirModalDoacao(pedidoId) {
     let pedidoData;
     try {
         const { data, error } = await supabase
-            .from('pedido')
-            .select('id, titulo, user_id, user_nome, user_estado, endereco(id, cep, rua, numero, complemento, bairro, cidade, estado_endereco)')
+            .from('pedido, endereco')
+            .select('id, titulo, user_id, nome, estado, id, cep, rua, numero, complemento, bairro, cidade, estado_endereco')
             .eq('id', pedidoId)
             .single();
         if (error || !data) throw error;
