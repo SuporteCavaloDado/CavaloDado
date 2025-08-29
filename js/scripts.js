@@ -626,46 +626,68 @@ async function abrirModalDoacao(pedidoId) {
         return;
     }
 
-    // Buscar endereço diretamente via usuario_id do criador
+    // Buscar endereço: primeiro via endereco_id, depois via usuario_id
     let enderecoData = null;
     let nomeUsuario = pedidoData.user_nome;
     let estadoFallback = 'N/A';
-    try {
-        const { data: addrData, error: addrError } = await supabase
-            .from('endereco')
-            .select('id, cep, rua, numero, complemento, bairro, cidade, estado_endereco')
-            .eq('usuario_id', pedidoData.user_id)
-            .order('created_at', { ascending: false }) // Pegar o mais recente
-            .limit(1)
-            .single();
-        if (!addrError && addrData) {
-            enderecoData = addrData;
-            console.log('Endereço encontrado:', enderecoData); // Depuração
-            // Vincular se não estiver ligado
-            if (!pedidoData.endereco_id) {
-                try {
-                    const { error: updateError } = await supabase
-                        .from('pedido')
-                        .update({ endereco_id: addrData.id })
-                        .eq('id', pedidoId);
-                    if (updateError) throw updateError;
-                    console.log('Endereço vinculado ao pedido com sucesso.');
-                } catch (updateErr) {
-                    console.error('Erro ao vincular endereço ao pedido:', updateErr);
-                    alert('Erro ao vincular endereço ao pedido.');
-                }
+
+    // Tentar via endereco_id se disponível
+    if (pedidoData.endereco_id) {
+        try {
+            const { data: addrData, error: addrError } = await supabase
+                .from('endereco')
+                .select('id, cep, rua, numero, complemento, bairro, cidade, estado_endereco')
+                .eq('id', pedidoData.endereco_id)
+                .maybeSingle(); // Evita erro com múltiplos resultados
+            if (!addrError && addrData) {
+                enderecoData = addrData;
+                console.log('Endereço via endereco_id:', enderecoData);
+            } else {
+                console.warn('Nenhum endereço encontrado via endereco_id:', addrError);
             }
-        } else {
-            console.error('Nenhum endereço encontrado:', addrError);
-            alert('O criador do pedido não possui endereço cadastrado. Peça para cadastrar em Configurações.');
+        } catch (addrErr) {
+            console.error('Erro ao consultar endereço via endereco_id:', addrErr);
         }
-    } catch (addrErr) {
-        console.error('Erro ao consultar endereço:', addrErr);
-        alert('Erro ao consultar endereço. Verifique o banco de dados.');
+    }
+
+    // Fallback para usuario_id se endereco_id não retornar
+    if (!enderecoData) {
+        try {
+            const { data: addrData, error: addrError } = await supabase
+                .from('endereco')
+                .select('id, cep, rua, numero, complemento, bairro, cidade, estado_endereco')
+                .eq('usuario_id', pedidoData.user_id)
+                .order('created_at', { ascending: false }) // Pegar o mais recente
+                .limit(1)
+                .maybeSingle();
+            if (!addrError && addrData) {
+                enderecoData = addrData;
+                console.log('Endereço via usuario_id:', enderecoData);
+                // Vincular ao pedido se não estiver vinculado
+                if (!pedidoData.endereco_id && addrData.id) {
+                    try {
+                        const { error: updateError } = await supabase
+                            .from('pedido')
+                            .update({ endereco_id: addrData.id })
+                            .eq('id', pedidoId);
+                        if (updateError) throw updateError;
+                        console.log('Endereço vinculado ao pedido com sucesso.');
+                    } catch (updateErr) {
+                        console.error('Erro ao vincular endereço:', updateErr);
+                    }
+                }
+            } else {
+                console.error('Nenhum endereço encontrado via usuario_id:', addrError);
+                alert('O criador do pedido não possui endereço cadastrado. Peça para cadastrar em Configurações.');
+            }
+        } catch (addrErr) {
+            console.error('Erro ao consultar endereço via usuario_id:', addrErr);
+            alert('Erro ao consultar endereço. Verifique as permissões do banco.');
+        }
     }
 
     // Buscar nome e estado na tabela usuario se necessário
-    if (!nomeUsuario || estadoFallback === 'N/A') {
+    if (!nomeUsuario || !enderecoData) {
         try {
             const { data: usuarioData, error: usuarioError } = await supabase
                 .from('usuario')
@@ -675,7 +697,7 @@ async function abrirModalDoacao(pedidoId) {
             if (!usuarioError && usuarioData) {
                 nomeUsuario = nomeUsuario || usuarioData.nome;
                 estadoFallback = usuarioData.estado || 'N/A';
-                console.log('Dados do usuário:', usuarioData); // Depuração
+                console.log('Dados do usuário:', usuarioData);
             }
         } catch (usuarioErr) {
             console.error('Erro ao carregar dados do usuário:', usuarioErr);
