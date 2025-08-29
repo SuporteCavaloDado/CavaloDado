@@ -853,6 +853,78 @@ async function confirmarDoacao(pedidoId) {
     }
 }
 
+// Atualizar Interface
+async function atualizarInterface() {
+    try {
+        // Carregar todos os pedidos, independentemente do status
+        const { data: pedidos, error } = await supabase
+            .from('pedido')
+            .select('id, titulo, user_id, user_nome, status, categoria, descricao, foto_url, created_at')
+            .order('created_at', { ascending: false });
+        if (error) throw error;
+
+        const listaPedidos = document.getElementById('lista-pedidos'); // Ajuste o ID
+        if (listaPedidos) {
+            listaPedidos.innerHTML = '';
+            pedidos.forEach(pedido => {
+                const item = document.createElement('div');
+                item.className = 'pedido-item';
+                item.innerHTML = `
+                    <h3>${pedido.titulo}</h3>
+                    <p>Criador: ${pedido.user_nome || 'Anônimo'}</p>
+                    <p>Status: ${pedido.status}</p>
+                    <button onclick="abrirModalDoacao('${pedido.id}')" 
+                            ${pedido.status !== 'Disponível' ? 'disabled' : ''}>Doar</button>
+                `;
+                listaPedidos.appendChild(item);
+            });
+        }
+
+        // Atualizar histórico do criador
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                const { data: pedidosCriador, error: criadorError } = await supabase
+                    .from('pedido')
+                    .select(`
+                        id, 
+                        titulo, 
+                        status, 
+                        created_at,
+                        doacao:c_doacao (codigo_rastreio)
+                    `)
+                    .eq('user_id', user.id)
+                    .order('created_at', { ascending: false });
+                if (criadorError) throw criadorError;
+
+                const historico = document.getElementById('historico-pedidos'); // Ajuste o ID
+                if (historico) {
+                    historico.innerHTML = '';
+                    pedidosCriador.forEach(pedido => {
+                        const codigoRastreio = pedido.doacao && pedido.doacao.length > 0 
+                            ? pedido.doacao[0].codigo_rastreio 
+                            : 'Nenhum código registrado';
+                        const item = document.createElement('div');
+                        item.className = 'historico-item';
+                        item.innerHTML = `
+                            <h3>${pedido.titulo}</h3>
+                            <p>Status: ${pedido.status}</p>
+                            <p>Código de Rastreio: ${codigoRastreio}</p>
+                            <p>Criado em: ${new Date(pedido.created_at).toLocaleDateString()}</p>
+                        `;
+                        historico.appendChild(item);
+                    });
+                }
+            }
+        } catch (authErr) {
+            console.warn('Nenhum usuário logado para atualizar histórico:', authErr);
+        }
+    } catch (err) {
+        console.error('Erro ao atualizar interface:', err);
+    }
+}
+
+// Copiar Texto
 function copiarTexto(texto) {
     navigator.clipboard.writeText(texto).then(() => {
         alert('Texto copiado!');
