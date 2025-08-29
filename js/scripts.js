@@ -1259,11 +1259,13 @@ async function mostrarPerfil(username) {
         return;
     }
 
+    // Usar cache se disponível
     if (profileCache && profileCache.username === username) {
         renderPerfil(content, profileCache);
         return;
     }
 
+    // Buscar perfil
     const { data: profile, error } = await supabase
         .from('usuario')
         .select('id, nome, estado, username, bio')
@@ -1276,12 +1278,7 @@ async function mostrarPerfil(username) {
         return;
     }
 
-    // Para o próprio usuário, sincronizar bio de usuarioLogado
-    if (username === usuarioLogado?.username) {
-        profile.bio = usuarioLogado.bio || profile.bio || 'Sem bio disponível';
-    }
-
-    profileCache = profile;
+    profileCache = profile; // Armazenar no cache
     renderPerfil(content, profile);
 }
 
