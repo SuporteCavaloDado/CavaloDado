@@ -787,15 +787,19 @@ async function abrirModalDoacao(pedidoId) {
 
 // Confirmar Doação
 async function confirmarDoacao(pedidoId) {
-    const codigoRastreio = document.getElementById('codigo-rastreio').value;
-    const termosAceitos = document.getElementById('aceito-responsabilidade').checked;
+    const codigoRastreio = document.getElementById('codigo_rastreio').value;
+    const termosAceitos = document.getElementById('termos_doacao').checked;
+
+    console.log('Iniciando confirmarDoacao para pedido:', pedidoId);
 
     // Validação do input
     if (!codigoRastreio || codigoRastreio.length !== 13) {
+        console.error('Validação falhou: código de rastreio inválido:', codigoRastreio);
         alert('O código de rastreio deve ter exatamente 13 caracteres.');
         return;
     }
     if (!termosAceitos) {
+        console.error('Validação falhou: termos não aceitos');
         alert('Você precisa aceitar as responsabilidades da doação.');
         return;
     }
@@ -808,12 +812,15 @@ async function confirmarDoacao(pedidoId) {
             if (!authError && user) {
                 doadorId = user.id;
                 console.log('Usuário logado:', doadorId);
+            } else {
+                console.log('Prosseguindo como anônimo');
             }
         } catch (authErr) {
             console.warn('Nenhum usuário logado, prosseguindo como anônimo:', authErr);
         }
 
         // Inserir doação
+        console.log('Inserindo doação:', { pedido_id: pedidoId, doador_id: doadorId, codigo_rastreio: codigoRastreio });
         const doacaoData = {
             pedido_id: pedidoId,
             doador_id: doadorId, // null se não logado
@@ -826,27 +833,37 @@ async function confirmarDoacao(pedidoId) {
             .insert([doacaoData])
             .select()
             .single();
-        if (doacaoError) throw doacaoError;
+        if (doacaoError) {
+            console.error('Erro ao inserir doação:', doacaoError);
+            throw new Error(`Falha ao salvar doação: ${doacaoError.message}`);
+        }
 
         // Atualizar status do pedido para Pendente
-        const { error: updateError } = await supabase
+        console.log('Atualizando status do pedido:', pedidoId);
+        const { data: updateData, error: updateError } = await supabase
             .from('pedido')
             .update({ status: 'Pendente' })
-            .eq('id', pedidoId);
-        if (updateError) throw updateError;
+            .eq('id', pedidoId)
+            .select();
+        if (updateError) {
+            console.error('Erro ao atualizar status do pedido:', updateError);
+            throw new Error(`Falha ao atualizar status: ${updateError.message}`);
+        }
 
-        console.log('Doação salva:', doacao);
-        console.log('Status do pedido atualizado para Pendente');
+        console.log('Doação salva com sucesso:', doacao);
+        console.log('Status do pedido atualizado:', updateData);
         alert('Doação confirmada com sucesso! Código: ' + codigoRastreio);
 
         // Recarregar interface
         if (typeof atualizarInterface === 'function') {
-            await atualizarInterface(); // Recarrega index e histórico
+            console.log('Atualizando interface...');
+            await atualizarInterface();
         } else {
-            window.location.reload(); // Fallback
+            console.log('Recarregando página como fallback');
+            window.location.reload();
         }
 
-        fecharModal(); // Fechar o modal
+        fecharModal();
     } catch (err) {
         console.error('Erro ao confirmar doação:', err);
         alert(`Erro ao confirmar doação: ${err.message}. Verifique as permissões no Supabase.`);
