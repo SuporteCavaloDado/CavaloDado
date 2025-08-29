@@ -849,7 +849,7 @@ async function confirmarDoacao(pedidoId) {
         fecharModal(); // Fechar o modal
     } catch (err) {
         console.error('Erro ao confirmar doação:', err);
-        alert('Erro ao confirmar doação. Verifique o console para detalhes.');
+        alert(`Erro ao confirmar doação: ${err.message}. Verifique as permissões no Supabase.`);
     }
 }
 
