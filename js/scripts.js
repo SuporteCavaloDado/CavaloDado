@@ -653,30 +653,37 @@ function abrirModalDoacao(pedidoId) {
     document.body.appendChild(modal);
 }
 
-function confirmarDoacao(pedidoId) {
+// Confirmar Doação
+async function confirmarDoacao(pedidoId) {
     const codigo = document.getElementById('codigo-rastreio').value;
     const aceito = document.getElementById('aceito-responsabilidade').checked;
-    
-    if (!codigo || codigo.length < 13) {
-        alert('Código de rastreio deve ter pelo menos 13 caracteres');
-        return;
+    if (!codigo || codigo.length < 13) { alert('Código de rastreio deve ter pelo menos 13 caracteres'); return; }
+    if (!aceito) { alert('Você deve concordar com as responsabilidades'); return; }
+    try {
+        const doacaoData = {
+            pedido_id: pedidoId,
+            codigo_rastreio: codigo,
+            termos_doacao: aceito
+        };
+        if (usuarioLogado) {
+            doacaoData.doador_id = usuarioLogado.id;  // Armazena apenas se logado
+        }  // Senão, doador_id será NULL implicitamente
+        const { error: doacaoError } = await supabase.from('doacao').insert(doacaoData);
+        if (doacaoError) throw doacaoError;
+        const { error: pedidoError } = await supabase.from('pedido').update({
+            status: 'Pendente',
+            codigo_rastreio: codigo
+        }).eq('id', pedidoId);
+        if (pedidoError) throw pedidoError;
+        // Atualiza cache local (se existir)
+        const pedido = pedidosCache.find(p => p.id === pedidoId);
+        if (pedido) { pedido.status = 'Pendente'; pedido.codigo_rastreio = codigo; }
+        alert('Doação confirmada! O criador foi notificado.');  // Simula notificação (futuro: email)
+        fecharModal();
+        renderizarFeed(pedidosCache);
+    } catch (error) {
+        alert('Erro ao finalizar doação: ' + error.message);
     }
-    
-    if (!aceito) {
-        alert('Você deve concordar com as responsabilidades');
-        return;
-    }
-    
-    // Atualizar status do pedido
-    const pedido = pedidosCache.find(p => p.id === pedidoId);
-    if (pedido) {
-        pedido.status = 'Pendente';
-        pedido.codigoRastreio = codigo;
-    }
-    
-    alert('Doação confirmada! Obrigado por ajudar.');
-    fecharModal();
-    renderizarFeed(pedidosCache);
 }
 
 function copiarTexto(texto) {
