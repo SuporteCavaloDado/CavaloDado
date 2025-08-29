@@ -597,7 +597,7 @@ async function abrirModalDoacao(pedidoId) {
     try {
         const { data, error } = await supabase
             .from('pedido')
-            .select('id, titulo, user_id, user_nome, endereco(id, cep, rua, numero, complemento, bairro, cidade, estado_endereco)')
+            .select('id, titulo, user_id, user_nome, user_estado, endereco(id, cep, rua, numero, complemento, bairro, cidade, estado_endereco)')
             .eq('id', pedidoId)
             .single();
         if (error || !data) throw error;
@@ -612,8 +612,8 @@ async function abrirModalDoacao(pedidoId) {
         alert('Você não pode doar para seu próprio pedido.');
         return;
     }
-    const endereco = {
-        nome: pedidoData.user_nome,
+    const endereco = pedidoData.endereco ? {
+        nome: pedidoData.user_nome || 'Anônimo',
         cep: pedidoData.endereco.cep,
         rua: pedidoData.endereco.rua,
         numero: pedidoData.endereco.numero,
@@ -621,6 +621,15 @@ async function abrirModalDoacao(pedidoId) {
         bairro: pedidoData.endereco.bairro,
         cidade: pedidoData.endereco.cidade,
         estado_endereco: pedidoData.endereco.estado_endereco
+    } : {
+        nome: pedidoData.user_nome || 'Anônimo',
+        cep: 'N/A',
+        rua: 'N/A',
+        numero: 'N/A',
+        complemento: '',
+        bairro: 'N/A',
+        cidade: 'N/A',
+        estado_endereco: pedidoData.user_estado || 'N/A'
     };
     const modal = document.createElement('div');
     modal.className = 'modal-overlay';
