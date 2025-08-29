@@ -597,7 +597,7 @@ async function abrirModalDoacao(pedidoId) {
     try {
         const { data, error } = await supabase
             .from('pedido')
-            .select('id, titulo, user_id, endereco(*)')
+            .select('id, titulo, user_id, user_nome, endereco(id, cep, rua, numero, complemento, bairro, cidade, estado_endereco)')
             .eq('id', pedidoId)
             .single();
         if (error || !data) throw error;
@@ -612,7 +612,16 @@ async function abrirModalDoacao(pedidoId) {
         alert('Você não pode doar para seu próprio pedido.');
         return;
     }
-    const endereco = pedidoData.endereco || { nome: 'Anônimo', rua: 'N/A', numero: 'N/A', complemento: 'N/A', bairro: 'N/A', cidade: 'N/A', estado: pedidoData.user_estado || 'N/A', cep: 'N/A' };
+    const endereco = {
+        nome: pedidoData.user_nome,
+        cep: pedidoData.endereco.cep,
+        rua: pedidoData.endereco.rua,
+        numero: pedidoData.endereco.numero,
+        complemento: pedidoData.endereco.complemento || '',
+        bairro: pedidoData.endereco.bairro,
+        cidade: pedidoData.endereco.cidade,
+        estado_endereco: pedidoData.endereco.estado_endereco
+    };
     const modal = document.createElement('div');
     modal.className = 'modal-overlay';
     modal.innerHTML = `
@@ -633,16 +642,16 @@ async function abrirModalDoacao(pedidoId) {
                         <button onclick="copiarTexto('${endereco.rua}')">Copiar</button>
                     </div>
                     <div class="endereco-linha">
-                        <span>${endereco.numero} ${endereco.complemento ? '- ' + endereco.complemento : ''}</span>
-                        <button onclick="copiarTexto('${endereco.numero} ${endereco.complemento ? '- ' + endereco.complemento : ''}')">Copiar</button>
+                        <span>${endereco.numero}${endereco.complemento ? ' - ' + endereco.complemento : ''}</span>
+                        <button onclick="copiarTexto('${endereco.numero}${endereco.complemento ? ' - ' + endereco.complemento : ''}')">Copiar</button>
                     </div>
                     <div class="endereco-linha">
                         <span>${endereco.bairro}</span>
                         <button onclick="copiarTexto('${endereco.bairro}')">Copiar</button>
                     </div>
                     <div class="endereco-linha">
-                        <span>${endereco.cidade} - ${endereco.estado_endereco || endereco.estado}</span>
-                        <button onclick="copiarTexto('${endereco.cidade} - ${endereco.estado_endereco || endereco.estado}')">Copiar</button>
+                        <span>${endereco.cidade} - ${endereco.estado_endereco}</span>
+                        <button onclick="copiarTexto('${endereco.cidade} - ${endereco.estado_endereco}')">Copiar</button>
                     </div>
                     <div class="endereco-linha">
                         <span>${endereco.cep}</span>
