@@ -51,25 +51,21 @@ function atualizarMenuLogado() {
     const menuItems = document.querySelector('.menu-items');
     if (!menuItems) return;
     
-    const username = usuarioLogado?.username || '';
-    
     if (usuarioLogado) {
         menuItems.innerHTML = `
-            <a href="/index.html" class="menu-item">Início</a>
-            <a href="/dashboard.html/${username}" class="menu-item" onclick="navigateTo('perfil', '${username}'); return false;">Perfil</a>
-            <a href="/dashboard.html/${username}/favoritos" class="menu-item" onclick="navigateTo('favoritos', '${username}'); return false;">Favoritos</a>
-            <a href="/dashboard.html/historico" class="menu-item" onclick="navigateTo('historico', '${username}'); return false;">Histórico</a>
-            <a href="/new-request.html" class="menu-item">Novo Pedido</a>
-            <a href="/config.html" class="menu-item" onclick="window.location.href='/config.html'; return false;">Configurações</a>
-            <a href="/regras.html" class="menu-item">Termos e Regras</a>
+            <a href="index.html" class="menu-item">Início</a>
+            <a href="dashboard.html" class="menu-item">Perfil</a>
+            <a href="new-request.html" class="menu-item">Novo Pedido</a>
+            <a href="config.html" class="menu-item">Configurações</a>
+            <a href="regras.html" class="menu-item">Termos e Regras</a>
             <a href="javascript:void(0)" class="menu-item" onclick="logout()">Sair</a>
         `;
     } else {
         menuItems.innerHTML = `
-            <a href="/index.html" class="menu-item">Início</a>
-            <a href="/login.html" class="menu-item">Entrar</a>
-            <a href="/register.html" class="menu-item">Cadastrar</a>
-            <a href="/regras.html" class="menu-item">Termos e Regras</a>
+            <a href="index.html" class="menu-item">Início</a>
+            <a href="login.html" class="menu-item">Entrar</a>
+            <a href="register.html" class="menu-item">Cadastrar</a>
+            <a href="regras.html" class="menu-item">Termos e Regras</a>
         `;
     }
 }
