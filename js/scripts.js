@@ -602,8 +602,20 @@ function realizarPesquisa() {
 // Modal de doação
 function abrirModalDoacao(pedidoId) {
     const pedido = pedidosCache.find(p => p.id === pedidoId);
-    if (!pedido) return;
-    
+    if (!pedido) {
+        alert('Pedido não encontrado.');
+        return;
+    }
+    if (usuarioLogado && pedido.user_id === usuarioLogado.id) {
+        alert('Você não pode doar para si mesmo.');
+        return;
+    }
+    // Verifica se endereço está completo
+    const endereco = pedido.endereco || {};
+    if (!endereco.cep || !endereco.rua || !endereco.bairro || !endereco.cidade || !endereco.estado_endereco) {
+        alert('Endereço incompleto para este pedido. Contate o criador do pedido.');
+        return;
+    }
     const modal = document.createElement('div');
     modal.className = 'modal-overlay';
     modal.innerHTML = `
@@ -616,48 +628,50 @@ function abrirModalDoacao(pedidoId) {
                 <div class="endereco-completo">
                     <h4>Endereço de entrega:</h4>
                     <div class="endereco-linha">
-                        <span>${pedido.endereco.nome}</span>
-                        <button onclick="copiarTexto('${pedido.endereco.nome}')">Copiar</button>
+                        <span>${pedido.endereco.nome || 'Anônimo'}</span>
+                        <button onclick="copiarTexto('${pedido.endereco.nome || 'Anônimo'}')">Copiar</button>
                     </div>
                     <div class="endereco-linha">
-                        <span>${pedido.endereco.rua}</span>
-                        <button onclick="copiarTexto('${pedido.endereco.rua}')">Copiar</button>
+                        <span>${pedido.endereco.rua || 'N/A'}</span>
+                        <button onclick="copiarTexto('${pedido.endereco.rua || 'N/A'}')">Copiar</button>
                     </div>
                     <div class="endereco-linha">
-                        <span>${pedido.endereco.bairro}</span>
-                        <button onclick="copiarTexto('${pedido.endereco.bairro}')">Copiar</button>
+                        <span>${pedido.endereco.bairro || 'N/A'}</span>
+                        <button onclick="copiarTexto('${pedido.endereco.bairro || 'N/A'}')">Copiar</button>
                     </div>
                     <div class="endereco-linha">
-                        <span>${pedido.endereco.cidade} - ${pedido.endereco.estado}</span>
-                        <button onclick="copiarTexto('${pedido.endereco.cidade} - ${pedido.endereco.estado}')">Copiar</button>
+                        <span>${pedido.endereco.cidade || 'N/A'} - ${pedido.endereco.estado || 'N/A'}</span>
+                        <button onclick="copiarTexto('${pedido.endereco.cidade || 'N/A'} - ${pedido.endereco.estado || 'N/A'}')">Copiar</button>
                     </div>
                     <div class="endereco-linha">
-                        <span>${pedido.endereco.cep}</span>
-                        <button onclick="copiarTexto('${pedido.endereco.cep}')">Copiar</button>
+                        <span>${pedido.endereco.cep || 'N/A'}</span>
+                        <button onclick="copiarTexto('${pedido.endereco.cep || 'N/A'}')">Copiar</button>
                     </div>
+                    ${pedido.endereco.complemento ? `
+                        <div class="endereco-linha">
+                            <span>Complemento: ${pedido.endereco.complemento}</span>
+                            <button onclick="copiarTexto('${pedido.endereco.complemento}')">Copiar</button>
+                        </div>
+                    ` : ''}
                 </div>
-                
                 <div class="form-group">
                     <label class="form-label">Código de rastreio *</label>
                     <input type="text" id="codigo-rastreio" class="form-input" 
                            placeholder="Digite o código de rastreio (mín. 13 caracteres)" 
                            minlength="13" required>
                 </div>
-                
                 <div class="form-checkbox">
                     <input type="checkbox" id="aceito-responsabilidade" required>
                     <label for="aceito-responsabilidade">
                         Concordo com as responsabilidades da doação
                     </label>
                 </div>
-                
-                <button class="btn btn-primary" onclick="confirmarDoacao(${pedidoId})">
+                <button class="btn btn-primary" onclick="confirmarDoacao('${pedidoId}')">
                     Confirmar Doação
                 </button>
             </div>
         </div>
     `;
-    
     document.body.appendChild(modal);
 }
 
