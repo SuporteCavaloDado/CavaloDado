@@ -608,19 +608,49 @@ async function abrirModalDoacao(pedidoId) {
         pedidoData = pedidosCache.find(p => p.id === pedidoId); // Fallback cache
         if (!pedidoData) return;
     }
+
+    // Carregar usuarioLogado de forma segura se não estiver definido
+    if (typeof usuarioLogado === 'undefined' || !usuarioLogado) {
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            usuarioLogado = user;
+        } catch (authErr) {
+            console.error('Erro ao carregar usuário logado:', authErr);
+            usuarioLogado = null; // Prosseguir sem usuário logado
+        }
+    }
+
     if (usuarioLogado && pedidoData.user_id === usuarioLogado.id) {
         alert('Você não pode doar para seu próprio pedido.');
         return;
     }
-    const endereco = pedidoData.endereco ? {
+
+    // Query separada para endereço se a expansão falhar ou for null
+    let enderecoData = pedidoData.endereco;
+    if (!enderecoData && pedidoData.endereco_id) {
+        try {
+            const { data: addrData, error: addrError } = await supabase
+                .from('endereco')
+                .select('cep, rua, numero, complemento, bairro, cidade, estado_endereco')
+                .eq('id', pedidoData.endereco_id)
+                .single();
+            if (!addrError && addrData) {
+                enderecoData = addrData;
+            }
+        } catch (addrErr) {
+            console.error('Erro ao carregar endereço separadamente:', addrErr);
+        }
+    }
+
+    const endereco = enderecoData ? {
         nome: pedidoData.user_nome || 'Anônimo',
-        cep: pedidoData.endereco.cep,
-        rua: pedidoData.endereco.rua,
-        numero: pedidoData.endereco.numero,
-        complemento: pedidoData.endereco.complemento || '',
-        bairro: pedidoData.endereco.bairro,
-        cidade: pedidoData.endereco.cidade,
-        estado_endereco: pedidoData.endereco.estado_endereco
+        cep: enderecoData.cep || 'N/A',
+        rua: enderecoData.rua || 'N/A',
+        numero: enderecoData.numero || 'N/A',
+        complemento: enderecoData.complemento || '',
+        bairro: enderecoData.bairro || 'N/A',
+        cidade: enderecoData.cidade || 'N/A',
+        estado_endereco: enderecoData.estado_endereco || pedidoData.user_estado || 'N/A'
     } : {
         nome: pedidoData.user_nome || 'Anônimo',
         cep: 'N/A',
@@ -631,6 +661,7 @@ async function abrirModalDoacao(pedidoId) {
         cidade: 'N/A',
         estado_endereco: pedidoData.user_estado || 'N/A'
     };
+
     const modal = document.createElement('div');
     modal.className = 'modal-overlay';
     modal.innerHTML = `
