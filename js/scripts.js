@@ -1358,19 +1358,31 @@ async function criarPedido(e) {
     
     const fotoUrl = `${SUPABASE_URL}/storage/v1/object/public/pedidos/${fileName}`;
     
-    // Inserir pedido no Supabase
+// Buscar endereço do usuário
+const { data: endereco, error: enderecoError } = await supabase
+    .from('endereco')
+    .select('id')
+    .eq('usuario_id', usuarioLogado.id)
+    .single();
+if (enderecoError || !endereco) {
+    alert('Nenhum endereço cadastrado. Configure seu endereço primeiro.');
+    window.location.href = 'config.html';
+    return;
+}
+// Inserir pedido no Supabase
 const { error } = await supabase
     .from('pedido')
     .insert({
         user_id: usuarioLogado.id,
+        endereco_id: endereco.id, // Associar endereço
         titulo,
         categoria,
         descricao,
         foto_url: fotoUrl,
         termos_pedido: termos,
         status: STATUS_PEDIDOS.DISPONIVEL,
-        user_nome: usuarioLogado.nome || 'Anônimo',  // CORRIGIDO: Salva nome do usuário
-        user_estado: usuarioLogado.estado || 'N/A'  // CORRIGIDO: Salva estado do usuário
+        user_nome: usuarioLogado.nome || 'Anônimo',
+        user_estado: usuarioLogado.estado || 'N/A'
     });
     
     if (error) {
