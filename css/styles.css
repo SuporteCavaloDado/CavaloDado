@@ -676,6 +676,11 @@ body {
             background: #E6C200;
         }
 
+.codigo-rastreio {
+    font-weight: bold;
+    color: #333;
+}
+
 /* Historico Tabela */
 .historico-table { width: 100%; border-collapse: collapse; }
 .historico-table td, .historico-table th { padding: 0.5rem; border-bottom: 1px solid #eee; }
