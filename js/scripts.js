@@ -1259,26 +1259,45 @@ async function mostrarPerfil(username) {
         return;
     }
 
-    // Usar cache se disponível
     if (profileCache && profileCache.username === username) {
         renderPerfil(content, profileCache);
         return;
     }
 
-    // Buscar perfil
-    const { data: profile, error } = await supabase
-        .from('usuario')
-        .select('id, nome, estado, username, bio')
-        .eq('username', username || usuarioLogado?.username)
-        .single();
-
-    if (error || !profile) {
-        console.error('Erro ao carregar perfil:', error);
-        content.innerHTML = '<p>Erro ao carregar perfil ou usuário não encontrado.</p>';
-        return;
+    let profile;
+    if (username === usuarioLogado?.username) {
+        // Próprio usuário: buscar bio de user_metadata (como index.html)
+        const { data: { user }, error } = await supabase.auth.getUser();
+        if (error || !user) {
+            console.error('Erro ao carregar user_metadata:', error);
+            content.innerHTML = '<p>Erro ao carregar perfil.</p>';
+            return;
+        }
+        profile = {
+            id: user.id,
+            nome: user.user_metadata.nome || 'Anônimo',
+            estado: user.user_metadata.estado || 'N/A',
+            username: user.user_metadata.username || 'N/A',
+            bio: user.user_metadata.bio || 'Sem bio disponível'
+        };
+        console.log('Perfil do próprio usuário:', profile);
+    } else {
+        // Outro usuário: consultar tabela usuario
+        const { data, error } = await supabase
+            .from('usuario')
+            .select('id, nome, estado, username, bio')
+            .eq('username', username)
+            .single();
+        if (error || !data) {
+            console.error('Erro ao carregar perfil:', error);
+            content.innerHTML = '<p>Erro ao carregar perfil ou usuário não encontrado.</p>';
+            return;
+        }
+        profile = data;
+        console.log('Perfil de outro usuário:', profile);
     }
 
-    profileCache = profile; // Armazenar no cache
+    profileCache = profile;
     renderPerfil(content, profile);
 }
 
