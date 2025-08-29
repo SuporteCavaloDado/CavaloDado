@@ -393,6 +393,13 @@ function inicializarFeed() {
 // ... Código original de scripts.js (mantido, apenas trechos alterados abaixo) ...
 
 async function carregarPedidos() {
+    // Verificar se STATUS_PEDIDOS está definido
+    if (!STATUS_PEDIDOS || !STATUS_PEDIDOS.DISPONIVEL) {
+        console.error('STATUS_PEDIDOS.DISPONIVEL não definido');
+        alert('Erro de configuração: Status de pedidos não definido.');
+        return;
+    }
+
     const { data: pedidos, error } = await supabase
         .from('pedido')
         .select(`
@@ -408,7 +415,7 @@ async function carregarPedidos() {
             user_estado,
             endereco (cep, rua, numero, complemento, bairro, cidade, estado_endereco)
         `)
-        .eq('status', STATUS_PEDIDOS.DISPONIVEL)
+        .eq('status', STATUS_PEDIDOS.DISPONIVEL) // Corrigido: DISPONIVEL
         .order('created_at', { ascending: false });
 
     if (error) {
