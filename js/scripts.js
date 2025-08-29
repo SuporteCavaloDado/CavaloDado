@@ -390,6 +390,8 @@ function inicializarFeed() {
 }
 
 // Carregar Pedidos
+// ... Código original de scripts.js (mantido, apenas trechos alterados abaixo) ...
+
 async function carregarPedidos() {
     const { data: pedidos, error } = await supabase
         .from('pedido')
@@ -416,7 +418,7 @@ async function carregarPedidos() {
     }
 
     pedidosCache = pedidos.map(pedido => {
-        console.log('Dados do pedido:', pedido); // Debug: Verificar dados retornados
+        console.log('Dados do pedido:', { id: pedido.id, endereco: pedido.endereco }); // Debug
         const endereco = pedido.endereco || {};
         return {
             id: pedido.id,
@@ -441,10 +443,196 @@ async function carregarPedidos() {
         };
     });
 
-    console.log('Pedidos cacheados:', pedidosCache); // Debug: Verificar cache final
+    console.log('Pedidos cacheados:', pedidosCache); // Debug
     renderizarFeed(pedidosCache);
 }
 
+function abrirModalDoacao(pedidoId) {
+    const pedido = pedidosCache.find(p => p.id === pedidoId);
+    if (!pedido) {
+        alert('Pedido não encontrado.');
+        return;
+    }
+    if (usuarioLogado && pedido.user_id === usuarioLogado.id) {
+        alert('Você não pode doar para si mesmo.');
+        return;
+    }
+    const endereco = pedido.endereco || {};
+    if (!endereco.cep || !endereco.rua || !endereco.bairro || !endereco.cidade || !endereco.estado_endereco) {
+        alert('Endereço incompleto para este pedido. Contate o criador do pedido.');
+        return;
+    }
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Doar para: ${pedido.titulo}</h3>
+                <button class="modal-close" onclick="fecharModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="endereco-completo">
+                    <h4>Endereço de entrega:</h4>
+                    <div class="endereco-linha">
+                        <span>${pedido.endereco.nome || 'Anônimo'}</span>
+                        <button onclick="copiarTexto('${pedido.endereco.nome || 'Anônimo'}')">Copiar</button>
+                    </div>
+                    <div class="endereco-linha">
+                        <span>${pedido.endereco.rua} ${pedido.endereco.numero}</span>
+                        <button onclick="copiarTexto('${pedido.endereco.rua} ${pedido.endereco.numero}')">Copiar</button>
+                    </div>
+                    ${pedido.endereco.complemento ? `
+                        <div class="endereco-linha">
+                            <span>Complemento: ${pedido.endereco.complemento}</span>
+                            <button onclick="copiarTexto('${pedido.endereco.complemento}')">Copiar</button>
+                        </div>
+                    ` : ''}
+                    <div class="endereco-linha">
+                        <span>${pedido.endereco.bairro}</span>
+                        <button onclick="copiarTexto('${pedido.endereco.bairro}')">Copiar</button>
+                    </div>
+                    <div class="endereco-linha">
+                        <span>${pedido.endereco.cidade} - ${pedido.endereco.estado}</span>
+                        <button onclick="copiarTexto('${pedido.endereco.cidade} - ${pedido.endereco.estado}')">Copiar</button>
+                    </div>
+                    <div class="endereco-linha">
+                        <span>${pedido.endereco.cep}</span>
+                        <button onclick="copiarTexto('${pedido.endereco.cep}')">Copiar</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Código de rastreio *</label>
+                    <input type="text" id="codigo-rastreio" class="form-input" 
+                           placeholder="Digite o código de rastreio (mín. 13 caracteres)" 
+                           minlength="13" required>
+                </div>
+                <div class="form-checkbox">
+                    <input type="checkbox" id="aceito-responsabilidade" required>
+                    <label for="aceito-responsabilidade">
+                        Concordo com as responsabilidades da doação
+                    </label>
+                </div>
+                <button class="btn btn-primary" onclick="confirmarDoacao('${pedidoId}')">
+                    Confirmar Doação
+                </button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+async function criarPedido(e) {
+    e.preventDefault();
+    
+    if (!usuarioLogado) {
+        alert('Faça login para criar pedidos');
+        return;
+    }
+    
+    // Cooldown: checar último pedido no Supabase
+    const { data: ultimoPedido, error: checkError } = await supabase
+        .from('pedido')
+        .select('created_at')
+        .eq('user_id', usuarioLogado.id)
+        .order('created_at', { ascending: false })
+        .limit(1);
+    
+    if (checkError) {
+        alert('Erro ao verificar limite: ' + checkError.message);
+        return;
+    }
+    
+    if (ultimoPedido && ultimoPedido.length > 0) {
+        const agora = new Date().getTime();
+        const ultimo = new Date(ultimoPedido[0].created_at).getTime();
+        const diferencaHoras = (agora - ultimo) / (1000 * 60 * 60);
+        
+        if (diferencaHoras < CONFIG.INTERVALO_PEDIDOS_HORAS) {
+            alert(`Aguarde ${CONFIG.INTERVALO_PEDIDOS_HORAS} horas para novo pedido.`);
+            return;
+        }
+    }
+    
+    // Coletar dados do form
+    const titulo = document.getElementById('titulo').value.trim();
+    const categoria = document.getElementById('categoria').value;
+    const descricao = document.getElementById('descricao').value.trim();
+    const fotoInput = document.getElementById('foto-input').files[0];
+    const termos = document.getElementById('termos-pedido').checked;
+    
+    // Validações
+    if (!titulo || !categoria || !descricao || !fotoInput || !termos) {
+        alert('Preencha todos os campos obrigatórios e aceite os termos.');
+        return;
+    }
+    if (titulo.length > CONFIG.MAX_CARACTERES_PRODUTO) {
+        alert('Título excede 60 caracteres.');
+        return;
+    }
+    if (!['image/png', 'image/jpeg'].includes(fotoInput.type)) {
+        alert('Apenas PNG ou JPEG são permitidos.');
+        return;
+    }
+    if (fotoInput.size > 5 * 1024 * 1024) {
+        alert('Foto deve ter no máximo 5MB.');
+        return;
+    }
+    
+    // Upload foto para Storage
+    const safeFileName = fotoInput.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+    const fileName = `${usuarioLogado.id}/${Date.now()}_${safeFileName}`;
+    const { error: uploadError } = await supabase.storage
+        .from('pedidos')
+        .upload(fileName, fotoInput, { upsert: false });
+    
+    if (uploadError) {
+        console.error('Erro no upload:', {
+            bucket: 'pedidos',
+            fileName,
+            errorDetails: uploadError
+        });
+        alert('Erro ao fazer upload da foto: ' + uploadError.message);
+        return;
+    }
+    
+    const fotoUrl = `${SUPABASE_URL}/storage/v1/object/public/pedidos/${fileName}`;
+    
+    // Buscar endereço do usuário
+    const { data: endereco, error: enderecoError } = await supabase
+        .from('endereco')
+        .select('id')
+        .eq('usuario_id', usuarioLogado.id)
+        .single();
+    if (enderecoError || !endereco) {
+        alert('Nenhum endereço cadastrado. Configure seu endereço primeiro.');
+        window.location.href = 'config.html';
+        return;
+    }
+    // Inserir pedido no Supabase
+    const { error } = await supabase
+        .from('pedido')
+        .insert({
+            user_id: usuarioLogado.id,
+            endereco_id: endereco.id,
+            titulo,
+            categoria,
+            descricao,
+            foto_url: fotoUrl,
+            termos_pedido: termos,
+            status: STATUS_PEDIDOS.DISPONIVEL,
+            user_nome: usuarioLogado.nome || 'Anônimo',
+            user_estado: usuarioLogado.estado || 'N/A'
+        });
+    
+    if (error) {
+        alert('Erro ao criar pedido: ' + error.message);
+        return;
+    }
+    
+    alert('Pedido criado! Aguarde 2 horas para o próximo.');
+    window.location.href = '
+
+// Renderizar Feed 
 function renderizarFeed(pedidos) {
     const feedContainer = document.querySelector('.feed-container');
     if (!feedContainer) return;
