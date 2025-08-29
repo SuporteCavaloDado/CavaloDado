@@ -596,15 +596,15 @@ async function abrirModalDoacao(pedidoId) {
     let pedidoData;
     try {
         const { data, error } = await supabase
-            .from('pedido, endereco')
-            .select('id, titulo, user_id, nome, estado, id, cep, rua, numero, complemento, bairro, cidade, estado_endereco')
+            .from('pedido')
+            .select('id, titulo, user_id, user_nome, user_estado, endereco_id')
             .eq('id', pedidoId)
             .single();
         if (error || !data) throw error;
         pedidoData = data;
     } catch (err) {
-        console.error('Erro ao carregar pedido/endereço:', err);
-        alert('Erro ao carregar dados. Usando cache como fallback.');
+        console.error('Erro ao carregar pedido:', err);
+        alert('Erro ao carregar dados do pedido. Usando cache como fallback.');
         pedidoData = pedidosCache.find(p => p.id === pedidoId); // Fallback cache
         if (!pedidoData) return;
     }
@@ -625,31 +625,34 @@ async function abrirModalDoacao(pedidoId) {
         return;
     }
 
-    // Query separada para endereço se a expansão falhar ou for null
-    let enderecoData = pedidoData.endereco;
-    if (!enderecoData && pedidoData.endereco_id) {
-        try {
-            const { data: addrData, error: addrError } = await supabase
-                .from('endereco')
-                .select('cep, rua, numero, complemento, bairro, cidade, estado_endereco')
-                .eq('id', pedidoData.endereco_id)
-                .single();
-            if (!addrError && addrData) {
-                enderecoData = addrData;
-            }
-        } catch (addrErr) {
-            console.error('Erro ao carregar endereço separadamente:', addrErr);
+    // Fetch endereço diretamente via usuario_id do criador (pedido.user_id), assumindo um endereço por usuário
+    let enderecoData = null;
+    try {
+        const { data: addrData, error: addrError } = await supabase
+            .from('endereco')
+            .select('cep, rua, numero, complemento, bairro, cidade, estado_endereco')
+            .eq('usuario_id', pedidoData.user_id)
+            .order('created_at', { ascending: false }) // Pega o mais recente se múltiplos
+            .limit(1)
+            .single();
+        if (!addrError && addrData) {
+            enderecoData = addrData;
+        } else {
+            console.error('Erro ao carregar endereço:', addrError);
         }
+    } catch (addrErr) {
+        console.error('Erro ao consultar endereço:', addrErr);
     }
 
+    // Use dados reais ou fallback
     const endereco = enderecoData ? {
         nome: pedidoData.user_nome || 'Anônimo',
-        cep: enderecoData.cep || 'N/A',
-        rua: enderecoData.rua || 'N/A',
-        numero: enderecoData.numero || 'N/A',
+        cep: enderecoData.cep,
+        rua: enderecoData.rua,
+        numero: enderecoData.numero,
         complemento: enderecoData.complemento || '',
-        bairro: enderecoData.bairro || 'N/A',
-        cidade: enderecoData.cidade || 'N/A',
+        bairro: enderecoData.bairro,
+        cidade: enderecoData.cidade,
         estado_endereco: enderecoData.estado_endereco || pedidoData.user_estado || 'N/A'
     } : {
         nome: pedidoData.user_nome || 'Anônimo',
