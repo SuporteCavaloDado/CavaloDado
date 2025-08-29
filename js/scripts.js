@@ -1250,6 +1250,8 @@ async function inicializarDashboard() {
 }
 
     // Mostrar Perfil
+let profileCache = null; // Cache para perfil
+
 async function mostrarPerfil(username) {
     const content = document.getElementById('dashboard-content');
     if (!content) {
@@ -1257,15 +1259,16 @@ async function mostrarPerfil(username) {
         return;
     }
 
+    // Usar cache se disponível
     if (profileCache && profileCache.username === username) {
         renderPerfil(content, profileCache);
         return;
     }
 
-    // Se bio está na tabela usuario, incluir na consulta
+    // Buscar perfil
     const { data: profile, error } = await supabase
         .from('usuario')
-        .select('id, nome, estado, username, bio') // Adicionado bio
+        .select('id, nome, estado, username')
         .eq('username', username || usuarioLogado?.username)
         .single();
 
@@ -1275,12 +1278,7 @@ async function mostrarPerfil(username) {
         return;
     }
 
-    // Para o próprio usuário, garantir bio do user_metadata como fallback
-    if (username === usuarioLogado?.username) {
-        profile.bio = usuarioLogado.bio || profile.bio || '';
-    }
-
-    profileCache = profile;
+    profileCache = profile; // Armazenar no cache
     renderPerfil(content, profile);
 }
 
