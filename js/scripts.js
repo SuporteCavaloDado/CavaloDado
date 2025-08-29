@@ -389,6 +389,7 @@ function inicializarFeed() {
     inicializarPesquisa();
 }
 
+// Carregar Pedidos
 async function carregarPedidos() {
     const { data: pedidos, error } = await supabase
         .from('pedido')
@@ -414,26 +415,33 @@ async function carregarPedidos() {
         return;
     }
 
-    pedidosCache = pedidos.map(pedido => ({
-        id: pedido.id,
-        titulo: pedido.titulo,
-        descricao: pedido.descricao,
-        categoria: pedido.categoria,
-        estado: pedido.user_estado || pedido.endereco?.estado_endereco || 'N/A',
-        status: pedido.status,
-        usuario: pedido.user_nome || 'Anônimo',
-        data: pedido.created_at,
-        media: { tipo: 'imagem', url: pedido.foto_url || 'https://placehold.co/400x600?text=Sem+Imagem' },
-        endereco: pedido.endereco || {
-            nome: pedido.user_nome || 'Anônimo',
-            rua: 'N/A',
-            bairro: 'N/A',
-            cidade: 'N/A',
-            estado: 'N/A',
-            cep: 'N/A'
-        }
-    }));
+    pedidosCache = pedidos.map(pedido => {
+        console.log('Dados do pedido:', pedido); // Debug: Verificar dados retornados
+        const endereco = pedido.endereco || {};
+        return {
+            id: pedido.id,
+            titulo: pedido.titulo,
+            descricao: pedido.descricao,
+            categoria: pedido.categoria,
+            estado: pedido.user_estado || endereco.estado_endereco || 'N/A',
+            status: pedido.status,
+            usuario: pedido.user_nome || 'Anônimo',
+            data: pedido.created_at,
+            media: { tipo: 'imagem', url: pedido.foto_url || 'https://placehold.co/400x600?text=Sem+Imagem' },
+            endereco: {
+                nome: pedido.user_nome || 'Anônimo',
+                rua: endereco.rua || 'N/A',
+                numero: endereco.numero || 'N/A',
+                complemento: endereco.complemento || '',
+                bairro: endereco.bairro || 'N/A',
+                cidade: endereco.cidade || 'N/A',
+                estado: endereco.estado_endereco || 'N/A',
+                cep: endereco.cep || 'N/A'
+            }
+        };
+    });
 
+    console.log('Pedidos cacheados:', pedidosCache); // Debug: Verificar cache final
     renderizarFeed(pedidosCache);
 }
 
