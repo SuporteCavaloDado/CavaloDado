@@ -882,7 +882,7 @@ async function atualizarHistorico() {
             .order('created_at', { ascending: false });
         if (queryError) {
             console.error('Erro ao buscar pedidos:', queryError);
-            alert('Erro ao carregar histórico.');
+            alert('Erro ao carregar histórico: ' + queryError.message);
             return;
         }
 
@@ -901,9 +901,8 @@ async function atualizarHistorico() {
             expandContent.className = 'historico-item';
             const codigoRastreio = pedido.doacao?.codigo_rastreio || '';
             const fotoHtml = pedido.foto_url ? `<img src="${pedido.foto_url}" alt="Foto do pedido" style="max-width: 200px; margin-bottom: 10px;">` : '';
-            console.log(`Renderizando pedido ${pedido.id}: ${codigoRastreio}`);
+            console.log(`Renderizando pedido ${pedido.id}: código_rastreio=${codigoRastreio}`);
 
-            // Estrutura condicional corrigida
             if (pedido.status === STATUS_PEDIDOS.PENDENTE) {
                 expandContent.innerHTML = `
                     <h3>${pedido.titulo}</h3>
@@ -920,7 +919,14 @@ async function atualizarHistorico() {
                 // Eventos para checkboxes e botões
                 const [invalido, entregue] = expandContent.querySelectorAll('input[name="opt"]');
                 const confirmBtn = expandContent.querySelector('.confirm-btn');
-                expandContent.querySelector('.copy-btn').onclick = () => navigator.clipboard.writeText(codigoRastreio);
+                expandContent.querySelector('.copy-btn').onclick = () => {
+                    if (codigoRastreio) {
+                        navigator.clipboard.writeText(codigoRastreio);
+                        alert('Código copiado!');
+                    } else {
+                        alert('Nenhum código de rastreio disponível.');
+                    }
+                };
                 [invalido, entregue].forEach(cb => {
                     cb.onchange = () => {
                         if (cb.checked) [invalido, entregue].forEach(other => { if (other !== cb) other.checked = false; });
