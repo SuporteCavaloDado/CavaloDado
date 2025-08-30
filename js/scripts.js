@@ -875,6 +875,7 @@ async function atualizarHistorico() {
                 titulo,
                 status,
                 created_at,
+                foto_url,
                 doacao!left (codigo_rastreio)
             `)
             .eq('user_id', user.id)
@@ -896,27 +897,49 @@ async function atualizarHistorico() {
 
         historico.innerHTML = '';
         pedidos.forEach(pedido => {
-            const STATUS_PEDIDOS = { PENDENTE: 'Pendente' }; // Ajuste conforme sua constante
             const expandContent = document.createElement('div');
             expandContent.className = 'historico-item';
             const codigoRastreio = pedido.doacao?.codigo_rastreio || '';
+            const fotoHtml = pedido.foto_url ? `<img src="${pedido.foto_url}" alt="Foto do pedido" style="max-width: 200px; margin-bottom: 10px;">` : '';
             console.log(`Renderizando pedido ${pedido.id}: ${codigoRastreio}`);
 
-            else if (pedido.status === STATUS_PEDIDOS.PENDENTE) {
-    expandContent.innerHTML = `
-        ${fotoHtml}
-        <div><input value="${pedido.doacao?.codigo_rastreio || ''}" readonly><button class="copy-btn">Copiar</button></div>
-        <div>
-            <label><input type="checkbox" name="opt" value="invalido">Código Inválido</label>
-            <label><input type="checkbox" name="opt" value="entregue">Produto Entregue</label>
-        </div>
-        <p class="note">Conferir o código com atenção.</p>
-        <button class="confirm-btn">Confirmar</button>
-    `;
+            // Estrutura condicional corrigida
+            if (pedido.status === STATUS_PEDIDOS.PENDENTE) {
+                expandContent.innerHTML = `
+                    <h3>${pedido.titulo}</h3>
+                    <p>Status: ${pedido.status}</p>
+                    ${fotoHtml}
+                    <div><input value="${codigoRastreio}" readonly><button class="copy-btn">Copiar</button></div>
+                    <div>
+                        <label><input type="checkbox" name="opt" value="invalido">Código Inválido</label>
+                        <label><input type="checkbox" name="opt" value="entregue">Produto Entregue</label>
+                    </div>
+                    <p class="note">Conferir o código com atenção.</p>
+                    <button class="confirm-btn">Confirmar</button>
+                `;
+                // Eventos para checkboxes e botões
+                const [invalido, entregue] = expandContent.querySelectorAll('input[name="opt"]');
+                const confirmBtn = expandContent.querySelector('.confirm-btn');
+                expandContent.querySelector('.copy-btn').onclick = () => navigator.clipboard.writeText(codigoRastreio);
+                [invalido, entregue].forEach(cb => {
+                    cb.onchange = () => {
+                        if (cb.checked) [invalido, entregue].forEach(other => { if (other !== cb) other.checked = false; });
+                    };
+                });
+                confirmBtn.onclick = async () => {
+                    const checked = expandContent.querySelector('input[name="opt"]:checked');
+                    if (!checked) return alert('Selecione uma opção');
+                    const updates = { status: checked.value === 'invalido' ? STATUS_PEDIDOS.DISPONIVEL : STATUS_PEDIDOS.CONCLUIDO };
+                    if (updates.status === STATUS_PEDIDOS.CONCLUIDO) updates.completion_date = new Date().toISOString();
+                    const { error } = await supabase.from('pedido').update(updates).eq('id', pedido.id);
+                    if (error) return alert('Erro ao atualizar status: ' + error.message);
+                    atualizarHistorico(); // Recarrega o histórico
+                };
             } else {
                 expandContent.innerHTML = `
                     <h3>${pedido.titulo}</h3>
                     <p>Status: ${pedido.status}</p>
+                    ${fotoHtml}
                     <p>Código de Rastreio: ${codigoRastreio}</p>
                 `;
             }
