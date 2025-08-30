@@ -52,6 +52,11 @@
                         <h3 style="color: var(--cor-secundaria); margin-bottom: 1rem;">Dados do Perfil</h3>
                         
                         <form id="perfil-form">
+                            <div class="profile-photo-section text-center" style="margin-bottom: 1.5rem;">
+                                <img id="profile-img" src="https://placehold.co/100x100?text=Perfil" alt="Foto de Perfil" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; cursor: pointer; border: 1px solid var(--cor-cinza-claro);">
+                                <input type="file" id="profile-photo" accept="image/*" style="display: none;">
+                            </div>
+                            
                             <div class="form-group">
                                 <label for="nome" class="form-label">Nome completo</label>
                                 <input type="text" id="nome" class="form-input">
@@ -217,6 +222,21 @@
             } else {
                 console.error('Função salvarEndereco não encontrada');
                 alert('Função de salvar endereço não encontrada.');
+            }
+        });
+
+    // Adicionar clique na imagem para upload
+    const profileImg = document.getElementById('profile-img');
+    const fileInput = document.getElementById('profile-photo');
+    if (profileImg && fileInput) {
+        profileImg.addEventListener('click', () => fileInput.click());
+
+        // Preview local da imagem selecionada (moderno e simples)
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files[0]) {
+                const reader = new FileReader();
+                reader.onload = e => profileImg.src = e.target.result;
+                reader.readAsDataURL(fileInput.files[0]);
             }
         });
 
