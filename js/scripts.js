@@ -181,6 +181,13 @@ function inicializarConfiguracoes() {
     if (!usuarioLogado.username || !usuarioLogado.estado) {
         if (errorMessage) errorMessage.innerHTML = '<p style="color: red;">Complete seu perfil (usuário e endereço).</p>';
     }
+
+    // Adicionar exibição da foto (compatível, assume preencherDadosUsuario preenche outros campos)
+    const profileImg = document.getElementById('profile-img');
+    if (profileImg) {
+        profileImg.src = usuarioLogado.photo_url || 'https://placehold.co/100x100?text=Perfil';
+    }
+
     const perfilForm = document.getElementById('perfil-form');
     if (perfilForm) {
         perfilForm.addEventListener('submit', async (e) => {
@@ -195,6 +202,22 @@ function inicializarConfiguracoes() {
                 showError('Preencha o nome de usuário.');
                 return;
             }
+
+            // Adicionar upload de foto (simples e moderno)
+            const fileInput = document.getElementById('profile-photo');
+            if (fileInput?.files?.[0]) {
+                const file = fileInput.files[0];
+                const fileExt = file.name.split('.').pop();
+                const filePath = `${usuarioLogado.id}/profile.${fileExt}`; // Pasta por usuário no bucket 'usuario'
+                const { error: uploadError } = await supabase.storage.from('usuario').upload(filePath, file, { upsert: true });
+                if (uploadError) {
+                    showError('Erro ao upload da foto: ' + uploadError.message);
+                    return;
+                }
+                const { data: urlData } = supabase.storage.from('usuario').getPublicUrl(filePath);
+                dados.photo_url = urlData.publicUrl;
+            }
+
             try {
                 const { error } = await supabase.auth.updateUser({ data: dados });
                 if (error) throw error;
