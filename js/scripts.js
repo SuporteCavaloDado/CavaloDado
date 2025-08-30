@@ -1724,11 +1724,11 @@ async function carregarHistorico() {
         return;
     }
 
-    const { data: pedidos, error } = await supabase
-        .from('pedido')
-        .select('*')
-        .eq('user_id', usuarioLogado.id)
-        .order('created_at', { ascending: false });
+const { data: pedidos, error } = await supabase
+    .from('pedido')
+    .select('*, doacao!left(codigo_rastreio)')
+    .eq('user_id', usuarioLogado.id)
+    .order('created_at', { ascending: false });
 
     if (error) {
         console.error('Erro ao carregar histórico:', error);
