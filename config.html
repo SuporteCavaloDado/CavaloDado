@@ -173,83 +173,83 @@
     <script src="js/scripts.js"></script>
     
     <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        console.log('Página config.html carregada');
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Página config.html carregada');
 
-        // Carregar dados
-        if (typeof preencherDadosUsuario === 'function') preencherDadosUsuario();
-        if (typeof carregarEndereco === 'function') carregarEndereco();
+            // Carregar dados
+            if (typeof preencherDadosUsuario === 'function') preencherDadosUsuario();
+            if (typeof carregarEndereco === 'function') carregarEndereco();
 
-        // Máscara CEP
-        document.getElementById('cep').addEventListener('input', function(e) {
-            let valor = e.target.value.replace(/\D/g, '');
-            valor = valor.replace(/(\d{5})(\d)/, '$1-$2');
-            e.target.value = valor;
-            console.log('CEP formatado:', e.target.value);
-        });
-
-        // Buscar CEP
-        document.getElementById('cep').addEventListener('blur', function(e) {
-            const cep = e.target.value.replace(/\D/g, '');
-            console.log('Buscando CEP:', cep);
-            if (cep.length === 8) {
-                fetch(`https://viacep.com.br/ws/${cep}/json/`)
-                    .then(response => response.json())
-                    .then(data => {
-                        console.log('Resposta ViaCEP:', data);
-                        if (!data.erro) {
-                            document.getElementById('rua').value = data.logradouro || '';
-                            document.getElementById('bairro').value = data.bairro || '';
-                            document.getElementById('cidade').value = data.localidade || '';
-                            document.getElementById('estado-endereco').value = data.uf || '';
-                        } else {
-                            alert('CEP inválido. Verifique o valor digitado.');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Erro ao buscar CEP:', error);
-                        alert('Erro ao buscar CEP. Verifique sua conexão.');
-                    });
-            }
-        });
-
-        // Salvar endereço
-        document.getElementById('endereco-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            console.log('Formulário de endereço enviado');
-            if (typeof salvarEndereco === 'function') {
-                salvarEndereco(e);
-            } else {
-                console.error('Função salvarEndereco não encontrada');
-                alert('Função de salvar endereço não encontrada.');
-            }
-        });
-
-    // Adicionar clique na imagem para upload
-    const profileImg = document.getElementById('profile-img');
-    const fileInput = document.getElementById('profile-photo');
-    if (profileImg && fileInput) {
-        profileImg.addEventListener('click', () => fileInput.click());
-
-        // Preview local da imagem selecionada (moderno e simples)
-        fileInput.addEventListener('change', () => {
-            if (fileInput.files[0]) {
-                const reader = new FileReader();
-                reader.onload = e => profileImg.src = e.target.result;
-                reader.readAsDataURL(fileInput.files[0]);
-            }
-        });
-
-        // Salvar perfil
-        const perfilForm = document.getElementById('perfil-form');
-        if (perfilForm) {
-            perfilForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                if (typeof salvarPerfil === 'function') salvarPerfil(e);
+            // Máscara CEP
+            document.getElementById('cep').addEventListener('input', function(e) {
+                let valor = e.target.value.replace(/\D/g, '');
+                valor = valor.replace(/(\d{5})(\d)/, '$1-$2');
+                e.target.value = valor;
+                console.log('CEP formatado:', e.target.value);
             });
-        }
-    });
-    </script>
-</body>
-</html>
 
+            // Buscar CEP
+            document.getElementById('cep').addEventListener('blur', function(e) {
+                const cep = e.target.value.replace(/\D/g, '');
+                console.log('Buscando CEP:', cep);
+                if (cep.length === 8) {
+                    fetch(`https://viacep.com.br/ws/${cep}/json/`)
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log('Resposta ViaCEP:', data);
+                            if (!data.erro) {
+                                document.getElementById('rua').value = data.logradouro || '';
+                                document.getElementById('bairro').value = data.bairro || '';
+                                document.getElementById('cidade').value = data.localidade || '';
+                                document.getElementById('estado-endereco').value = data.uf || '';
+                            } else {
+                                alert('CEP inválido. Verifique o valor digitado.');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Erro ao buscar CEP:', error);
+                            alert('Erro ao buscar CEP. Verifique sua conexão.');
+                        });
+                }
+            });
+
+            // Salvar endereço
+            document.getElementById('endereco-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                console.log('Formulário de endereço enviado');
+                if (typeof salvarEndereco === 'function') {
+                    salvarEndereco(e);
+                } else {
+                    console.error('Função salvarEndereco não encontrada');
+                    alert('Função de salvar endereço não encontrada.');
+                }
+            });
+
+            // Salvar perfil
+            const perfilForm = document.getElementById('perfil-form');
+            if (perfilForm) {
+                perfilForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    if (typeof salvarPerfil === 'function') salvarPerfil(e);
+                });
+            }
+
+            // Adicionar clique na imagem para upload
+            const profileImg = document.getElementById('profile-img');
+            const fileInput = document.getElementById('profile-photo');
+            if (profileImg && fileInput) {
+                profileImg.addEventListener('click', () => fileInput.click());
+
+                // Preview local da imagem selecionada
+                fileInput.addEventListener('change', () => {
+                    if (fileInput.files[0]) {
+                        const reader = new FileReader();
+                        reader.onload = e => profileImg.src = e.target.result;
+                        reader.readAsDataURL(fileInput.files[0]);
+                    }
+                });
+            }
+        });
+        </script>
+    </body>
+</html>
