@@ -179,10 +179,10 @@ function inicializarConfiguracoes() {
     preencherDadosUsuario();
     const errorMessage = document.getElementById('error-message');
     if (!usuarioLogado.username || !usuarioLogado.estado) {
-        if (errorMessage) errorMessage.innerHTML = '<p style="color: red;">Complete seu perfil (usuário e endereço).</p>';
+        if (errorMessage) errorMessage.innerHTML = '<p>Complete seu perfil (usuário e endereço).</p>';
     }
 
-    // Adicionar exibição da foto (compatível, assume preencherDadosUsuario preenche outros campos)
+    // Exibir foto de perfil
     const profileImg = document.getElementById('profile-img');
     if (profileImg) {
         profileImg.src = usuarioLogado.photo_url || 'https://placehold.co/100x100?text=Perfil';
@@ -203,19 +203,35 @@ function inicializarConfiguracoes() {
                 return;
             }
 
-            // Adicionar upload de foto (simples e moderno)
+            // Upload de foto com validação
             const fileInput = document.getElementById('profile-photo');
             if (fileInput?.files?.[0]) {
                 const file = fileInput.files[0];
-                const fileExt = file.name.split('.').pop();
-                const filePath = `${usuarioLogado.id}/profile.${fileExt}`; // Pasta por usuário no bucket 'usuario'
-                const { error: uploadError } = await supabase.storage.from('usuario').upload(filePath, file, { upsert: true });
-                if (uploadError) {
-                    showError('Erro ao upload da foto: ' + uploadError.message);
+                // Validar tipo de arquivo (apenas imagens)
+                if (!file.type.startsWith('image/')) {
+                    showError('Por favor, selecione uma imagem válida (ex: JPEG, PNG).');
                     return;
                 }
-                const { data: urlData } = supabase.storage.from('usuario').getPublicUrl(filePath);
-                dados.photo_url = urlData.publicUrl;
+                // Validar tamanho (máximo 5MB para evitar erros)
+                if (file.size > 5 * 1024 * 1024) {
+                    showError('A imagem deve ter no máximo 5MB.');
+                    return;
+                }
+                const fileExt = file.name.split('.').pop().toLowerCase();
+                const filePath = `${usuarioLogado.id}/profile.${fileExt}`;
+                try {
+                    const { error: uploadError } = await supabase.storage
+                        .from('usuario')
+                        .upload(filePath, file, { upsert: true });
+                    if (uploadError) throw uploadError;
+                    const { data: urlData } = supabase.storage
+                        .from('usuario')
+                        .getPublicUrl(filePath);
+                    dados.photo_url = urlData.publicUrl;
+                } catch (error) {
+                    showError('Erro ao fazer upload da foto: ' + error.message);
+                    return;
+                }
             }
 
             try {
@@ -229,6 +245,7 @@ function inicializarConfiguracoes() {
             }
         });
     }
+
     const enderecoForm = document.getElementById('endereco-form');
     if (enderecoForm) {
         enderecoForm.addEventListener('submit', async (e) => {
