@@ -902,18 +902,17 @@ async function atualizarHistorico() {
             const codigoRastreio = pedido.doacao?.codigo_rastreio || '';
             console.log(`Renderizando pedido ${pedido.id}: ${codigoRastreio}`);
 
-            if (pedido.status === STATUS_PEDIDOS.PENDENTE) {
-                expandContent.innerHTML = `
-                    <h3>${pedido.titulo}</h3>
-                    <p>Status: ${pedido.status}</p>
-                    <div><input value="${codigoRastreio}" readonly><button class="copy-btn">Copiar</button></div>
-                    <div>
-                        <label><input type="checkbox" name="opt" value="invalido">Código Inválido</label>
-                        <label><input type="checkbox" name="opt" value="entregue">Produto Entregue</label>
-                    </div>
-                    <p class="note">Conferir o código com atenção.</p>
-                    <button class="confirm-btn">Confirmar</button>
-                `;
+            else if (pedido.status === STATUS_PEDIDOS.PENDENTE) {
+    expandContent.innerHTML = `
+        ${fotoHtml}
+        <div><input value="${pedido.doacao?.codigo_rastreio || ''}" readonly><button class="copy-btn">Copiar</button></div>
+        <div>
+            <label><input type="checkbox" name="opt" value="invalido">Código Inválido</label>
+            <label><input type="checkbox" name="opt" value="entregue">Produto Entregue</label>
+        </div>
+        <p class="note">Conferir o código com atenção.</p>
+        <button class="confirm-btn">Confirmar</button>
+    `;
             } else {
                 expandContent.innerHTML = `
                     <h3>${pedido.titulo}</h3>
