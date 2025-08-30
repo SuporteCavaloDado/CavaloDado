@@ -860,7 +860,6 @@ async function confirmarDoacao(pedidoId) {
 async function atualizarHistorico() {
     console.log('Iniciando atualizarHistorico');
     try {
-        // Verificar usuário logado
         const { data: { user }, error: authError } = await supabase.auth.getUser();
         if (authError || !user) {
             console.error('Erro: Nenhum usuário logado', authError);
@@ -869,7 +868,6 @@ async function atualizarHistorico() {
         }
         console.log('Usuário logado:', user.id);
 
-        // Buscar pedidos com código de rastreio
         const { data: pedidos, error: queryError } = await supabase
             .from('pedido')
             .select(`
@@ -889,30 +887,41 @@ async function atualizarHistorico() {
 
         console.log('Dados retornados:', JSON.stringify(pedidos, null, 2));
 
-        // Verificar elemento HTML
         const historico = document.getElementById('historico-pedidos');
         if (!historico) {
             console.error('Erro: Elemento historico-pedidos não encontrado');
-            alert('Erro: Elemento historico-pedidos não encontrado no HTML.');
+            alert('Erro: Elemento historico-pedidos não encontrado.');
             return;
         }
 
-        // Renderizar pedidos
         historico.innerHTML = '';
         pedidos.forEach(pedido => {
-            const codigoRastreio = pedido.doacao && pedido.doacao.codigo_rastreio 
-                ? pedido.doacao.codigo_rastreio 
-                : 'Nenhum código';
+            const STATUS_PEDIDOS = { PENDENTE: 'Pendente' }; // Ajuste conforme sua constante
+            const expandContent = document.createElement('div');
+            expandContent.className = 'historico-item';
+            const codigoRastreio = pedido.doacao?.codigo_rastreio || '';
             console.log(`Renderizando pedido ${pedido.id}: ${codigoRastreio}`);
-            const item = document.createElement('div');
-            item.className = 'historico-item';
-            item.innerHTML = `
-                <h3>${pedido.titulo}</h3>
-                <p>Status: ${pedido.status}</p>
-                <p>Código de Rastreio: <span class="codigo-rastreio">${codigoRastreio}</span></p>
-                <p>Criado em: ${new Date(pedido.created_at).toLocaleDateString()}</p>
-            `;
-            historico.appendChild(item);
+
+            if (pedido.status === STATUS_PEDIDOS.PENDENTE) {
+                expandContent.innerHTML = `
+                    <h3>${pedido.titulo}</h3>
+                    <p>Status: ${pedido.status}</p>
+                    <div><input value="${codigoRastreio}" readonly><button class="copy-btn">Copiar</button></div>
+                    <div>
+                        <label><input type="checkbox" name="opt" value="invalido">Código Inválido</label>
+                        <label><input type="checkbox" name="opt" value="entregue">Produto Entregue</label>
+                    </div>
+                    <p class="note">Conferir o código com atenção.</p>
+                    <button class="confirm-btn">Confirmar</button>
+                `;
+            } else {
+                expandContent.innerHTML = `
+                    <h3>${pedido.titulo}</h3>
+                    <p>Status: ${pedido.status}</p>
+                    <p>Código de Rastreio: ${codigoRastreio}</p>
+                `;
+            }
+            historico.appendChild(expandContent);
         });
     } catch (err) {
         console.error('Erro em atualizarHistorico:', err);
