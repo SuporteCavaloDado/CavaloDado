@@ -529,7 +529,7 @@ function criarElementoPedido(pedido) {
     div.innerHTML = `
         ${mediaHtml}
         <div class="pedido-actions">
-            <button class="action-btn" onclick="verPerfil('${pedido.usuario}')">
+            <button class="action-btn" onclick="verPerfil('${pedido.username}')">
                 <span>👤</span>
             </button>
             <button class="action-btn btn-doar" onclick="abrirModalDoacao('${pedido.id}')">
