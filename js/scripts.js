@@ -1537,22 +1537,27 @@ async function inicializarDashboard() {
     const menuItems = document.getElementById('menu-items');
     if (!content || !nav || !menuItems) {
         console.error('Erro: dashboard-content, dashboard-nav ou menu-items não encontrado');
+        content && (content.innerHTML = '<p>Erro: Elementos da página não encontrados.</p>');
         return;
     }
 
-    // Extrair username da URL (pathname)
-    let username = window.location.pathname.split('/').pop();
-    username = username !== 'dashboard.html' ? username : usuarioLogado?.username || '';
+    // Extrair section e username da URL
+    const pathSegments = window.location.pathname.split('/');
+    let section = pathSegments[pathSegments.length - 2] || 'perfil';
+    let username = pathSegments[pathSegments.length - 1] || usuarioLogado?.username || '';
+    if (!['perfil', 'favoritos', 'historico'].includes(section)) {
+        section = 'perfil'; // Fallback para perfil
+    }
 
     // Determinar se é o próprio perfil
     const isOwnProfile = usuarioLogado && username === usuarioLogado.username;
 
     // Configurar navegação do dashboard
     nav.innerHTML = `
-        <button class="btn btn-outline ${!window.location.hash || window.location.hash === '#perfil' ? 'active' : ''}" onclick="navigateTo('perfil', '${username}')">Perfil</button>
-        <button class="btn btn-outline ${window.location.hash === '#favoritos' ? 'active' : ''}" onclick="navigateTo('favoritos', '${username}')">Favoritos</button>
+        <button class="btn btn-outline ${section === 'perfil' ? 'active' : ''}" onclick="navigateTo('perfil', '${username}')">Perfil</button>
+        <button class="btn btn-outline ${section === 'favoritos' ? 'active' : ''}" onclick="navigateTo('favoritos', '${username}')">Favoritos</button>
         ${isOwnProfile ? `
-            <button class="btn btn-outline ${window.location.hash === '#historico' ? 'active' : ''}" onclick="navigateTo('historico', '${username}')">Histórico</button>
+            <button class="btn btn-outline ${section === 'historico' ? 'active' : ''}" onclick="navigateTo('historico', '${username}')">Histórico</button>
         ` : ''}
     `;
 
@@ -1580,12 +1585,13 @@ async function inicializarDashboard() {
 
     // Lidar com evento popstate
     window.addEventListener('popstate', (event) => {
-        const { section, username } = event.state || { section: 'perfil', username };
+        const { section, username } = event.state || { section: 'perfil', username: usuarioLogado?.username || '' };
         updateContent(section, username);
     });
 
     // Atualizar conteúdo
     function updateContent(section, username) {
+        console.log('Atualizando conteúdo:', { section, username });
         nav.querySelectorAll('.btn').forEach(btn => btn.classList.remove('active'));
         const activeBtn = nav.querySelector(`button[onclick*="navigateTo('${section}'"]`);
         if (activeBtn) activeBtn.classList.add('active');
@@ -1609,10 +1615,8 @@ async function inicializarDashboard() {
         }
     }
 
-    // Inicializar conteúdo ao carregar ou recarregar
-    const pathSegments = window.location.pathname.split('/');
-    const section = pathSegments[pathSegments.length - 2] || 'perfil'; // Extrair section de /section/username
-    username = pathSegments[pathSegments.length - 1] || usuarioLogado?.username || '';
+    // Inicializar conteúdo
+    console.log('Inicializando dashboard:', { section, username });
     updateContent(section, username);
 }
 
@@ -1624,9 +1628,15 @@ async function mostrarPerfil(username) {
         return;
     }
 
+    // Invalidar cache se username mudou ou bio está desatualizada
+    if (profileCache && (profileCache.username !== username || profileCache.data.bio === null)) {
+        profileCache = null;
+    }
+
     // Verificar cache (válido por 5 minutos)
     const cacheDuration = 5 * 60 * 1000; // 5 minutos em ms
     if (profileCache && profileCache.username === username && Date.now() - profileCache.timestamp < cacheDuration) {
+        console.log('Usando cache para perfil:', profileCache.data);
         renderPerfil(content, profileCache.data);
         return;
     }
@@ -1682,18 +1692,25 @@ async function mostrarPerfil(username) {
 }
 
 function renderPerfil(content, profile) {
-    content.innerHTML = `
-        <h2>Perfil</h2>
-        <div class="card perfil-card">
-            <p>${profile.nome || 'Anônimo'}</p>
-            <p>${profile.estado || 'N/A'}</p>
-            <p>${profile.username || 'N/A'}</p>
-            <p>${profile.bio || 'Sem bio disponível'}</p>
-        </div>
-    `;
+    try {
+        console.log('Renderizando perfil:', profile);
+        content.insertAdjacentHTML('beforeend', `
+            <h2>Perfil</h2>
+            <div class="card perfil-card">
+                <p>${profile.nome || 'Anônimo'}</p>
+                <p>${profile.estado || 'N/A'}</p>
+                <p>${profile.username || 'N/A'}</p>
+                <p>${profile.bio || 'Sem bio disponível'}</p>
+            </div>
+        `);
+        content.querySelector('p:empty')?.remove(); // Remove parágrafos vazios
+    } catch (err) {
+        console.error('Erro ao renderizar perfil:', err);
+        content.innerHTML = '<p>Erro ao renderizar perfil. Tente novamente.</p>';
+    }
 }
 
-    // Mostrar Favoritos
+// Mostrar Favoritos
 async function mostrarFavoritos(username) {
     const content = document.getElementById('dashboard-content');
     if (!content) {
@@ -1701,31 +1718,31 @@ async function mostrarFavoritos(username) {
         return;
     }
 
-    // Buscar user_id pelo username
-    const { data: user, error: userError } = await supabase
-        .from('usuario')
-        .select('id')
-        .eq('username', username || usuarioLogado?.username)
-        .single();
-
-    if (userError || !user) {
-        console.error('Erro ao buscar usuário:', userError);
-        content.innerHTML = '<p>Erro ao carregar usuário.</p>';
-        return;
-    }
-
-    // Usar cache se disponível
-    if (favoritosCache && favoritosCache.userId === user.id) {
+    // Verificar cache (válido por 5 minutos)
+    const cacheDuration = 5 * 60 * 1000; // 5 minutos em ms
+    if (favoritosCache && favoritosCache.username === username && Date.now() - favoritosCache.timestamp < cacheDuration) {
+        console.log('Usando cache para favoritos:', favoritosCache.data);
         renderFavoritos(content, favoritosCache.data);
         return;
     }
 
-    content.innerHTML = `
-        <h2>Favoritos</h2>
-        <div class="favoritos-grid"></div>
-    `;
+    content.innerHTML = '<p>Carregando favoritos...</p>'; // Feedback de loading
 
     try {
+        // Buscar user_id pelo username
+        const { data: user, error: userError } = await supabase
+            .from('usuario')
+            .select('id')
+            .eq('username', username || usuarioLogado?.username)
+            .single();
+
+        if (userError || !user) {
+            console.error('Erro ao buscar usuário:', userError);
+            content.innerHTML = '<p>Erro ao carregar usuário.</p>';
+            return;
+        }
+
+        // Buscar favoritos
         const { data: favoritos, error } = await supabase
             .from('favoritos')
             .select(`
@@ -1741,7 +1758,13 @@ async function mostrarFavoritos(username) {
             return;
         }
 
-        favoritosCache = { userId: user.id, data: favoritos }; // Armazenar no cache
+        // Atualizar cache
+        favoritosCache = { username, userId: user.id, data: favoritos, timestamp: Date.now() };
+        console.log('Favoritos carregados:', favoritos);
+        content.innerHTML = `
+            <h2>Favoritos</h2>
+            <div class="favoritos-grid"></div>
+        `;
         renderFavoritos(content, favoritos);
     } catch (err) {
         console.error('Erro inesperado em mostrarFavoritos:', err);
@@ -1750,21 +1773,30 @@ async function mostrarFavoritos(username) {
 }
 
 function renderFavoritos(content, favoritos) {
-    const grid = content.querySelector('.favoritos-grid');
-    if (!grid) return;
-
-    grid.innerHTML = favoritos.length ? '' : '<p>Nenhum favorito encontrado.</p>';
-
-    favoritos.forEach(fav => {
-        if (fav.pedido) {
-            const imgDiv = document.createElement('div');
-            imgDiv.className = 'favorito-item';
-            imgDiv.innerHTML = `
-                <img src="${fav.pedido.foto_url || 'https://placehold.co/200x200?text=Sem+Imagem'}" alt="Foto do pedido favorito" class="favorito-image" onerror="this.src='https://placehold.co/200x200?text=Erro+na+Imagem';">
-            `;
-            grid.appendChild(imgDiv);
+    try {
+        const grid = content.querySelector('.favoritos-grid');
+        if (!grid) {
+            console.error('Erro: favoritos-grid não encontrado');
+            content.innerHTML = '<p>Erro ao renderizar favoritos.</p>';
+            return;
         }
-    });
+
+        grid.innerHTML = favoritos.length ? '' : '<p>Nenhum favorito encontrado.</p>';
+
+        favoritos.forEach(fav => {
+            if (fav.pedido) {
+                const imgDiv = document.createElement('div');
+                imgDiv.className = 'favorito-item';
+                imgDiv.innerHTML = `
+                    <img src="${fav.pedido.foto_url || 'https://placehold.co/200x200?text=Sem+Imagem'}" alt="Foto do pedido favorito" class="favorito-image" onerror="this.src='https://placehold.co/200x200?text=Erro+na+Imagem';">
+                `;
+                grid.appendChild(imgDiv);
+            }
+        });
+    } catch (err) {
+        console.error('Erro ao renderizar favoritos:', err);
+        content.innerHTML = '<p>Erro ao renderizar favoritos. Tente novamente.</p>';
+    }
 }
 
     // Mostrar Historico
