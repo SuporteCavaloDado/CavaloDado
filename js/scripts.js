@@ -1599,11 +1599,6 @@ async function inicializarDashboard() {
     updateContent(hash, username);
 }
 
-    // Inicializar conteúdo
-    const hash = window.location.hash.slice(1) || 'perfil';
-    updateContent(hash, username);
-}
-
     // Mostrar Perfil
 let profileCache = null; // Cache para perfil
 
