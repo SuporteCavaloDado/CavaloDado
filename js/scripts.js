@@ -1616,6 +1616,9 @@ async function inicializarDashboard() {
     // Mostrar Perfil
 let profileCache = null; // Cache para perfil
 
+// Mostrar Perfil
+let profileCache = null; // Cache para perfil
+
 async function mostrarPerfil(username) {
     const content = document.getElementById('dashboard-content');
     if (!content) {
@@ -1623,41 +1626,77 @@ async function mostrarPerfil(username) {
         return;
     }
 
-    if (profileCache && profileCache.username === username) {
+    // Invalidar cache se username mudou
+    if (profileCache && profileCache.username !== username) {
+        profileCache = null;
+    }
+
+    if (profileCache) {
         renderPerfil(content, profileCache);
         return;
     }
 
     let profile;
     if (username === usuarioLogado?.username) {
-        // Próprio usuário: buscar bio de user_metadata (como index.html)
+        // Próprio usuário: buscar de user_metadata
         const { data: { user }, error } = await supabase.auth.getUser();
         if (error || !user) {
             console.error('Erro ao carregar user_metadata:', error);
-            content.innerHTML = '<p>Erro ao carregar perfil.</p>';
+            content.innerHTML = '<p>Erro ao carregar perfil. Faça login novamente.</p>';
+            window.location.href = '/login.html';
             return;
+        }
+        // Buscar estado da tabela endereco
+        let estado = user.user_metadata.estado || 'N/A';
+        const { data: endereco, error: enderecoError } = await supabase
+            .from('endereco')
+            .select('estado_endereco')
+            .eq('usuario_id', user.id)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+        if (endereco && !enderecoError) {
+            estado = endereco.estado_endereco || 'N/A';
         }
         profile = {
             id: user.id,
             nome: user.user_metadata.nome || 'Anônimo',
-            estado: user.user_metadata.estado || 'N/A',
+            estado: estado,
             username: user.user_metadata.username || 'N/A',
             bio: user.user_metadata.bio || 'Sem bio disponível'
         };
         console.log('Perfil do próprio usuário:', profile);
     } else {
-        // Outro usuário: consultar tabela usuario
-        const { data, error } = await supabase
+        // Outro usuário: consultar tabela usuario e endereco
+        const { data: usuario, error: usuarioError } = await supabase
             .from('usuario')
-            .select('id, nome, estado, username, bio')
+            .select('id, nome, username, bio')
             .eq('username', username)
             .single();
-        if (error || !data) {
-            console.error('Erro ao carregar perfil:', error);
-            content.innerHTML = '<p>Erro ao carregar perfil ou usuário não encontrado.</p>';
+        if (usuarioError || !usuario) {
+            console.error('Erro ao carregar perfil:', usuarioError);
+            content.innerHTML = '<p>Usuário não encontrado ou erro ao carregar perfil.</p>';
             return;
         }
-        profile = data;
+        // Buscar estado da tabela endereco
+        let estado = 'N/A';
+        const { data: endereco, error: enderecoError } = await supabase
+            .from('endereco')
+            .select('estado_endereco')
+            .eq('usuario_id', usuario.id)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+        if (endereco && !enderecoError) {
+            estado = endereco.estado_endereco || 'N/A';
+        }
+        profile = {
+            id: usuario.id,
+            nome: usuario.nome || 'Anônimo',
+            estado: estado,
+            username: usuario.username || 'N/A',
+            bio: usuario.bio || 'Sem bio disponível'
+        };
         console.log('Perfil de outro usuário:', profile);
     }
 
@@ -1669,10 +1708,10 @@ function renderPerfil(content, profile) {
     content.innerHTML = `
         <h2>Perfil</h2>
         <div class="card perfil-card">
-            <p class="perfil-nome"> ${profile.nome || 'Anônimo'}</p>
-            <p> ${profile.estado || 'N/A'}</p>
-            <p> ${profile.username || 'N/A'}</p>
-            <p>${profile.bio || 'Sem bio disponível'}</p>
+            <p><strong>Nome:</strong> ${profile.nome || 'Anônimo'}</p>
+            <p><strong>Estado:</strong> ${profile.estado || 'N/A'}</p>
+            <p><strong>Username:</strong> ${profile.username || 'N/A'}</p>
+            <p><strong>Bio:</strong> ${profile.bio || 'Sem bio disponível'}</p>
         </div>
     `;
 }
