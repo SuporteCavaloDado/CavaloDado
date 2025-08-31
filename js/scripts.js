@@ -427,6 +427,16 @@ function inicializarFeed() {
     carregarPedidos();
     inicializarFiltros();
     inicializarPesquisa();
+    formatViews();
+}
+
+function formatViews(views) {
+    if (views >= 1000000) {
+        return `(${Math.round(views / 100000) / 10}M)`; // Ex: (1.2M)
+    } else if (views >= 1000) {
+        return `(${Math.round(views / 1000)}MIL)`; // Ex: (5MIL)
+    }
+    return `(${views})`; // Ex: (5)
 }
 
 async function carregarPedidos() {
@@ -443,15 +453,23 @@ async function carregarPedidos() {
             created_at,
             user_nome,
             user_estado,
+            views,
             endereco (cep, rua, numero, complemento, bairro, cidade, estado_endereco)
         `)
-        .in('status', ['Disponível', 'Pendente', 'Concluído']) // Incluir todos os status
-        .order('created_at', { ascending: false }); // Ordenar por mais recente
+        .in('status', ['Disponível', 'Pendente', 'Concluído'])
+        .order('created_at', { ascending: false });
 
     if (error) {
         console.error('Erro ao carregar pedidos:', error);
         alert('Erro ao carregar feed: ' + error.message);
         return;
+    }
+
+    // Incrementar views em lote
+    const pedidoIds = pedidos.map(p => p.id);
+    if (pedidoIds.length > 0) {
+        const { error: incrementError } = await supabase.rpc('increment_pedido_views', { pedido_ids: pedidoIds });
+        if (incrementError) console.error('Erro ao incrementar views:', incrementError);
     }
 
     pedidosCache = pedidos.map(pedido => ({
@@ -463,6 +481,7 @@ async function carregarPedidos() {
         status: pedido.status,
         usuario: pedido.user_nome || 'Anônimo',
         data: pedido.created_at,
+        views: pedido.views || 0,
         media: { tipo: 'imagem', url: pedido.foto_url || 'https://placehold.co/400x600?text=Sem+Imagem' },
         endereco: pedido.endereco || {
             nome: pedido.user_nome || 'Anônimo',
@@ -527,7 +546,7 @@ function criarElementoPedido(pedido) {
             <div class="pedido-meta">
                 <span>${pedido.categoria}</span>
                 <span>${pedido.estado}</span>
-                <span>${pedido.status}</span>
+                <span>(${pedido.status}) ${formatViews(pedido.views)}</span>
             </div>
         </div>
     `;
