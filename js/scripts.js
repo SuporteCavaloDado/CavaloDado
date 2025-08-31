@@ -1066,11 +1066,11 @@ function fecharModal() {
 function verPerfil(username) {
     if (!username || username === 'anonimo') {
         console.error('Username inválido:', username);
-        window.location.href = 'dashboard.html';
+        window.location.href = '/dashboard.html';
         return;
     }
 
-    window.location.href = `/dashboard.html/${username}`;
+    window.location.href = `/perfil/${username}`;
 }
 
 // Favorito
