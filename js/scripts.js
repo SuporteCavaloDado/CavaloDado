@@ -546,7 +546,8 @@ function criarElementoPedido(pedido) {
             <div class="pedido-meta">
                 <span>${pedido.categoria}</span>
                 <span>${pedido.estado}</span>
-                <span>(${pedido.status}) ${formatViews(pedido.views)}</span>
+                <span>${pedido.status}</span>
+                <span>${formatViews(pedido.views)}</span>
             </div>
         </div>
     `;
