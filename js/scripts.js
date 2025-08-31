@@ -455,6 +455,7 @@ async function carregarPedidos() {
             user_estado,
             views,
             endereco (cep, rua, numero, complemento, bairro, cidade, estado_endereco)
+            usuario:user_id (username)
         `)
         .in('status', ['Disponível', 'Pendente', 'Concluído'])
         .order('created_at', { ascending: false });
