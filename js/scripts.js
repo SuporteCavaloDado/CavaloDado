@@ -1684,10 +1684,10 @@ function renderPerfil(content, profile) {
     content.innerHTML = `
         <h2>Perfil</h2>
         <div class="card perfil-card">
-            <p><strong>Nome:</strong> ${profile.nome || 'Anônimo'}</p>
-            <p><strong>Estado:</strong> ${profile.estado || 'N/A'}</p>
-            <p><strong>Username:</strong> ${profile.username || 'N/A'}</p>
-            <p><strong>Bio:</strong> ${profile.bio || 'Sem bio disponível'}</p>
+            <p>${profile.nome || 'Anônimo'}</p>
+            <p>${profile.estado || 'N/A'}</p>
+            <p>${profile.username || 'N/A'}</p>
+            <p>${profile.bio || 'Sem bio disponível'}</p>
         </div>
     `;
 }
