@@ -2,6 +2,8 @@
 let usuarioLogado = null;
 let pedidosCache = [];
 let filtrosAtivos = {};
+let profileCache = null;
+let favoritosCache = null;
 
 // Inicialização
 document.addEventListener('DOMContentLoaded', function() {
