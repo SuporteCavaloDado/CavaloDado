@@ -431,22 +431,7 @@ function inicializarFeed() {
 
 async function carregarPedidos() {
     const { data: pedidos, error } = await supabase
-        .from('pedido')
-        .select(`
-            id,
-            user_id,
-            titulo,
-            categoria,
-            descricao,
-            foto_url,
-            status,
-            created_at,
-            user_nome,
-            user_estado,
-            endereco (cep, rua, numero, complemento, bairro, cidade, estado_endereco)
-        `)
-        .in('status', ['Disponível', 'Pendente', 'Concluído']) // Incluir todos os status
-        .order('random()', { ascending: false }); // Ordenação aleatória com RANDOM()
+        .rpc('get_random_pedidos');
 
     if (error) {
         console.error('Erro ao carregar pedidos:', error);
