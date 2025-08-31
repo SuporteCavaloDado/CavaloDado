@@ -454,7 +454,7 @@ async function carregarPedidos() {
             user_nome,
             user_estado,
             views,
-            endereco (cep, rua, numero, complemento, bairro, cidade, estado_endereco)
+            endereco (cep, rua, numero, complemento, bairro, cidade, estado_endereco),
             usuario:user_id (username)
         `)
         .in('status', ['Disponível', 'Pendente', 'Concluído'])
@@ -481,6 +481,7 @@ async function carregarPedidos() {
         estado: pedido.user_estado || pedido.endereco?.estado_endereco || 'N/A',
         status: pedido.status,
         usuario: pedido.user_nome || 'Anônimo',
+        username: pedido.usuario?.username || 'anonimo', // Adicionar username
         data: pedido.created_at,
         views: pedido.views || 0,
         media: { tipo: 'imagem', url: pedido.foto_url || 'https://placehold.co/400x600?text=Sem+Imagem' },
