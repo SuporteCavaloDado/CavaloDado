@@ -1529,25 +1529,31 @@ async function inicializarDashboard() {
         <button class="btn btn-outline ${window.location.hash === '#favoritos' ? 'active' : ''}" onclick="navigateTo('favoritos', '${username}')">Favoritos</button>
         ${isOwnProfile ? `
             <button class="btn btn-outline ${window.location.hash === '#historico' ? 'active' : ''}" onclick="navigateTo('historico', '${username}')">Histórico</button>
-            <button class="btn btn-outline ${window.location.hash === '#config' ? 'active' : ''}" onclick="navigateTo('config', '${username}')">Configurações</button>
         ` : ''}
     `;
 
-    // Configurar menu lateral
+    // Configurar menu lateral com links diretos
     menuItems.innerHTML = `
-        <a href="index.html" class="menu-item">Início</a>
+        <a href="/index.html" class="menu-item" onclick="clearDashboard()">Início</a>
         <a href="/dashboard.html/${username}" class="menu-item">Perfil</a>
-        <a href="new-request.html" class="menu-item">Novo Pedido</a>
+        <a href="/new-request.html" class="menu-item" onclick="clearDashboard()">Novo Pedido</a>
         ${isOwnProfile ? `
             <a href="/dashboard.html/${username}#historico" class="menu-item">Histórico</a>
             <a href="/dashboard.html/${username}#favoritos" class="menu-item">Favoritos</a>
-            <a href="/dashboard.html/${username}#config" class="menu-item">Configurações</a>
+            <a href="/config.html" class="menu-item" onclick="clearDashboard()">Configurações</a>
         ` : `
             <a href="/dashboard.html/${username}#favoritos" class="menu-item">Favoritos</a>
         `}
-        <a href="regras.html" class="menu-item">Termos e Regras</a>
+        <a href="/regras.html" class="menu-item" onclick="clearDashboard()">Termos e Regras</a>
         ${usuarioLogado ? `<a href="#" class="menu-item" onclick="logout()">Sair</a>` : ''}
     `;
+
+    // Função para limpar o dashboard antes de navegar
+    window.clearDashboard = function() {
+        content.innerHTML = ''; // Limpar conteúdo
+        nav.innerHTML = ''; // Limpar navegação
+        window.removeEventListener('popstate', handlePopstate); // Remover listener
+    };
 
     // Função de navegação no lado do cliente
     window.navigateTo = function(section, username) {
@@ -1556,10 +1562,11 @@ async function inicializarDashboard() {
     };
 
     // Lidar com evento popstate
-    window.addEventListener('popstate', (event) => {
+    function handlePopstate(event) {
         const { section, username } = event.state || { section: 'perfil', username: usuarioLogado?.username || '' };
         updateContent(section, username);
-    });
+    }
+    window.addEventListener('popstate', handlePopstate);
 
     // Atualizar conteúdo
     function updateContent(section, username) {
@@ -1567,23 +1574,10 @@ async function inicializarDashboard() {
         const activeBtn = nav.querySelector(`button[onclick*="navigateTo('${section}'"]`);
         if (activeBtn) activeBtn.classList.add('active');
 
-        if (section === 'config') {
-            if (!usuarioLogado) {
-                content.innerHTML = '<p>Faça login para acessar configurações.</p>';
-                window.location.href = 'login.html';
-                return;
-            }
-            if (!isOwnProfile) {
-                content.innerHTML = '<p>Acesso restrito às suas próprias configurações.</p>';
-                history.pushState({ section: 'perfil', username }, '', `/dashboard.html/${username}`);
-                mostrarPerfil(username);
-                return;
-            }
-            inicializarConfiguracoes();
-        } else if (section === 'historico') {
+        if (section === 'historico') {
             if (!usuarioLogado) {
                 content.innerHTML = '<p>Faça login para ver o histórico.</p>';
-                window.location.href = 'login.html';
+                window.location.href = '/login.html';
                 return;
             }
             if (!isOwnProfile) {
@@ -1599,6 +1593,11 @@ async function inicializarDashboard() {
             mostrarPerfil(username);
         }
     }
+
+    // Inicializar conteúdo
+    const hash = window.location.hash.slice(1) || 'perfil';
+    updateContent(hash, username);
+}
 
     // Inicializar conteúdo
     const hash = window.location.hash.slice(1) || 'perfil';
