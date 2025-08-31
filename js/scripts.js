@@ -1613,9 +1613,6 @@ async function inicializarDashboard() {
     updateContent(section, username);
 }
 
-    // Mostrar Perfil
-let profileCache = null; // Cache para perfil
-
 // Mostrar Perfil
 let profileCache = null; // Cache para perfil
 
