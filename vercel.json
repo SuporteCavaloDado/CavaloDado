@@ -1,7 +1,15 @@
 {
   "rewrites": [
     {
-      "source": "/dashboard.html/:username",
+      "source": "/perfil/:username",
+      "destination": "/dashboard.html"
+    },
+    {
+      "source": "/favoritos/:username",
+      "destination": "/dashboard.html"
+    },
+    {
+      "source": "/historico/:username",
       "destination": "/dashboard.html"
     }
   ]
