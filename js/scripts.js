@@ -440,7 +440,8 @@ function formatViews(views) {
 }
 
 async function carregarPedidos() {
-    const { data: pedidos, error } = await supabase
+    // Buscar pedidos sem join automático
+    const { data: pedidos, error: pedidoError } = await supabase
         .from('pedido')
         .select(`
             id,
@@ -454,16 +455,44 @@ async function carregarPedidos() {
             user_nome,
             user_estado,
             views,
-            endereco (cep, rua, numero, complemento, bairro, cidade, estado_endereco),
-            usuario:user_id (username)
+            endereco_id
         `)
         .in('status', ['Disponível', 'Pendente', 'Concluído'])
         .order('created_at', { ascending: false });
 
-    if (error) {
-        console.error('Erro ao carregar pedidos:', error);
-        alert('Erro ao carregar feed: ' + error.message);
+    if (pedidoError) {
+        console.error('Erro ao carregar pedidos:', pedidoError);
+        alert('Erro ao carregar feed: ' + pedidoError.message);
         return;
+    }
+
+    // Buscar usernames de public.usuario
+    const userIds = [...new Set(pedidos.map(p => p.user_id))];
+    const { data: usuarios, error: userError } = await supabase
+        .from('usuario')
+        .select('id, username')
+        .in('id', userIds);
+
+    if (userError) {
+        console.error('Erro ao carregar usernames:', userError);
+        alert('Erro ao carregar usernames: ' + userError.message);
+        return;
+    }
+    const usernameMap = new Map(usuarios.map(u => [u.id, u.username || 'anonimo']));
+
+    // Buscar endereços apenas para pedidos com endereco_id
+    const enderecoIds = [...new Set(pedidos.filter(p => p.endereco_id).map(p => p.endereco_id))];
+    let enderecoMap = new Map();
+    if (enderecoIds.length > 0) {
+        const { data: enderecos, error: enderecoError } = await supabase
+            .from('endereco')
+            .select('id, cep, rua, numero, complemento, bairro, cidade, estado_endereco')
+            .in('id', enderecoIds);
+        if (enderecoError) {
+            console.error('Erro ao carregar endereços:', enderecoError);
+        } else {
+            enderecoMap = new Map(enderecos.map(e => [e.id, e]));
+        }
     }
 
     // Incrementar views em lote
@@ -478,14 +507,14 @@ async function carregarPedidos() {
         titulo: pedido.titulo,
         descricao: pedido.descricao,
         categoria: pedido.categoria,
-        estado: pedido.user_estado || pedido.endereco?.estado_endereco || 'N/A',
+        estado: pedido.user_estado || enderecoMap.get(pedido.endereco_id)?.estado_endereco || 'N/A',
         status: pedido.status,
         usuario: pedido.user_nome || 'Anônimo',
-        username: pedido.usuario?.username || 'anonimo', // Adicionar username
+        username: usernameMap.get(pedido.user_id) || 'anonimo',
         data: pedido.created_at,
         views: pedido.views || 0,
         media: { tipo: 'imagem', url: pedido.foto_url || 'https://placehold.co/400x600?text=Sem+Imagem' },
-        endereco: pedido.endereco || {
+        endereco: enderecoMap.get(pedido.endereco_id) || {
             nome: pedido.user_nome || 'Anônimo',
             rua: 'N/A',
             bairro: 'N/A',
