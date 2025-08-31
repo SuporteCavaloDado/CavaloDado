@@ -1616,8 +1616,6 @@ async function inicializarDashboard() {
 }
 
 // Mostrar Perfil
-let profileCache = null; // Cache para perfil
-
 async function mostrarPerfil(username) {
     const content = document.getElementById('dashboard-content');
     if (!content) {
@@ -1625,58 +1623,29 @@ async function mostrarPerfil(username) {
         return;
     }
 
-    // Invalidar cache se username mudou
-    if (profileCache && profileCache.username !== username) {
-        profileCache = null;
-    }
-
-    if (profileCache) {
-        renderPerfil(content, profileCache);
+    // Verificar cache (válido por 5 minutos)
+    const cacheDuration = 5 * 60 * 1000; // 5 minutos em ms
+    if (profileCache && profileCache.username === username && Date.now() - profileCache.timestamp < cacheDuration) {
+        renderPerfil(content, profileCache.data);
         return;
     }
 
-    let profile;
-    if (username === usuarioLogado?.username) {
-        // Próprio usuário: buscar de user_metadata
-        const { data: { user }, error } = await supabase.auth.getUser();
-        if (error || !user) {
-            console.error('Erro ao carregar user_metadata:', error);
-            content.innerHTML = '<p>Erro ao carregar perfil. Faça login novamente.</p>';
-            window.location.href = '/login.html';
-            return;
-        }
-        // Buscar estado da tabela endereco
-        let estado = user.user_metadata.estado || 'N/A';
-        const { data: endereco, error: enderecoError } = await supabase
-            .from('endereco')
-            .select('estado_endereco')
-            .eq('usuario_id', user.id)
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .maybeSingle();
-        if (endereco && !enderecoError) {
-            estado = endereco.estado_endereco || 'N/A';
-        }
-        profile = {
-            id: user.id,
-            nome: user.user_metadata.nome || 'Anônimo',
-            estado: estado,
-            username: user.user_metadata.username || 'N/A',
-            bio: user.user_metadata.bio || 'Sem bio disponível'
-        };
-        console.log('Perfil do próprio usuário:', profile);
-    } else {
-        // Outro usuário: consultar tabela usuario e endereco
+    content.innerHTML = '<p>Carregando perfil...</p>'; // Feedback de loading
+
+    try {
+        // Buscar usuário por username
         const { data: usuario, error: usuarioError } = await supabase
             .from('usuario')
             .select('id, nome, username, bio')
             .eq('username', username)
             .single();
+
         if (usuarioError || !usuario) {
-            console.error('Erro ao carregar perfil:', usuarioError);
+            console.error('Erro ao carregar usuário:', usuarioError);
             content.innerHTML = '<p>Usuário não encontrado ou erro ao carregar perfil.</p>';
             return;
         }
+
         // Buscar estado da tabela endereco
         let estado = 'N/A';
         const { data: endereco, error: enderecoError } = await supabase
@@ -1686,21 +1655,29 @@ async function mostrarPerfil(username) {
             .order('created_at', { ascending: false })
             .limit(1)
             .maybeSingle();
+
         if (endereco && !enderecoError) {
             estado = endereco.estado_endereco || 'N/A';
+        } else if (enderecoError) {
+            console.warn('Erro ao carregar endereço:', enderecoError);
         }
-        profile = {
+
+        const profile = {
             id: usuario.id,
             nome: usuario.nome || 'Anônimo',
             estado: estado,
             username: usuario.username || 'N/A',
             bio: usuario.bio || 'Sem bio disponível'
         };
-        console.log('Perfil de outro usuário:', profile);
-    }
 
-    profileCache = profile;
-    renderPerfil(content, profile);
+        // Atualizar cache
+        profileCache = { username, data: profile, timestamp: Date.now() };
+        console.log('Perfil carregado:', profile);
+        renderPerfil(content, profile);
+    } catch (err) {
+        console.error('Erro inesperado em mostrarPerfil:', err);
+        content.innerHTML = '<p>Erro inesperado ao carregar perfil. Tente novamente.</p>';
+    }
 }
 
 function renderPerfil(content, profile) {
