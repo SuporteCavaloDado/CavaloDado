@@ -1693,8 +1693,6 @@ function renderPerfil(content, profile) {
 }
 
     // Mostrar Favoritos
-let favoritosCache = null; // Cache para favoritos
-
 async function mostrarFavoritos(username) {
     const content = document.getElementById('dashboard-content');
     if (!content) {
