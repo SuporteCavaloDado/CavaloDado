@@ -1068,8 +1068,7 @@ function verPerfil(username) {
         return;
     }
 
-    history.pushState({ section: 'perfil', username }, '', `/dashboard.html/${username}`);
-    inicializarDashboard();
+    window.location.href = `/dashboard.html/${username}`;
 }
 
 // Favorito
