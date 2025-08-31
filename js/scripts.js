@@ -1559,14 +1559,14 @@ async function inicializarDashboard() {
     // Configurar menu lateral com redirecionamentos diretos
     menuItems.innerHTML = `
         <a href="/index.html" class="menu-item">Início</a>
-        <a href="/dashboard.html/${username}" class="menu-item">Perfil</a>
+        <a href="/perfil/${username}" class="menu-item">Perfil</a>
         <a href="/new-request.html" class="menu-item">Novo Pedido</a>
         ${isOwnProfile ? `
-            <a href="/dashboard.html/${username}#historico" class="menu-item">Histórico</a>
-            <a href="/dashboard.html/${username}#favoritos" class="menu-item">Favoritos</a>
+            <a href="/historico/${username}" class="menu-item">Histórico</a>
+            <a href="/favoritos/${username}" class="menu-item">Favoritos</a>
             <a href="/config.html" class="menu-item">Configurações</a>
         ` : `
-            <a href="/dashboard.html/${username}#favoritos" class="menu-item">Favoritos</a>
+            <a href="/favoritos/${username}" class="menu-item">Favoritos</a>
         `}
         <a href="/regras.html" class="menu-item">Termos e Regras</a>
         ${usuarioLogado ? `<a href="#" class="menu-item" onclick="logout()">Sair</a>` : ''}
@@ -1574,7 +1574,7 @@ async function inicializarDashboard() {
 
     // Função de navegação no lado do cliente
     window.navigateTo = function(section, username) {
-        history.pushState({ section, username }, '', `/dashboard.html/${username}${section === 'perfil' ? '' : `#${section}`}`);
+        history.pushState({ section, username }, '', `/${section}/${username}`);
         updateContent(section, username);
     };
 
@@ -1597,7 +1597,7 @@ async function inicializarDashboard() {
             }
             if (!isOwnProfile) {
                 content.innerHTML = '<p>Acesso restrito ao seu próprio histórico.</p>';
-                history.pushState({ section: 'perfil', username }, '', `/dashboard.html/${username}`);
+                history.pushState({ section: 'perfil', username }, '', `/perfil/${username}`);
                 mostrarPerfil(username);
                 return;
             }
@@ -1610,8 +1610,9 @@ async function inicializarDashboard() {
     }
 
     // Inicializar conteúdo ao carregar ou recarregar
-    const hash = window.location.hash.slice(1);
-    const section = hash || 'perfil';
+    const pathSegments = window.location.pathname.split('/');
+    const section = pathSegments[pathSegments.length - 2] || 'perfil'; // Extrair section de /section/username
+    username = pathSegments[pathSegments.length - 1] || usuarioLogado?.username || '';
     updateContent(section, username);
 }
 
