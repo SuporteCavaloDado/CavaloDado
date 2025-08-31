@@ -1,9 +1,8 @@
 {
   "rewrites": [
     {
-      "source": "/dashboard.html/:username*",
+      "source": "/dashboard.html/:username",
       "destination": "/dashboard.html"
     }
-  ],
-  "cleanUrls": false
+  ]
 }
