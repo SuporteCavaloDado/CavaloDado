@@ -1061,20 +1061,14 @@ function fecharModal() {
 }
 
 // Funções de ação
-async function verPerfil(userId) {
-    const { data: user, error } = await supabase
-        .from('usuario')
-        .select('username')
-        .eq('id', userId)
-        .single();
-
-    if (error || !user?.username) {
-        console.error('Erro ao buscar username:', error);
+function verPerfil(username) {
+    if (!username || username === 'anonimo') {
+        console.error('Username inválido:', username);
         window.location.href = 'dashboard.html';
         return;
     }
 
-    history.pushState({ section: 'perfil', username: user.username }, '', `/dashboard.html/${user.username}`);
+    history.pushState({ section: 'perfil', username }, '', `/dashboard.html/${username}`);
     inicializarDashboard();
 }
 
