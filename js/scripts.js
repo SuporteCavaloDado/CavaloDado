@@ -432,11 +432,11 @@ function inicializarFeed() {
 
 function formatViews(views) {
     if (views >= 1000000) {
-        return `(${Math.round(views / 100000) / 10}M)`; // Ex: (1.2M)
+        return `${Math.round(views / 100000) / 10}M`; // Ex: 1.2M
     } else if (views >= 1000) {
-        return `(${Math.round(views / 1000)}MIL)`; // Ex: (5MIL)
+        return `${Math.round(views / 1000)}MIL`; // Ex: 5MIL
     }
-    return `(${views})`; // Ex: (5)
+    return `${views}`; // Ex: 5
 }
 
 async function carregarPedidos() {
