@@ -1525,10 +1525,11 @@ async function inicializarDashboard() {
 
     // Configurar navegação do dashboard
     nav.innerHTML = `
-        <button class="btn btn-outline ${!window.location.hash ? 'active' : ''}" onclick="navigateTo('perfil', '${username}')">Perfil</button>
+        <button class="btn btn-outline ${!window.location.hash || window.location.hash === '#perfil' ? 'active' : ''}" onclick="navigateTo('perfil', '${username}')">Perfil</button>
         <button class="btn btn-outline ${window.location.hash === '#favoritos' ? 'active' : ''}" onclick="navigateTo('favoritos', '${username}')">Favoritos</button>
         ${isOwnProfile ? `
             <button class="btn btn-outline ${window.location.hash === '#historico' ? 'active' : ''}" onclick="navigateTo('historico', '${username}')">Histórico</button>
+            <button class="btn btn-outline ${window.location.hash === '#config' ? 'active' : ''}" onclick="navigateTo('config', '${username}')">Configurações</button>
         ` : ''}
     `;
 
@@ -1540,6 +1541,7 @@ async function inicializarDashboard() {
         ${isOwnProfile ? `
             <a href="/dashboard.html/${username}#historico" class="menu-item">Histórico</a>
             <a href="/dashboard.html/${username}#favoritos" class="menu-item">Favoritos</a>
+            <a href="/dashboard.html/${username}#config" class="menu-item">Configurações</a>
         ` : `
             <a href="/dashboard.html/${username}#favoritos" class="menu-item">Favoritos</a>
         `}
@@ -1555,7 +1557,7 @@ async function inicializarDashboard() {
 
     // Lidar com evento popstate
     window.addEventListener('popstate', (event) => {
-        const { section, username } = event.state || { section: 'perfil', username };
+        const { section, username } = event.state || { section: 'perfil', username: usuarioLogado?.username || '' };
         updateContent(section, username);
     });
 
@@ -1565,9 +1567,23 @@ async function inicializarDashboard() {
         const activeBtn = nav.querySelector(`button[onclick*="navigateTo('${section}'"]`);
         if (activeBtn) activeBtn.classList.add('active');
 
-        if (section === 'historico') {
+        if (section === 'config') {
+            if (!usuarioLogado) {
+                content.innerHTML = '<p>Faça login para acessar configurações.</p>';
+                window.location.href = 'login.html';
+                return;
+            }
+            if (!isOwnProfile) {
+                content.innerHTML = '<p>Acesso restrito às suas próprias configurações.</p>';
+                history.pushState({ section: 'perfil', username }, '', `/dashboard.html/${username}`);
+                mostrarPerfil(username);
+                return;
+            }
+            inicializarConfiguracoes();
+        } else if (section === 'historico') {
             if (!usuarioLogado) {
                 content.innerHTML = '<p>Faça login para ver o histórico.</p>';
+                window.location.href = 'login.html';
                 return;
             }
             if (!isOwnProfile) {
@@ -1585,9 +1601,8 @@ async function inicializarDashboard() {
     }
 
     // Inicializar conteúdo
-    const hash = window.location.hash.slice(1);
-    const section = hash || 'perfil';
-    updateContent(section, username);
+    const hash = window.location.hash.slice(1) || 'perfil';
+    updateContent(hash, username);
 }
 
     // Mostrar Perfil
