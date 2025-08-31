@@ -508,7 +508,7 @@ function renderizarFeed(pedidos) {
         console.log('Carregando pedido no feed:', {
             titulo: pedido.titulo,
             fotoUrl: pedido.media.url
-        });  // CORRIGIDO: Log para depuração
+        });
         
         const pedidoElement = criarElementoPedido(pedido);
         feedContainer.appendChild(pedidoElement);
