@@ -445,8 +445,8 @@ async function carregarPedidos() {
             user_estado,
             endereco (cep, rua, numero, complemento, bairro, cidade, estado_endereco)
         `)
-        .eq('status', STATUS_PEDIDOS.DISPONIVEL)
-        .order('created_at', { ascending: false });
+        .in('status', ['Disponível', 'Pendente', 'Concluído']) // Incluir todos os status
+        .order('random'); // Ordenação aleatória
 
     if (error) {
         console.error('Erro ao carregar pedidos:', error);
