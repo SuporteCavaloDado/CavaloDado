@@ -973,56 +973,6 @@ function fecharModal() {
     if (modal) modal.remove();
 }
 
-// Modal Perfil
-async function abrirModalPerfil(userId) {
-    if (!userId) {
-        alert('Usuário inválido.');
-        return;
-    }
-
-    try {
-        // Buscar dados do usuário no Supabase
-        const { data: usuario, error: userError } = await supabase
-            .from('usuario')
-            .select('id, nome, bio, estado')
-            .eq('id', userId)
-            .single();
-
-        if (userError || !usuario) throw userError;
-
-        // Buscar endereço para estado (fallback)
-        let estado = usuario.estado || 'N/A';
-        const { data: endereco, error: addrError } = await supabase
-            .from('endereco')
-            .select('estado_endereco')
-            .eq('usuario_id', userId)
-            .maybeSingle();
-
-        if (endereco && !addrError) estado = endereco.estado_endereco || estado;
-
-        // Criar modal com dados
-        const modal = document.createElement('div');
-        modal.className = 'modal-overlay';
-        modal.innerHTML = `
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3>Informações do Criador</h3>
-                    <button class="modal-close" onclick="fecharModal()">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <p><strong>Nome:</strong> ${usuario.nome || 'Anônimo'}</p>
-                    <p><strong>Bio:</strong> ${usuario.bio || 'Sem bio'}</p>
-                    <p><strong>Estado:</strong> ${estado}</p>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(modal);
-    } catch (err) {
-        console.error('Erro ao carregar dados:', err);
-        alert('Erro ao carregar informações do criador.');
-    }
-}
-
 supabase.auth.onAuthStateChange(async (event, session) => {
     try {
         if (event === 'SIGNED_IN' && session) {
