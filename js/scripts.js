@@ -684,22 +684,21 @@ async function abrirModalDoacao(pedidoId) {
             .single();
         if (error || !data) throw error;
         pedidoData = data;
-        console.log('Dados do pedido:', pedidoData); // Depuração
+        console.log('Dados do pedido:', pedidoData);
     } catch (err) {
         console.error('Erro ao carregar pedido:', err);
         alert('Erro ao carregar dados do pedido.');
-        pedidoData = pedidosCache.find(p => p.id === pedidoId); // Fallback cache
+        pedidoData = pedidosCache.find(p => p.id === pedidoId);
         if (!pedidoData) return;
     }
 
-    // Carregar usuarioLogado de forma segura
     if (typeof usuarioLogado === 'undefined' || !usuarioLogado) {
         try {
             const { data: { user } } = await supabase.auth.getUser();
             usuarioLogado = user;
         } catch (authErr) {
             console.error('Erro ao carregar usuário logado:', authErr);
-            usuarioLogado = null; // Prosseguir sem usuário logado
+            usuarioLogado = null;
         }
     }
 
@@ -708,19 +707,41 @@ async function abrirModalDoacao(pedidoId) {
         return;
     }
 
-    // Buscar endereço: primeiro via endereco_id, depois via usuario_id
-    let enderecoData = null;
-    let nomeUsuario = pedidoData.user_nome;
-    let estadoFallback = 'N/A';
+    // Buscar dados do perfil do criador (nome, bio, estado, photo_url)
+    let perfilData = { nome: 'Anônimo', bio: 'Sem bio', estado: 'N/A', photo_url: 'https://placehold.co/100x100?text=Perfil' };
+    try {
+        const { data: usuario, error: userError } = await supabase
+            .from('usuario')
+            .select('nome, bio, estado')
+            .eq('id', pedidoData.user_id)
+            .single();
+        if (!userError && usuario) {
+            perfilData.nome = usuario.nome || 'Anônimo';
+            perfilData.bio = usuario.bio || 'Sem bio';
+            perfilData.estado = usuario.estado || 'N/A';
+        }
 
-    // Tentar via endereco_id se disponível
+        // Buscar photo_url do auth.user_metadata
+        const { data: authUser, error: authError } = await supabase.auth.admin.getUserById(pedidoData.user_id);
+        if (!authError && authUser?.user?.user_metadata?.photo_url) {
+            perfilData.photo_url = authUser.user.user_metadata.photo_url;
+        }
+    } catch (perfilErr) {
+        console.error('Erro ao carregar perfil do criador:', perfilErr);
+    }
+
+    // Buscar endereço (mantido como antes)
+    let enderecoData = null;
+    let nomeUsuario = pedidoData.user_nome || perfilData.nome;
+    let estadoFallback = perfilData.estado;
+
     if (pedidoData.endereco_id) {
         try {
             const { data: addrData, error: addrError } = await supabase
                 .from('endereco')
                 .select('id, cep, rua, numero, complemento, bairro, cidade, estado_endereco')
                 .eq('id', pedidoData.endereco_id)
-                .maybeSingle(); // Evita erro com múltiplos resultados
+                .maybeSingle();
             if (!addrError && addrData) {
                 enderecoData = addrData;
                 console.log('Endereço via endereco_id:', enderecoData);
@@ -732,20 +753,18 @@ async function abrirModalDoacao(pedidoId) {
         }
     }
 
-    // Fallback para usuario_id se endereco_id não retornar
     if (!enderecoData) {
         try {
             const { data: addrData, error: addrError } = await supabase
                 .from('endereco')
                 .select('id, cep, rua, numero, complemento, bairro, cidade, estado_endereco')
                 .eq('usuario_id', pedidoData.user_id)
-                .order('created_at', { ascending: false }) // Pegar o mais recente
+                .order('created_at', { ascending: false })
                 .limit(1)
                 .maybeSingle();
             if (!addrError && addrData) {
                 enderecoData = addrData;
                 console.log('Endereço via usuario_id:', enderecoData);
-                // Vincular ao pedido se não estiver vinculado
                 if (!pedidoData.endereco_id && addrData.id) {
                     try {
                         const { error: updateError } = await supabase
@@ -768,7 +787,6 @@ async function abrirModalDoacao(pedidoId) {
         }
     }
 
-    // Buscar nome e estado na tabela usuario se necessário
     if (!nomeUsuario || !enderecoData) {
         try {
             const { data: usuarioData, error: usuarioError } = await supabase
@@ -787,7 +805,7 @@ async function abrirModalDoacao(pedidoId) {
     }
 
     const endereco = enderecoData ? {
-        nome: nomeUsuario || 'Anônimo',
+        nome: nomeUsuario,
         cep: enderecoData.cep,
         rua: enderecoData.rua,
         numero: enderecoData.numero,
@@ -796,7 +814,7 @@ async function abrirModalDoacao(pedidoId) {
         cidade: enderecoData.cidade,
         estado_endereco: enderecoData.estado_endereco || estadoFallback
     } : {
-        nome: nomeUsuario || 'Anônimo',
+        nome: nomeUsuario,
         cep: 'N/A',
         rua: 'N/A',
         numero: 'N/A',
@@ -815,6 +833,12 @@ async function abrirModalDoacao(pedidoId) {
                 <button class="modal-close" onclick="fecharModal()">&times;</button>
             </div>
             <div class="modal-body">
+                <div class="perfil-criador">
+                    <img src="${perfilData.photo_url}" alt="Foto do criador" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; margin-bottom: 10px;">
+                    <p><strong>Nome:</strong> ${perfilData.nome}</p>
+                    <p><strong>Bio:</strong> ${perfilData.bio}</p>
+                    <p><strong>Estado:</strong> ${perfilData.estado}</p>
+                </div>
                 <div class="endereco-completo">
                     <h4>Endereço de entrega:</h4>
                     <div class="endereco-linha">
