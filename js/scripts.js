@@ -2,8 +2,6 @@
 let usuarioLogado = null;
 let pedidosCache = [];
 let filtrosAtivos = {};
-let profileCache = null;
-let favoritosCache = null;
 
 // Inicialização
 document.addEventListener('DOMContentLoaded', function() {
@@ -56,7 +54,7 @@ function atualizarMenuLogado() {
     if (usuarioLogado) {
         menuItems.innerHTML = `
             <a href="index.html" class="menu-item">Início</a>
-            <a href="dashboard.html" class="menu-item">Perfil</a>
+            <a href="dashboard.html" class="menu-item">Histórico</a>
             <a href="new-request.html" class="menu-item">Novo Pedido</a>
             <a href="config.html" class="menu-item">Configurações</a>
             <a href="regras.html" class="menu-item">Termos e Regras</a>
@@ -140,12 +138,12 @@ function inicializarLogin() {
                 if (error) throw error;
                 usuarioLogado = {
                     id: data.user.id,
-                    nome: data.user.user_metadata.nome || 'Usuário',  // CORRIGIDO: data.user em vez de userData
+                    nome: data.user.user_metadata.nome || 'Usuário',  
                     email: data.user.email,
                     username: data.user.user_metadata.username || '',
                     estado: data.user.user_metadata.estado || '',
-                    termos: data.user.user_metadata.termos || true,  // Ajustado para default true, como em outros lugares
-                    bio: data.user.user_metadata.bio || ''  // Garantido: bio é carregada aqui
+                    termos: data.user.user_metadata.termos || true,  
+                    bio: data.user.user_metadata.bio || ''  
                 };
                 localStorage.setItem('cavalodado_usuario', JSON.stringify(usuarioLogado));
                 atualizarMenuLogado();
@@ -560,14 +558,11 @@ function criarElementoPedido(pedido) {
     div.innerHTML = `
         ${mediaHtml}
         <div class="pedido-actions">
-            <button class="action-btn" onclick="verPerfil('${pedido.username}')">
+            <button class="action-btn" onclick="abrirModalPerfil('${pedido.user_id}')">
                 <span>👤</span>
             </button>
             <button class="action-btn btn-doar" onclick="abrirModalDoacao('${pedido.id}')">
                 <span>❤️</span>
-            </button>
-            <button class="action-btn" onclick="toggleFavorito('${pedido.id}')">
-                <span>⭐</span>
             </button>
             <button class="action-btn" onclick="compartilhar('${pedido.id}')">
                 <span>📤</span>
@@ -941,112 +936,10 @@ async function confirmarDoacao(pedidoId) {
 
         console.log('Doação salva:', doacao);
         alert('Doação confirmada! Código: ' + codigoRastreio);
-        await atualizarHistorico(); // Chama função específica para o histórico
         fecharModal();
     } catch (err) {
         console.error('Erro ao confirmar doação:', err);
         alert('Erro ao confirmar doação: ' + err.message);
-    }
-}
-
-// Atualizar Historico
-async function atualizarHistorico() {
-    console.log('Iniciando atualizarHistorico');
-    try {
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
-        if (authError || !user) {
-            console.error('Erro: Nenhum usuário logado', authError);
-            alert('Faça login para visualizar o histórico.');
-            return;
-        }
-        console.log('Usuário logado:', user.id);
-
-        const { data: pedidos, error: queryError } = await supabase
-            .from('pedido')
-            .select(`
-                id,
-                titulo,
-                status,
-                created_at,
-                foto_url,
-                doacao!left (codigo_rastreio)
-            `)
-            .eq('user_id', user.id)
-            .order('created_at', { ascending: false });
-        if (queryError) {
-            console.error('Erro ao buscar pedidos:', queryError);
-            alert('Erro ao carregar histórico: ' + queryError.message);
-            return;
-        }
-
-        console.log('Dados retornados:', JSON.stringify(pedidos, null, 2));
-
-        const historico = document.getElementById('historico-pedidos');
-        if (!historico) {
-            console.error('Erro: Elemento historico-pedidos não encontrado');
-            alert('Erro: Elemento historico-pedidos não encontrado.');
-            return;
-        }
-
-        historico.innerHTML = '';
-        pedidos.forEach(pedido => {
-            const expandContent = document.createElement('div');
-            expandContent.className = 'historico-item';
-            const codigoRastreio = pedido.doacao?.codigo_rastreio || '';
-            const fotoHtml = pedido.foto_url ? `<img src="${pedido.foto_url}" alt="Foto do pedido" style="max-width: 200px; margin-bottom: 10px;">` : '';
-            console.log(`Renderizando pedido ${pedido.id}: código_rastreio=${codigoRastreio}`);
-
-            if (pedido.status === STATUS_PEDIDOS.PENDENTE) {
-                expandContent.innerHTML = `
-                    <h3>${pedido.titulo}</h3>
-                    <p>Status: ${pedido.status}</p>
-                    ${fotoHtml}
-                    <div><input value="${codigoRastreio}" readonly><button class="copy-btn">Copiar</button></div>
-                    <div>
-                        <label><input type="checkbox" name="opt" value="invalido">Código Inválido</label>
-                        <label><input type="checkbox" name="opt" value="entregue">Produto Entregue</label>
-                    </div>
-                    <p class="note">Conferir o código com atenção.</p>
-                    <button class="confirm-btn">Confirmar</button>
-                `;
-                // Eventos para checkboxes e botões
-                const [invalido, entregue] = expandContent.querySelectorAll('input[name="opt"]');
-                const confirmBtn = expandContent.querySelector('.confirm-btn');
-                expandContent.querySelector('.copy-btn').onclick = () => {
-                    if (codigoRastreio) {
-                        navigator.clipboard.writeText(codigoRastreio);
-                        alert('Código copiado!');
-                    } else {
-                        alert('Nenhum código de rastreio disponível.');
-                    }
-                };
-                [invalido, entregue].forEach(cb => {
-                    cb.onchange = () => {
-                        if (cb.checked) [invalido, entregue].forEach(other => { if (other !== cb) other.checked = false; });
-                    };
-                });
-                confirmBtn.onclick = async () => {
-                    const checked = expandContent.querySelector('input[name="opt"]:checked');
-                    if (!checked) return alert('Selecione uma opção');
-                    const updates = { status: checked.value === 'invalido' ? STATUS_PEDIDOS.DISPONIVEL : STATUS_PEDIDOS.CONCLUIDO };
-                    if (updates.status === STATUS_PEDIDOS.CONCLUIDO) updates.completion_date = new Date().toISOString();
-                    const { error } = await supabase.from('pedido').update(updates).eq('id', pedido.id);
-                    if (error) return alert('Erro ao atualizar status: ' + error.message);
-                    atualizarHistorico(); // Recarrega o histórico
-                };
-            } else {
-                expandContent.innerHTML = `
-                    <h3>${pedido.titulo}</h3>
-                    <p>Status: ${pedido.status}</p>
-                    ${fotoHtml}
-                    <p>Código de Rastreio: ${codigoRastreio}</p>
-                `;
-            }
-            historico.appendChild(expandContent);
-        });
-    } catch (err) {
-        console.error('Erro em atualizarHistorico:', err);
-        alert('Erro ao carregar histórico: ' + err.message);
     }
 }
 
@@ -1062,78 +955,53 @@ function fecharModal() {
     if (modal) modal.remove();
 }
 
-// Funções de ação
-function verPerfil(username) {
-    if (!username || username === 'anonimo') {
-        console.error('Username inválido:', username);
-        window.location.href = '/dashboard.html';
-        return;
-    }
-
-    window.location.href = `/perfil/${username}`;
-}
-
-// Favorito
-async function toggleFavorito(pedidoId) {
-    if (!usuarioLogado) {
-        alert('Faça login para favoritar pedidos');
+// Modal Perfil
+async function abrirModalPerfil(userId) {
+    if (!userId) {
+        alert('Usuário inválido.');
         return;
     }
 
     try {
-        // Verificar se o pedido existe
-        const { data: pedidoExiste, error: pedidoError } = await supabase
-            .from('pedido')
-            .select('id')
-            .eq('id', pedidoId)
+        // Buscar dados do usuário no Supabase
+        const { data: usuario, error: userError } = await supabase
+            .from('usuario')
+            .select('id, nome, bio, estado')
+            .eq('id', userId)
             .single();
 
-        if (pedidoError || !pedidoExiste) {
-            console.error('Erro: Pedido não encontrado:', pedidoError);
-            alert('Erro: Pedido inválido.');
-            return;
-        }
+        if (userError || !usuario) throw userError;
 
-        const { data: favoritoExistente, error: checkError } = await supabase
-            .from('favoritos')
-            .select('id')
-            .eq('user_id', usuarioLogado.id)
-            .eq('pedido_id', pedidoId)
+        // Buscar endereço para estado (fallback)
+        let estado = usuario.estado || 'N/A';
+        const { data: endereco, error: addrError } = await supabase
+            .from('endereco')
+            .select('estado_endereco')
+            .eq('usuario_id', userId)
             .maybeSingle();
 
-        if (checkError) {
-            console.error('Erro ao verificar favorito:', checkError);
-            alert('Erro ao verificar favoritos: ' + checkError.message);
-            return;
-        }
+        if (endereco && !addrError) estado = endereco.estado_endereco || estado;
 
-        if (favoritoExistente) {
-            const { error } = await supabase
-                .from('favoritos')
-                .delete()
-                .eq('id', favoritoExistente.id);
-            
-            if (error) {
-                console.error('Erro ao remover favorito:', error);
-                alert('Erro ao remover favorito: ' + error.message);
-                return;
-            }
-            alert('Removido dos favoritos!');
-        } else {
-            const { error } = await supabase
-                .from('favoritos')
-                .insert({ user_id: usuarioLogado.id, pedido_id: pedidoId });
-            
-            if (error) {
-                console.error('Erro ao adicionar favorito:', error);
-                alert('Erro ao adicionar favorito: ' + error.message);
-                return;
-            }
-            alert('Adicionado aos favoritos!');
-        }
+        // Criar modal com dados
+        const modal = document.createElement('div');
+        modal.className = 'modal-overlay';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Informações do Criador</h3>
+                    <button class="modal-close" onclick="fecharModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p><strong>Nome:</strong> ${usuario.nome || 'Anônimo'}</p>
+                    <p><strong>Bio:</strong> ${usuario.bio || 'Sem bio'}</p>
+                    <p><strong>Estado:</strong> ${estado}</p>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
     } catch (err) {
-        console.error('Erro inesperado em toggleFavorito:', err);
-        alert('Erro inesperado ao gerenciar favoritos.');
+        console.error('Erro ao carregar dados:', err);
+        alert('Erro ao carregar informações do criador.');
     }
 }
 
@@ -1517,8 +1385,8 @@ const { error } = await supabase
         foto_url: fotoUrl,
         termos_pedido: termos,
         status: STATUS_PEDIDOS.DISPONIVEL,
-        user_nome: usuarioLogado.nome || 'Anônimo',  // CORRIGIDO: Salva nome do usuário
-        user_estado: usuarioLogado.estado || 'N/A'  // CORRIGIDO: Salva estado do usuário
+        user_nome: usuarioLogado.nome || 'Anônimo',  
+        user_estado: usuarioLogado.estado || 'N/A'  
     });
     
     if (error) {
@@ -1533,287 +1401,41 @@ const { error } = await supabase
 // Dashboard
 async function inicializarDashboard() {
     const content = document.getElementById('dashboard-content');
-    const nav = document.getElementById('dashboard-nav');
     const menuItems = document.getElementById('menu-items');
-    if (!content || !nav || !menuItems) {
-        console.error('Erro: dashboard-content, dashboard-nav ou menu-items não encontrado');
+    if (!content || !menuItems) {
+        console.error('Erro: dashboard-content ou menu-items não encontrado');
         content && (content.innerHTML = '<p>Erro: Elementos da página não encontrados.</p>');
         return;
     }
 
-    // Extrair section e username da URL
-    const pathSegments = window.location.pathname.split('/');
-    let section = pathSegments[pathSegments.length - 2] || 'perfil';
-    let username = pathSegments[pathSegments.length - 1] || usuarioLogado?.username || '';
-    if (!['perfil', 'favoritos', 'historico'].includes(section)) {
-        section = 'perfil'; // Fallback para perfil
+    // Verificar usuário logado
+    if (!usuarioLogado) {
+        content.innerHTML = '<p>Faça login para ver o histórico.</p>';
+        window.location.href = 'login.html';
+        return;
     }
 
-    // Determinar se é o próprio perfil
-    const isOwnProfile = usuarioLogado && username === usuarioLogado.username;
-
-    // Configurar navegação do dashboard
-    nav.innerHTML = `
-        <button class="btn btn-outline ${section === 'perfil' ? 'active' : ''}" onclick="navigateTo('perfil', '${username}')">Perfil</button>
-        <button class="btn btn-outline ${section === 'favoritos' ? 'active' : ''}" onclick="navigateTo('favoritos', '${username}')">Favoritos</button>
-        ${isOwnProfile ? `
-            <button class="btn btn-outline ${section === 'historico' ? 'active' : ''}" onclick="navigateTo('historico', '${username}')">Histórico</button>
-        ` : ''}
-    `;
-
-    // Configurar menu lateral com redirecionamentos diretos
+    // Configurar menu lateral (sem Perfil ou Favoritos)
     menuItems.innerHTML = `
         <a href="/index.html" class="menu-item">Início</a>
-        <a href="/perfil/${username}" class="menu-item">Perfil</a>
         <a href="/new-request.html" class="menu-item">Novo Pedido</a>
-        ${isOwnProfile ? `
-            <a href="/historico/${username}" class="menu-item">Histórico</a>
-            <a href="/favoritos/${username}" class="menu-item">Favoritos</a>
-            <a href="/config.html" class="menu-item">Configurações</a>
-        ` : `
-            <a href="/favoritos/${username}" class="menu-item">Favoritos</a>
-        `}
+        <a href="/dashboard.html" class="menu-item">Histórico</a>
+        <a href="/config.html" class="menu-item">Configurações</a>
         <a href="/regras.html" class="menu-item">Termos e Regras</a>
-        ${usuarioLogado ? `<a href="#" class="menu-item" onclick="logout()">Sair</a>` : ''}
+        <a href="#" class="menu-item" onclick="logout()">Sair</a>
     `;
 
-    // Função de navegação no lado do cliente
-    window.navigateTo = function(section, username) {
-        history.pushState({ section, username }, '', `/${section}/${username}`);
-        updateContent(section, username);
-    };
-
-    // Lidar com evento popstate
-    window.addEventListener('popstate', (event) => {
-        const { section, username } = event.state || { section: 'perfil', username: usuarioLogado?.username || '' };
-        updateContent(section, username);
-    });
-
-    // Atualizar conteúdo
-    function updateContent(section, username) {
-        console.log('Atualizando conteúdo:', { section, username });
-        nav.querySelectorAll('.btn').forEach(btn => btn.classList.remove('active'));
-        const activeBtn = nav.querySelector(`button[onclick*="navigateTo('${section}'"]`);
-        if (activeBtn) activeBtn.classList.add('active');
-
-        if (section === 'historico') {
-            if (!usuarioLogado) {
-                content.innerHTML = '<p>Faça login para ver o histórico.</p>';
-                return;
-            }
-            if (!isOwnProfile) {
-                content.innerHTML = '<p>Acesso restrito ao seu próprio histórico.</p>';
-                history.pushState({ section: 'perfil', username }, '', `/perfil/${username}`);
-                mostrarPerfil(username);
-                return;
-            }
-            mostrarHistorico();
-        } else if (section === 'favoritos') {
-            mostrarFavoritos(username);
-        } else {
-            mostrarPerfil(username);
-        }
-    }
-
-    // Inicializar conteúdo
-    console.log('Inicializando dashboard:', { section, username });
-    updateContent(section, username);
-}
-
-// Mostrar Perfil
-async function mostrarPerfil(username) {
-    const content = document.getElementById('dashboard-content');
-    if (!content) {
-        console.error('Erro: dashboard-content não encontrado');
-        return;
-    }
-
-    // Invalidar cache se username mudou ou bio está desatualizada
-    if (profileCache && (profileCache.username !== username || profileCache.data.bio === null)) {
-        profileCache = null;
-    }
-
-    // Verificar cache (válido por 5 minutos)
-    const cacheDuration = 5 * 60 * 1000; // 5 minutos em ms
-    if (profileCache && profileCache.username === username && Date.now() - profileCache.timestamp < cacheDuration) {
-        console.log('Usando cache para perfil:', profileCache.data);
-        renderPerfil(content, profileCache.data);
-        return;
-    }
-
-    content.innerHTML = '<p>Carregando perfil...</p>'; // Feedback de loading
-
-    try {
-        // Buscar usuário por username
-        const { data: usuario, error: usuarioError } = await supabase
-            .from('usuario')
-            .select('id, nome, username, bio')
-            .eq('username', username)
-            .single();
-
-        if (usuarioError || !usuario) {
-            console.error('Erro ao carregar usuário:', usuarioError);
-            content.innerHTML = '<p>Usuário não encontrado ou erro ao carregar perfil.</p>';
-            return;
-        }
-
-        // Buscar estado da tabela endereco
-        let estado = 'N/A';
-        const { data: endereco, error: enderecoError } = await supabase
-            .from('endereco')
-            .select('estado_endereco')
-            .eq('usuario_id', usuario.id)
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .maybeSingle();
-
-        if (endereco && !enderecoError) {
-            estado = endereco.estado_endereco || 'N/A';
-        } else if (enderecoError) {
-            console.warn('Erro ao carregar endereço:', enderecoError);
-        }
-
-        const profile = {
-            id: usuario.id,
-            nome: usuario.nome || 'Anônimo',
-            estado: estado,
-            username: usuario.username || 'N/A',
-            bio: usuario.bio || 'Sem bio disponível'
-        };
-
-        // Atualizar cache
-        profileCache = { username, data: profile, timestamp: Date.now() };
-        console.log('Perfil carregado:', profile);
-        renderPerfil(content, profile);
-    } catch (err) {
-        console.error('Erro inesperado em mostrarPerfil:', err);
-        content.innerHTML = '<p>Erro inesperado ao carregar perfil. Tente novamente.</p>';
-    }
-}
-
-function renderPerfil(content, profile) {
-    try {
-        console.log('Renderizando perfil:', profile);
-        content.insertAdjacentHTML('beforeend', `
-            <h2>Perfil</h2>
-            <div class="card perfil-card">
-                <p>${profile.nome || 'Anônimo'}</p>
-                <p>${profile.estado || 'N/A'}</p>
-                <p>${profile.username || 'N/A'}</p>
-                <p>${profile.bio || 'Sem bio disponível'}</p>
-            </div>
-        `);
-        content.querySelector('p:empty')?.remove(); // Remove parágrafos vazios
-    } catch (err) {
-        console.error('Erro ao renderizar perfil:', err);
-        content.innerHTML = '<p>Erro ao renderizar perfil. Tente novamente.</p>';
-    }
-}
-
-// Mostrar Favoritos
-async function mostrarFavoritos(username) {
-    const content = document.getElementById('dashboard-content');
-    if (!content) {
-        console.error('Erro: dashboard-content não encontrado');
-        return;
-    }
-
-    // Verificar cache (válido por 5 minutos)
-    const cacheDuration = 5 * 60 * 1000; // 5 minutos em ms
-    if (favoritosCache && favoritosCache.username === username && Date.now() - favoritosCache.timestamp < cacheDuration) {
-        console.log('Usando cache para favoritos:', favoritosCache.data);
-        renderFavoritos(content, favoritosCache.data);
-        return;
-    }
-
-    content.innerHTML = '<p>Carregando favoritos...</p>'; // Feedback de loading
-
-    try {
-        // Buscar user_id pelo username
-        const { data: user, error: userError } = await supabase
-            .from('usuario')
-            .select('id')
-            .eq('username', username || usuarioLogado?.username)
-            .single();
-
-        if (userError || !user) {
-            console.error('Erro ao buscar usuário:', userError);
-            content.innerHTML = '<p>Erro ao carregar usuário.</p>';
-            return;
-        }
-
-        // Buscar favoritos
-        const { data: favoritos, error } = await supabase
-            .from('favoritos')
-            .select(`
-                pedido_id,
-                pedido:pedido_id (id, foto_url)
-            `)
-            .eq('user_id', user.id)
-            .order('created_at', { ascending: false });
-
-        if (error) {
-            console.error('Erro ao carregar favoritos:', error);
-            content.innerHTML = '<p>Erro ao carregar favoritos: ' + error.message + '</p>';
-            return;
-        }
-
-        // Atualizar cache
-        favoritosCache = { username, userId: user.id, data: favoritos, timestamp: Date.now() };
-        console.log('Favoritos carregados:', favoritos);
-        content.innerHTML = `
-            <h2>Favoritos</h2>
-            <div class="favoritos-grid"></div>
-        `;
-        renderFavoritos(content, favoritos);
-    } catch (err) {
-        console.error('Erro inesperado em mostrarFavoritos:', err);
-        content.innerHTML = '<p>Erro inesperado ao carregar favoritos.</p>';
-    }
-}
-
-function renderFavoritos(content, favoritos) {
-    try {
-        const grid = content.querySelector('.favoritos-grid');
-        if (!grid) {
-            console.error('Erro: favoritos-grid não encontrado');
-            content.innerHTML = '<p>Erro ao renderizar favoritos.</p>';
-            return;
-        }
-
-        grid.innerHTML = favoritos.length ? '' : '<p>Nenhum favorito encontrado.</p>';
-
-        favoritos.forEach(fav => {
-            if (fav.pedido) {
-                const imgDiv = document.createElement('div');
-                imgDiv.className = 'favorito-item';
-                imgDiv.innerHTML = `
-                    <img src="${fav.pedido.foto_url || 'https://placehold.co/200x200?text=Sem+Imagem'}" alt="Foto do pedido favorito" class="favorito-image" onerror="this.src='https://placehold.co/200x200?text=Erro+na+Imagem';">
-                `;
-                grid.appendChild(imgDiv);
-            }
-        });
-    } catch (err) {
-        console.error('Erro ao renderizar favoritos:', err);
-        content.innerHTML = '<p>Erro ao renderizar favoritos. Tente novamente.</p>';
-    }
-}
-
-    // Mostrar Historico
-function mostrarHistorico() {
-    const content = document.getElementById('dashboard-content');
-    if (content) {
-        content.innerHTML = `
-            <h2>Meu Histórico</h2>
-            <div class="card">
-                <table class="historico-table">
-                    <thead><tr><th>Nome Pedido</th><th>Categoria</th><th>Data</th><th>Status</th><th></th></tr></thead>
-                    <tbody id="historico-body"></tbody>
-                </table>
-            </div>
-        `;
-        carregarHistorico();
-    }
+    // Carregar histórico diretamente
+    content.innerHTML = `
+        <h2>Meu Histórico</h2>
+        <div class="card">
+            <table class="historico-table">
+                <thead><tr><th>Nome do Pedido</th><th>Categoria</th><th>Status</th><th></th></tr></thead>
+                <tbody id="historico-body"></tbody>
+            </table>
+        </div>
+    `;
+    await carregarHistorico();
 }
 
 // Histórico Tabela
@@ -1824,11 +1446,11 @@ async function carregarHistorico() {
         return;
     }
 
-const { data: pedidos, error } = await supabase
-    .from('pedido')
-    .select('*, doacao!left(codigo_rastreio)')
-    .eq('user_id', usuarioLogado.id)
-    .order('created_at', { ascending: false });
+    const { data: pedidos, error } = await supabase
+        .from('pedido')
+        .select('id, titulo, categoria, status, doacao!left(codigo_rastreio)')
+        .eq('user_id', usuarioLogado.id)
+        .order('created_at', { ascending: false });
 
     if (error) {
         console.error('Erro ao carregar histórico:', error);
@@ -1844,24 +1466,19 @@ const { data: pedidos, error } = await supabase
     pedidos.forEach(pedido => {
         const row = document.createElement('tr');
         row.innerHTML = `
-            <td class="historico-nome" data-id="${pedido.id}" data-creator="${pedido.user_id}">${pedido.titulo}</td>
+            <td>${pedido.titulo}</td>
             <td>${pedido.categoria}</td>
-            <td>${new Date(pedido.created_at).toLocaleDateString('pt-BR')}</td>
             <td>${pedido.status}</td>
             <td><span class="expand-btn">▼</span></td>
         `;
         const expandRow = document.createElement('tr');
-        expandRow.innerHTML = `<td colspan="5"><div class="expand-content"></div></td>`;
+        expandRow.innerHTML = `<td colspan="4"><div class="expand-content"></div></td>`;
         tbody.appendChild(row);
         tbody.appendChild(expandRow);
 
         const expandContent = expandRow.querySelector('.expand-content');
-        // Adicionar foto no expand
-        const fotoHtml = pedido.foto_url ? `<img src="${pedido.foto_url}" alt="Foto do pedido" style="max-width: 200px; margin-bottom: 10px;">` : '';
-        
         if (pedido.status === STATUS_PEDIDOS.DISPONIVEL) {
             expandContent.innerHTML = `
-                ${fotoHtml}
                 <button class="delete-btn">Excluir</button>
             `;
             expandContent.querySelector('.delete-btn').onclick = async () => {
@@ -1879,8 +1496,7 @@ const { data: pedidos, error } = await supabase
             };
         } else if (pedido.status === STATUS_PEDIDOS.PENDENTE) {
             expandContent.innerHTML = `
-                ${fotoHtml}
-                <div><input value="${pedido.codigo_rastreio || ''}" readonly><button class="copy-btn">Copiar</button></div>
+                <div><input value="${pedido.doacao?.codigo_rastreio || ''}" readonly><button class="copy-btn">Copiar</button></div>
                 <div>
                     <label><input type="checkbox" name="opt" value="invalido">Código Inválido</label>
                     <label><input type="checkbox" name="opt" value="entregue">Produto Entregue</label>
@@ -1890,9 +1506,19 @@ const { data: pedidos, error } = await supabase
             `;
             const [invalido, entregue] = expandContent.querySelectorAll('input[name="opt"]');
             const confirmBtn = expandContent.querySelector('.confirm-btn');
-            expandContent.querySelector('.copy-btn').onclick = () => navigator.clipboard.writeText(pedido.codigo_rastreio || '');
-            [invalido, entregue].forEach(cb => cb.onchange = () => {
-                if (cb.checked) [invalido, entregue].forEach(other => other !== cb && (other.checked = false));
+            expandContent.querySelector('.copy-btn').onclick = () => {
+                const codigo = pedido.doacao?.codigo_rastreio || '';
+                if (codigo) {
+                    navigator.clipboard.writeText(codigo);
+                    alert('Código copiado!');
+                } else {
+                    alert('Nenhum código de rastreio disponível.');
+                }
+            };
+            [invalido, entregue].forEach(cb => {
+                cb.onchange = () => {
+                    if (cb.checked) [invalido, entregue].forEach(other => other !== cb && (other.checked = false));
+                };
             });
             confirmBtn.onclick = async () => {
                 const checked = expandContent.querySelector('input[name="opt"]:checked');
@@ -1911,25 +1537,13 @@ const { data: pedidos, error } = await supabase
             };
         } else if (pedido.status === STATUS_PEDIDOS.CONCLUIDO) {
             expandContent.innerHTML = `
-                ${fotoHtml}
-                <p>Finalizado em: ${new Date(pedido.completion_date).toLocaleDateString('pt-BR')}</p>
+                <p>Código de Rastreio: ${pedido.doacao?.codigo_rastreio || 'N/A'}</p>
             `;
         }
-    });
 
-    document.querySelectorAll('.expand-btn').forEach(btn => {
-        btn.onclick = (e) => {
-            const expand = e.target.closest('tr').nextElementSibling.querySelector('.expand-content');
-            expand.style.display = expand.style.display === 'block' ? 'none' : 'block';
-            e.target.textContent = expand.style.display === 'block' ? '▲' : '▼';
-        };
-    });
-
-    document.querySelectorAll('.historico-nome').forEach(nome => {
-        nome.onclick = () => {
-            const id = nome.dataset.id;
-            const creator = nome.dataset.creator;
-            window.location.href = `perfil.html?user=${creator}&pedido=${id}`;
+        row.querySelector('.expand-btn').onclick = (e) => {
+            expandContent.style.display = expandContent.style.display === 'block' ? 'none' : 'block';
+            e.target.textContent = expandContent.style.display === 'block' ? '▲' : '▼';
         };
     });
 }
@@ -2005,12 +1619,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
     console.log('Dados do usuário carregados:', window.usuarioLogado);
     preencherDadosUsuario();
-});
-
-// Encaminhar Pedido para Perfil 
-document.addEventListener('click', (e) => {
-    if (e.target.classList.contains('pedido-titulo')) {
-        const pedidoId = e.target.closest('.pedido-item').dataset.id;
-        window.location.href = `dashboard.html?id=${pedidoId}`;
-    }
 });
