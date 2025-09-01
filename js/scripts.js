@@ -708,45 +708,58 @@ async function abrirModalDoacao(pedidoId) {
     }
 
     // Buscar dados do perfil do criador (nome, bio, estado, photo_url)
-let perfilData = { nome: 'Anônimo', bio: 'Sem bio', estado: 'N/A', photo_url: 'https://placehold.co/100x100?text=Perfil' };
+let perfilData = { nome: 'Anônimo', bio: '', estado: 'N/A', photo_url: 'https://placehold.co/100x100?text=Perfil' };
 try {
-    // Buscar dados do usuário no Supabase Auth (user_metadata)
+    // Buscar dados do usuário na tabela usuario
+    const { data: usuario, error: userError } = await supabase
+        .from('usuario')
+        .select('id, nome, bio, estado, photo_url')
+        .eq('id', pedidoData.user_id)
+        .single();
+    if (!userError && usuario) {
+        perfilData.nome = usuario.nome || 'Anônimo';
+        perfilData.bio = usuario.bio || ''; // Removido 'Sem bio' para evitar texto padrão
+        perfilData.estado = usuario.estado || 'N/A';
+        perfilData.photo_url = usuario.photo_url || 'https://placehold.co/100x100?text=Perfil';
+    } else {
+        console.warn('Usuário não encontrado na tabela usuario:', userError);
+    }
+
+    // Buscar user_metadata do Supabase Auth como fallback
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (!authError && user && user.id === pedidoData.user_id) {
-        // Se for o próprio usuário logado, usar dados de usuarioLogado
-        perfilData.nome = usuarioLogado.nome || 'Anônimo';
-        perfilData.bio = usuarioLogado.bio || 'Sem bio';
-        perfilData.estado = usuarioLogado.estado || 'N/A';
-        perfilData.photo_url = usuarioLogado.photo_url || 'https://placehold.co/100x100?text=Perfil';
+        // Se for o usuário logado, usar usuarioLogado
+        perfilData.nome = usuarioLogado.nome || perfilData.nome;
+        perfilData.bio = usuarioLogado.bio || perfilData.bio;
+        perfilData.estado = usuarioLogado.estado || perfilData.estado;
+        perfilData.photo_url = usuarioLogado.photo_url || perfilData.photo_url;
     } else {
-        // Buscar dados do criador do pedido
-        const { data: usuario, error: userError } = await supabase
-            .from('usuario')
-            .select('id, nome, bio, estado')
-            .eq('id', pedidoData.user_id)
-            .single();
-        if (!userError && usuario) {
-            perfilData.nome = usuario.nome || 'Anônimo';
-            perfilData.bio = usuario.bio || 'Sem bio';
-            perfilData.estado = usuario.estado || 'N/A';
-        }
-
-        // Buscar photo_url do auth.user_metadata
-        const { data: authUser, error: authUserError } = await supabase.auth.getUser(pedidoData.user_id);
-        if (!authUserError && authUser?.user?.user_metadata?.photo_url) {
-            perfilData.photo_url = authUser.user.user_metadata.photo_url;
-        } else {
-            // Buscar na tabela usuario como fallback
-            const { data: usuarioFoto, error: fotoError } = await supabase
-                .from('usuario')
-                .select('photo_url')
-                .eq('id', pedidoData.user_id)
-                .single();
-            if (!fotoError && usuarioFoto?.photo_url) {
-                perfilData.photo_url = usuarioFoto.photo_url;
+        // Tentar buscar user_metadata para outro usuário (requer permissões admin)
+        try {
+            const { data: authUser, error: adminError } = await supabase.auth.admin.getUserById(pedidoData.user_id);
+            if (!adminError && authUser?.user?.user_metadata) {
+                perfilData.nome = authUser.user.user_metadata.nome || perfilData.nome;
+                perfilData.bio = authUser.user.user_metadata.bio || perfilData.bio;
+                perfilData.estado = authUser.user.user_metadata.estado || perfilData.estado;
+                perfilData.photo_url = authUser.user.user_metadata.photo_url || perfilData.photo_url;
             }
+        } catch (adminErr) {
+            console.warn('Erro ao acessar user_metadata via admin API:', adminErr);
         }
     }
+
+    // Buscar photo_url no storage como último fallback
+    if (perfilData.photo_url === 'https://placehold.co/100x100?text=Perfil') {
+        const filePath = `${pedidoData.user_id}/profile.jpg`; // Supondo que a foto seja salva como profile.jpg
+        const { data: urlData } = supabase.storage
+            .from('usuario')
+            .getPublicUrl(filePath);
+        if (urlData?.publicUrl) {
+            perfilData.photo_url = urlData.publicUrl;
+        }
+    }
+
+    console.log('Dados do perfil carregados:', perfilData);
 } catch (perfilErr) {
     console.error('Erro ao carregar perfil do criador:', perfilErr);
 }
