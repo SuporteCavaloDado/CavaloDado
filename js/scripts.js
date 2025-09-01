@@ -564,9 +564,6 @@ function criarElementoPedido(pedido) {
             <button class="action-btn btn-doar" onclick="abrirModalDoacao('${pedido.id}')">
                 <span>❤️</span>
             </button>
-            <button class="action-btn" onclick="compartilhar('${pedido.id}')">
-                <span>📤</span>
-            </button>
         </div>
         <div class="pedido-info">
             <div class="pedido-titulo">${pedido.titulo}</div>
@@ -1002,21 +999,6 @@ async function abrirModalPerfil(userId) {
     } catch (err) {
         console.error('Erro ao carregar dados:', err);
         alert('Erro ao carregar informações do criador.');
-    }
-}
-
-function compartilhar(pedidoId) {
-    const url = `${window.location.origin}/index.html?pedido=${pedidoId}`;
-    
-    if (navigator.share) {
-        navigator.share({
-            title: 'CavaloDado - Pedido de Doação',
-            url: url
-        });
-    } else {
-        navigator.clipboard.writeText(url).then(() => {
-            alert('Link copiado para compartilhamento!');
-        });
     }
 }
 
