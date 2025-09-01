@@ -708,11 +708,21 @@ async function abrirModalDoacao(pedidoId) {
     }
 
     // Buscar dados do perfil do criador (nome, bio, estado, photo_url)
-    let perfilData = { nome: 'Anônimo', bio: 'Sem bio', estado: 'N/A', photo_url: 'https://placehold.co/100x100?text=Perfil' };
-    try {
+let perfilData = { nome: 'Anônimo', bio: 'Sem bio', estado: 'N/A', photo_url: 'https://placehold.co/100x100?text=Perfil' };
+try {
+    // Buscar dados do usuário no Supabase Auth (user_metadata)
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (!authError && user && user.id === pedidoData.user_id) {
+        // Se for o próprio usuário logado, usar dados de usuarioLogado
+        perfilData.nome = usuarioLogado.nome || 'Anônimo';
+        perfilData.bio = usuarioLogado.bio || 'Sem bio';
+        perfilData.estado = usuarioLogado.estado || 'N/A';
+        perfilData.photo_url = usuarioLogado.photo_url || 'https://placehold.co/100x100?text=Perfil';
+    } else {
+        // Buscar dados do criador do pedido
         const { data: usuario, error: userError } = await supabase
             .from('usuario')
-            .select('nome, bio, estado')
+            .select('id, nome, bio, estado')
             .eq('id', pedidoData.user_id)
             .single();
         if (!userError && usuario) {
@@ -722,13 +732,24 @@ async function abrirModalDoacao(pedidoId) {
         }
 
         // Buscar photo_url do auth.user_metadata
-        const { data: authUser, error: authError } = await supabase.auth.admin.getUserById(pedidoData.user_id);
-        if (!authError && authUser?.user?.user_metadata?.photo_url) {
+        const { data: authUser, error: authUserError } = await supabase.auth.getUser(pedidoData.user_id);
+        if (!authUserError && authUser?.user?.user_metadata?.photo_url) {
             perfilData.photo_url = authUser.user.user_metadata.photo_url;
+        } else {
+            // Buscar na tabela usuario como fallback
+            const { data: usuarioFoto, error: fotoError } = await supabase
+                .from('usuario')
+                .select('photo_url')
+                .eq('id', pedidoData.user_id)
+                .single();
+            if (!fotoError && usuarioFoto?.photo_url) {
+                perfilData.photo_url = usuarioFoto.photo_url;
+            }
         }
-    } catch (perfilErr) {
-        console.error('Erro ao carregar perfil do criador:', perfilErr);
     }
+} catch (perfilErr) {
+    console.error('Erro ao carregar perfil do criador:', perfilErr);
+}
 
     // Buscar endereço (mantido como antes)
     let enderecoData = null;
