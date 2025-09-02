@@ -675,6 +675,7 @@ function realizarPesquisa() {
 
 // Modal de doação
 async function abrirModalDoacao(pedidoId) {
+    // Buscar dados do pedido
     let pedidoData;
     try {
         const { data, error } = await supabase
@@ -682,7 +683,7 @@ async function abrirModalDoacao(pedidoId) {
             .select('id, titulo, user_id, user_nome, endereco_id')
             .eq('id', pedidoId)
             .single();
-        if (error || !data) throw error;
+        if (error || !data) throw new Error('Pedido não encontrado: ' + (error?.message || ''));
         pedidoData = data;
         console.log('Dados do pedido:', pedidoData);
     } catch (err) {
@@ -692,68 +693,88 @@ async function abrirModalDoacao(pedidoId) {
         if (!pedidoData) return;
     }
 
-    if (typeof usuarioLogado === 'undefined' || !usuarioLogado) {
+    // Validar usuário logado
+    if (!usuarioLogado) {
         try {
-            const { data: { user } } = await supabase.auth.getUser();
-            usuarioLogado = user;
+            const { data: { user }, error } = await supabase.auth.getUser();
+            usuarioLogado = user ? {
+                id: user.id,
+                nome: user.user_metadata.nome || 'Anônimo',
+                bio: user.user_metadata.bio || '',
+                estado: user.user_metadata.estado || 'N/A',
+                photo_url: user.user_metadata.photo_url || 'https://placehold.co/100x100?text=Perfil'
+            } : null;
+            console.log('Usuário logado:', usuarioLogado);
         } catch (authErr) {
             console.error('Erro ao carregar usuário logado:', authErr);
             usuarioLogado = null;
         }
     }
 
+    // Impedir doação para próprio pedido
     if (usuarioLogado && pedidoData.user_id === usuarioLogado.id) {
         alert('Você não pode doar para seu próprio pedido.');
         return;
     }
 
-    // Buscar dados do perfil do criador (nome, bio, estado, photo_url)
-let perfilData = { nome: 'Anônimo', bio: '', estado: 'N/A', photo_url: 'https://placehold.co/100x100?text=Perfil' };
-try {
-    // Buscar dados do usuário na tabela usuario
-    const { data: usuario, error: userError } = await supabase
-        .from('usuario')
-        .select('id, nome, bio, estado, photo_url')
-        .eq('id', pedidoData.user_id)
-        .single();
-    if (!userError && usuario) {
-        perfilData.nome = usuario.nome || 'Anônimo';
-        perfilData.bio = usuario.bio || '';
-        perfilData.estado = usuario.estado || 'N/A';
-        perfilData.photo_url = usuario.photo_url || perfilData.photo_url;
-    } else {
-        console.warn('Usuário não encontrado na tabela usuario:', userError);
-    }
-
-    // Buscar user_metadata do Supabase Auth para o usuário logado
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (!authError && user && user.id === pedidoData.user_id) {
-        perfilData.nome = usuarioLogado.nome || perfilData.nome;
-        perfilData.bio = usuarioLogado.bio || perfilData.bio;
-        perfilData.estado = usuarioLogado.estado || perfilData.estado;
-        perfilData.photo_url = usuarioLogado.photo_url || perfilData.photo_url;
-    }
-
-    // Buscar photo_url diretamente no storage como fallback
-    if (!perfilData.photo_url || perfilData.photo_url === 'https://placehold.co/100x100?text=Perfil') {
-        const filePath = `${pedidoData.user_id}/profile.jpg`; // Ajuste a extensão se necessário
-        const { data: urlData } = supabase.storage
-            .from('usuario')
-            .getPublicUrl(filePath);
-        if (urlData?.publicUrl) {
-            perfilData.photo_url = urlData.publicUrl;
+    // Buscar dados do perfil do criador
+    let perfilData = { nome: 'Anônimo', bio: '', estado: 'N/A', photo_url: 'https://placehold.co/100x100?text=Perfil' };
+    try {
+        if (usuarioLogado && usuarioLogado.id === pedidoData.user_id) {
+            // Usar dados do usuário logado
+            perfilData.nome = usuarioLogado.nome;
+            perfilData.bio = usuarioLogado.bio;
+            perfilData.estado = usuarioLogado.estado;
+            perfilData.photo_url = usuarioLogado.photo_url;
+        } else {
+            // Buscar na tabela usuario
+            const { data: usuario, error: userError } = await supabase
+                .from('usuario')
+                .select('id, nome, bio, estado, photo_url')
+                .eq('id', pedidoData.user_id)
+                .single();
+            if (!userError && usuario) {
+                perfilData.nome = usuario.nome || 'Anônimo';
+                perfilData.bio = usuario.bio || '';
+                perfilData.estado = usuario.estado || 'N/A';
+                perfilData.photo_url = usuario.photo_url || perfilData.photo_url;
+            } else {
+                console.warn('Usuário não encontrado na tabela usuario:', userError);
+                throw new Error('Usuário não encontrado');
+            }
         }
+
+        // Fallback para photo_url no storage
+        if (!perfilData.photo_url || perfilData.photo_url === 'https://placehold.co/100x100?text=Perfil') {
+            const extensions = ['jpg', 'png', 'jpeg']; // Tentar múltiplas extensões
+            for (const ext of extensions) {
+                const filePath = `${pedidoData.user_id}/profile.${ext}`;
+                const { data: urlData } = supabase.storage
+                    .from('usuario')
+                    .getPublicUrl(filePath);
+                if (urlData?.publicUrl) {
+                    try {
+                        const response = await fetch(urlData.publicUrl, { method: 'HEAD' });
+                        if (response.ok) {
+                            perfilData.photo_url = urlData.publicUrl;
+                            break;
+                        }
+                    } catch (fetchErr) {
+                        console.warn(`Erro ao verificar photo_url (${filePath}):`, fetchErr);
+                    }
+                }
+            }
+        }
+
+        console.log('Dados do perfil carregados:', perfilData);
+    } catch (perfilErr) {
+        console.error('Erro ao carregar perfil do criador:', perfilErr);
+        alert('Erro ao carregar informações do criador.');
     }
 
-    console.log('Dados do perfil carregados:', perfilData);
-} catch (perfilErr) {
-    console.error('Erro ao carregar perfil do criador:', perfilErr);
-    alert('Erro ao carregar informações do criador.');
-}
-
-    // Buscar endereço (mantido como antes)
+    // Buscar endereço
     let enderecoData = null;
-    let nomeUsuario = pedidoData.user_nome || perfilData.nome;
+    let nomeUsuario = perfilData.nome; // Usar nome do perfil
     let estadoFallback = perfilData.estado;
 
     if (pedidoData.endereco_id) {
@@ -762,12 +783,10 @@ try {
                 .from('endereco')
                 .select('id, cep, rua, numero, complemento, bairro, cidade, estado_endereco')
                 .eq('id', pedidoData.endereco_id)
-                .maybeSingle();
+                .single();
             if (!addrError && addrData) {
                 enderecoData = addrData;
                 console.log('Endereço via endereco_id:', enderecoData);
-            } else {
-                console.warn('Nenhum endereço encontrado via endereco_id:', addrError);
             }
         } catch (addrErr) {
             console.error('Erro ao consultar endereço via endereco_id:', addrErr);
@@ -782,7 +801,7 @@ try {
                 .eq('usuario_id', pedidoData.user_id)
                 .order('created_at', { ascending: false })
                 .limit(1)
-                .maybeSingle();
+                .single();
             if (!addrError && addrData) {
                 enderecoData = addrData;
                 console.log('Endereço via usuario_id:', enderecoData);
@@ -799,8 +818,8 @@ try {
                     }
                 }
             } else {
-                console.error('Nenhum endereço encontrado via usuario_id:', addrError);
                 alert('O criador do pedido não possui endereço cadastrado. Peça para cadastrar em Configurações.');
+                enderecoData = null;
             }
         } catch (addrErr) {
             console.error('Erro ao consultar endereço via usuario_id:', addrErr);
@@ -808,31 +827,14 @@ try {
         }
     }
 
-    if (!nomeUsuario || !enderecoData) {
-        try {
-            const { data: usuarioData, error: usuarioError } = await supabase
-                .from('usuario')
-                .select('nome, estado')
-                .eq('id', pedidoData.user_id)
-                .single();
-            if (!usuarioError && usuarioData) {
-                nomeUsuario = nomeUsuario || usuarioData.nome;
-                estadoFallback = usuarioData.estado || 'N/A';
-                console.log('Dados do usuário:', usuarioData);
-            }
-        } catch (usuarioErr) {
-            console.error('Erro ao carregar dados do usuário:', usuarioErr);
-        }
-    }
-
     const endereco = enderecoData ? {
         nome: nomeUsuario,
-        cep: enderecoData.cep,
-        rua: enderecoData.rua,
-        numero: enderecoData.numero,
+        cep: enderecoData.cep || 'N/A',
+        rua: enderecoData.rua || 'N/A',
+        numero: enderecoData.numero || 'N/A',
         complemento: enderecoData.complemento || '',
-        bairro: enderecoData.bairro,
-        cidade: enderecoData.cidade,
+        bairro: enderecoData.bairro || 'N/A',
+        cidade: enderecoData.cidade || 'N/A',
         estado_endereco: enderecoData.estado_endereco || estadoFallback
     } : {
         nome: nomeUsuario,
@@ -845,6 +847,7 @@ try {
         estado_endereco: estadoFallback
     };
 
+    // Criar modal
     const modal = document.createElement('div');
     modal.className = 'modal-overlay';
     modal.innerHTML = `
@@ -856,9 +859,9 @@ try {
             <div class="modal-body">
                 <div class="perfil-criador">
                     <img src="${perfilData.photo_url}" alt="Foto do criador" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; margin-bottom: 10px;">
-                    <p><strong>Nome:</strong> ${perfilData.nome}</p>
-                    <p><strong>Bio:</strong> ${perfilData.bio}</p>
-                    <p><strong>Estado:</strong> ${perfilData.estado}</p>
+                    <p>${perfilData.nome}</p>
+                    <p>${perfilData.bio}</p>
+                    <p>${perfilData.estado}</p>
                 </div>
                 <div class="endereco-completo">
                     <h4>Endereço de entrega:</h4>
@@ -887,28 +890,24 @@ try {
                         <button onclick="copiarTexto('${endereco.cep}')">Copiar</button>
                     </div>
                 </div>
-                
                 <div class="form-group">
                     <label class="form-label">Código de rastreio *</label>
-                    <input type="text" id="codigo-rastreio" class="form-input" 
-                           placeholder="Digite o código de rastreio (exatamente 13 caracteres)" 
+                    <input type="text" id="codigo-rastreio" class="form-input"
+                           placeholder="Digite o código de rastreio (exatamente 13 caracteres)"
                            maxlength="13" minlength="13" required>
                 </div>
-                
                 <div class="form-checkbox">
                     <input type="checkbox" id="aceito-responsabilidade" required>
                     <label for="aceito-responsabilidade">
                         Concordo com as responsabilidades da doação
                     </label>
                 </div>
-                
                 <button class="btn btn-primary" onclick="confirmarDoacao('${pedidoId}')">
                     Confirmar Doação
                 </button>
             </div>
         </div>
     `;
-    
     document.body.appendChild(modal);
 }
 
