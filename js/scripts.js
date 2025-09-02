@@ -84,7 +84,8 @@ function inicializarPagina() {
                         username: userData.user.user_metadata.username || '',
                         estado: userData.user.user_metadata.estado || '',
                         termos: userData.user.user_metadata.termos || true,
-                        bio: userData.user.user_metadata.bio || ''
+                        bio: userData.user.user_metadata.bio || '',
+                        photo_url: userData.user.user_metadata.photo_url || 'https://placehold.co/100x100?text=Perfil'
                     };
                     localStorage.setItem('cavalodado_usuario', JSON.stringify(usuarioLogado));
                 }
@@ -118,6 +119,7 @@ function inicializarPagina() {
     }
 }
 
+// Login
 function inicializarLogin() {
     const loginForm = document.getElementById('login-form');
     if (loginForm) {
@@ -138,12 +140,13 @@ function inicializarLogin() {
                 if (error) throw error;
                 usuarioLogado = {
                     id: data.user.id,
-                    nome: data.user.user_metadata.nome || 'Usuário',  
+                    nome: data.user.user_metadata.nome || 'Usuário',
                     email: data.user.email,
                     username: data.user.user_metadata.username || '',
                     estado: data.user.user_metadata.estado || '',
-                    termos: data.user.user_metadata.termos || true,  
-                    bio: data.user.user_metadata.bio || ''  
+                    termos: data.user.user_metadata.termos || true,
+                    bio: data.user.user_metadata.bio || '',
+                    photo_url: data.user.user_metadata.photo_url || 'https://placehold.co/100x100?text=Perfil'
                 };
                 localStorage.setItem('cavalodado_usuario', JSON.stringify(usuarioLogado));
                 atualizarMenuLogado();
@@ -155,6 +158,7 @@ function inicializarLogin() {
     }
 }
 
+// Registro
 function inicializarRegistro() {
     const estadoSelect = document.getElementById('estado');
     if (estadoSelect) {
@@ -167,6 +171,74 @@ function inicializarRegistro() {
         });
     } else {
         console.error('Elemento <select> de estado não encontrado. Verifique o ID "estado" no HTML.');
+    }
+
+    const registerForm = document.getElementById('register-form');
+    if (registerForm) {
+        registerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            clearError();
+            const dados = {
+                nome: document.getElementById('nome').value,
+                email: document.getElementById('email').value,
+                username: document.getElementById('username').value,
+                estado: document.getElementById('estado').value,
+                senha: document.getElementById('senha').value,
+                confirmarSenha: document.getElementById('confirmar-senha').value,
+                termos: document.getElementById('termos').checked
+            };
+
+            if (!dados.termos) {
+                showError('Você deve aceitar os termos e condições.');
+                return;
+            }
+
+            const passwordError = validatePassword(dados.senha, dados.confirmarSenha);
+            if (passwordError) {
+                showError(passwordError);
+                return;
+            }
+
+            try {
+                const { data, error } = await supabase.auth.signUp({
+                    email: dados.email,
+                    password: dados.senha,
+                    options: {
+                        data: {
+                            nome: dados.nome,
+                            username: dados.username,
+                            estado: dados.estado,
+                            termos: true
+                        }
+                    }
+                });
+                if (error) throw error;
+
+                await supabase.from('usuario').insert({
+                    id: data.user.id,
+                    nome: dados.nome,
+                    email: dados.email,
+                    username: dados.username,
+                    estado: dados.estado,
+                    termos: true
+                });
+
+                usuarioLogado = {
+                    id: data.user.id,
+                    nome: dados.nome,
+                    email: dados.email,
+                    username: dados.username,
+                    estado: dados.estado,
+                    termos: true
+                };
+                localStorage.setItem('cavalodado_token', data.session.access_token);
+                localStorage.setItem('cavalodado_usuario', JSON.stringify(usuarioLogado));
+                alert('Cadastro realizado com sucesso!');
+                window.location.href = 'index.html';
+            } catch (error) {
+                showError('Erro ao cadastrar: ' + error.message);
+            }
+        });
     }
 }
 
@@ -207,12 +279,10 @@ function inicializarConfiguracoes() {
             const fileInput = document.getElementById('profile-photo');
             if (fileInput?.files?.[0]) {
                 const file = fileInput.files[0];
-                // Validar tipo de arquivo (apenas imagens)
                 if (!file.type.startsWith('image/')) {
                     showError('Por favor, selecione uma imagem válida (ex: JPEG, PNG).');
                     return;
                 }
-                // Validar tamanho (máximo 5MB para evitar erros)
                 if (file.size > 5 * 1024 * 1024) {
                     showError('A imagem deve ter no máximo 5MB.');
                     return;
@@ -237,6 +307,12 @@ function inicializarConfiguracoes() {
             try {
                 const { error } = await supabase.auth.updateUser({ data: dados });
                 if (error) throw error;
+                await supabase.from('usuario').update({
+                    nome: dados.nome,
+                    username: dados.username,
+                    bio: dados.bio,
+                    photo_url: dados.photo_url
+                }).eq('id', usuarioLogado.id);
                 Object.assign(usuarioLogado, dados);
                 localStorage.setItem('cavalodado_usuario', JSON.stringify(usuarioLogado));
                 alert('Perfil atualizado com sucesso!');
@@ -248,55 +324,15 @@ function inicializarConfiguracoes() {
 
     const enderecoForm = document.getElementById('endereco-form');
     if (enderecoForm) {
-        enderecoForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            clearError();
-            const dados = {
-                estado: document.getElementById('estado-endereco')?.value || ''
-            };
-            if (!dados.estado) {
-                showError('Preencha o estado no endereço.');
-                return;
-            }
-            try {
-                const { error } = await supabase.auth.updateUser({ data: dados });
-                if (error) throw error;
-                Object.assign(usuarioLogado, dados);
-                localStorage.setItem('cavalodado_usuario', JSON.stringify(usuarioLogado));
-                alert('Endereço atualizado com sucesso!');
-            } catch (error) {
-                showError('Erro ao atualizar endereço: ' + error.message);
-            }
-        });
+        enderecoForm.addEventListener('submit', salvarEndereco);
     }
 }
 
 // Salvar Endereço
 async function salvarEndereco(event) {
     event.preventDefault();
-    console.log('Salvando endereço...');
     try {
-        const { data: session, error: sessionError } = await supabase.auth.getSession();
-        if (sessionError) {
-            console.error('Erro ao obter sessão:', sessionError.message);
-            alert('Erro ao obter sessão: ' + sessionError.message);
-            return;
-        }
-        if (!session || !session.session) {
-            console.error('Nenhuma sessão encontrada');
-            alert('Nenhuma sessão encontrada. Faça login novamente.');
-            window.location.href = 'login.html';
-            return;
-        }
-
-        const userId = session.session.user.id;
-        console.log('Usuário ID:', userId);
-        if (!userId) {
-            console.error('ID de usuário inválido');
-            alert('ID de usuário inválido. Tente novamente.');
-            return;
-        }
-
+        const userId = usuarioLogado.id;
         const cep = document.getElementById('cep').value.trim();
         const rua = document.getElementById('rua').value.trim();
         const numero = document.getElementById('numero').value.trim();
@@ -305,20 +341,15 @@ async function salvarEndereco(event) {
         const cidade = document.getElementById('cidade').value.trim();
         const estado_endereco = document.getElementById('estado-endereco').value;
 
-        console.log('Dados do endereço:', { userId, cep, rua, numero, complemento, bairro, cidade, estado_endereco });
-
         if (!cep.match(/^\d{5}-\d{3}$/)) {
-            console.log('CEP inválido');
             alert('CEP inválido. Use o formato 00000-000.');
             return;
         }
-        if (!rua || !numero || !bairro || !cidade) {
-            console.log('Campos obrigatórios não preenchidos');
+        if (!rua || !numero || !bairro || !cidade || !estado_endereco) {
             alert('Preencha todos os campos obrigatórios.');
             return;
         }
         if (!ESTADOS_BRASIL.includes(estado_endereco)) {
-            console.log('Estado inválido');
             alert('Selecione um estado válido.');
             return;
         }
@@ -330,14 +361,12 @@ async function salvarEndereco(event) {
             .eq('usuario_id', userId)
             .single();
 
-        if (selectError && selectError.code !== 'PGRST116') { // PGRST116 = no rows found
-            console.error('Erro ao verificar endereço existente:', selectError.message);
+        if (selectError && selectError.code !== 'PGRST116') {
             alert('Erro ao verificar endereço: ' + selectError.message);
             return;
         }
 
         if (existingAddress) {
-            console.log('Atualizando endereço existente');
             ({ data: result, error } = await supabase
                 .from('endereco')
                 .update({ cep, rua, numero, complemento, bairro, cidade, estado_endereco, updated_at: new Date() })
@@ -345,7 +374,6 @@ async function salvarEndereco(event) {
                 .select()
                 .single());
         } else {
-            console.log('Inserindo novo endereço');
             ({ data: result, error } = await supabase
                 .from('endereco')
                 .insert({ usuario_id: userId, cep, rua, numero, complemento, bairro, cidade, estado_endereco })
@@ -354,51 +382,33 @@ async function salvarEndereco(event) {
         }
 
         if (error) {
-            console.error('Erro ao salvar endereço:', error.message, error.details, error.code);
-            alert('Erro ao salvar endereço: ' + error.message + ' (Código: ' + error.code + ')');
+            alert('Erro ao salvar endereço: ' + error.message);
             return;
         }
 
-        console.log('Endereço salvo com sucesso:', result);
         alert('Endereço salvo com sucesso!');
-        carregarEndereco(); // Recarrega os dados após salvar
+        carregarEndereco();
     } catch (err) {
-        console.error('Erro inesperado ao salvar endereço:', err.message, err.stack);
-        alert('Erro inesperado ao salvar endereço: ' + err.message);
+        alert('Erro ao salvar endereço: ' + err.message);
     }
 }
 
+// Carregar Endereço
 async function carregarEndereco() {
-    console.log('Carregando endereço...');
     try {
-        const { data: session, error: sessionError } = await supabase.auth.getSession();
-        if (sessionError) {
-            console.error('Erro ao obter sessão:', sessionError.message);
-            alert('Erro ao verificar sessão. Tente novamente.');
-            return;
-        }
-        if (!session.session) {
-            console.log('Nenhuma sessão encontrada, redirecionando para login');
-            window.location.href = 'login.html';
-            return;
-        }
-
-        const userId = session.session.user.id;
-        console.log('Usuário ID:', userId);
+        const userId = usuarioLogado.id;
         const { data, error } = await supabase
             .from('endereco')
             .select('cep, rua, numero, complemento, bairro, cidade, estado_endereco')
             .eq('usuario_id', userId)
             .single();
 
-        if (error && error.code !== 'PGRST116') { // PGRST116 = no rows found
-            console.error('Erro ao carregar endereço:', error.message);
+        if (error && error.code !== 'PGRST116') {
             alert('Erro ao carregar endereço: ' + error.message);
             return;
         }
 
         if (data) {
-            console.log('Endereço carregado:', data);
             document.getElementById('cep').value = data.cep || '';
             document.getElementById('rua').value = data.rua || '';
             document.getElementById('numero').value = data.numero || '';
@@ -407,7 +417,6 @@ async function carregarEndereco() {
             document.getElementById('cidade').value = data.cidade || '';
             document.getElementById('estado-endereco').value = data.estado_endereco || '';
         } else {
-            console.log('Nenhum endereço encontrado para o usuário');
             document.getElementById('cep').value = '';
             document.getElementById('rua').value = '';
             document.getElementById('numero').value = '';
@@ -417,7 +426,6 @@ async function carregarEndereco() {
             document.getElementById('estado-endereco').value = '';
         }
     } catch (err) {
-        console.error('Erro inesperado ao carregar endereço:', err.message, err.stack);
         alert('Erro ao carregar endereço: ' + err.message);
     }
 }
@@ -427,104 +435,99 @@ function inicializarFeed() {
     carregarPedidos();
     inicializarFiltros();
     inicializarPesquisa();
-    formatViews();
 }
 
 function formatViews(views) {
-    if (views >= 1000000) {
-        return `${Math.round(views / 100000) / 10}M`; // Ex: 1.2M
-    } else if (views >= 1000) {
-        return `${Math.round(views / 1000)}MIL`; // Ex: 5MIL
-    }
-    return `${views}`; // Ex: 5
+    if (views >= 1000000) return `${Math.round(views / 100000) / 10}M`;
+    if (views >= 1000) return `${Math.round(views / 1000)}MIL`;
+    return `${views}`;
 }
 
 async function carregarPedidos() {
-    // Buscar pedidos sem join automático
-    const { data: pedidos, error: pedidoError } = await supabase
-        .from('pedido')
-        .select(`
-            id,
-            user_id,
-            titulo,
-            categoria,
-            descricao,
-            foto_url,
-            status,
-            created_at,
-            user_nome,
-            user_estado,
-            views,
-            endereco_id
-        `)
-        .in('status', ['Disponível', 'Pendente', 'Concluído'])
-        .order('created_at', { ascending: false });
+    try {
+        const { data: pedidos, error: pedidoError } = await supabase
+            .from('pedido')
+            .select(`
+                id,
+                user_id,
+                titulo,
+                categoria,
+                descricao,
+                foto_url,
+                status,
+                created_at,
+                user_nome,
+                user_estado,
+                views,
+                endereco_id
+            `)
+            .in('status', [STATUS_PEDIDOS.DISPONIVEL, STATUS_PEDIDOS.PENDENTE, STATUS_PEDIDOS.CONCLUIDO])
+            .order('created_at', { ascending: false });
 
-    if (pedidoError) {
-        console.error('Erro ao carregar pedidos:', pedidoError);
-        alert('Erro ao carregar feed: ' + pedidoError.message);
-        return;
-    }
-
-    // Buscar usernames de public.usuario
-    const userIds = [...new Set(pedidos.map(p => p.user_id))];
-    const { data: usuarios, error: userError } = await supabase
-        .from('usuario')
-        .select('id, username')
-        .in('id', userIds);
-
-    if (userError) {
-        console.error('Erro ao carregar usernames:', userError);
-        alert('Erro ao carregar usernames: ' + userError.message);
-        return;
-    }
-    const usernameMap = new Map(usuarios.map(u => [u.id, u.username || 'anonimo']));
-
-    // Buscar endereços apenas para pedidos com endereco_id
-    const enderecoIds = [...new Set(pedidos.filter(p => p.endereco_id).map(p => p.endereco_id))];
-    let enderecoMap = new Map();
-    if (enderecoIds.length > 0) {
-        const { data: enderecos, error: enderecoError } = await supabase
-            .from('endereco')
-            .select('id, cep, rua, numero, complemento, bairro, cidade, estado_endereco')
-            .in('id', enderecoIds);
-        if (enderecoError) {
-            console.error('Erro ao carregar endereços:', enderecoError);
-        } else {
-            enderecoMap = new Map(enderecos.map(e => [e.id, e]));
+        if (pedidoError) {
+            alert('Erro ao carregar feed: ' + pedidoError.message);
+            return;
         }
-    }
 
-    // Incrementar views em lote
-    const pedidoIds = pedidos.map(p => p.id);
-    if (pedidoIds.length > 0) {
-        const { error: incrementError } = await supabase.rpc('increment_pedido_views', { pedido_ids: pedidoIds });
-        if (incrementError) console.error('Erro ao incrementar views:', incrementError);
-    }
-
-    pedidosCache = pedidos.map(pedido => ({
-        id: pedido.id,
-        titulo: pedido.titulo,
-        descricao: pedido.descricao,
-        categoria: pedido.categoria,
-        estado: pedido.user_estado || enderecoMap.get(pedido.endereco_id)?.estado_endereco || 'N/A',
-        status: pedido.status,
-        usuario: pedido.user_nome || 'Anônimo',
-        username: usernameMap.get(pedido.user_id) || 'anonimo',
-        data: pedido.created_at,
-        views: pedido.views || 0,
-        media: { tipo: 'imagem', url: pedido.foto_url || 'https://placehold.co/400x600?text=Sem+Imagem' },
-        endereco: enderecoMap.get(pedido.endereco_id) || {
-            nome: pedido.user_nome || 'Anônimo',
-            rua: 'N/A',
-            bairro: 'N/A',
-            cidade: 'N/A',
-            estado: 'N/A',
-            cep: 'N/A'
+        const userIds = [...new Set(pedidos.map(p => p.user_id).filter(id => id))];
+        let usernameMap = new Map();
+        if (userIds.length > 0) {
+            const { data: usuarios, error: userError } = await supabase
+                .from('usuario')
+                .select('id, username')
+                .in('id', userIds);
+            if (userError) {
+                alert('Erro ao carregar usernames: ' + userError.message);
+                return;
+            }
+            usernameMap = new Map(usuarios.map(u => [u.id, u.username || 'anonimo']));
         }
-    }));
 
-    renderizarFeed(pedidosCache);
+        const enderecoIds = [...new Set(pedidos.filter(p => p.endereco_id).map(p => p.endereco_id))];
+        let enderecoMap = new Map();
+        if (enderecoIds.length > 0) {
+            const { data: enderecos, error: enderecoError } = await supabase
+                .from('endereco')
+                .select('id, cep, rua, numero, complemento, bairro, cidade, estado_endereco')
+                .in('id', enderecoIds);
+            if (enderecoError) {
+                console.error('Erro ao carregar endereços:', enderecoError);
+            } else {
+                enderecoMap = new Map(enderecos.map(e => [e.id, e]));
+            }
+        }
+
+        const pedidoIds = pedidos.map(p => p.id);
+        if (pedidoIds.length > 0) {
+            const { error: incrementError } = await supabase.rpc('increment_pedido_views', { pedido_ids: pedidoIds });
+            if (incrementError) console.error('Erro ao incrementar views:', incrementError);
+        }
+
+        pedidosCache = pedidos.map(pedido => ({
+            id: pedido.id,
+            titulo: pedido.titulo,
+            descricao: pedido.descricao,
+            categoria: pedido.categoria,
+            estado: pedido.user_estado || enderecoMap.get(pedido.endereco_id)?.estado_endereco || 'N/A',
+            status: pedido.status,
+            usuario: pedido.user_nome || 'Anônimo',
+            username: usernameMap.get(pedido.user_id) || 'anonimo',
+            data: pedido.created_at,
+            views: pedido.views || 0,
+            media: { tipo: 'imagem', url: pedido.foto_url || 'https://placehold.co/400x600?text=Sem+Imagem' },
+            endereco: enderecoMap.get(pedido.endereco_id) || {
+                rua: 'N/A',
+                bairro: 'N/A',
+                cidade: 'N/A',
+                estado: 'N/A',
+                cep: 'N/A'
+            }
+        }));
+
+        renderizarFeed(pedidosCache);
+    } catch (err) {
+        alert('Erro ao carregar pedidos: ' + err.message);
+    }
 }
 
 function renderizarFeed(pedidos) {
@@ -534,11 +537,6 @@ function renderizarFeed(pedidos) {
     feedContainer.innerHTML = '';
     
     pedidos.forEach(pedido => {
-        console.log('Carregando pedido no feed:', {
-            titulo: pedido.titulo,
-            fotoUrl: pedido.media.url
-        });
-        
         const pedidoElement = criarElementoPedido(pedido);
         feedContainer.appendChild(pedidoElement);
     });
@@ -588,7 +586,6 @@ function inicializarFiltros() {
         });
     }
     
-    // Preencher selects de filtros
     preencherFiltros();
 }
 
@@ -597,6 +594,7 @@ function preencherFiltros() {
     const estadoSelect = document.getElementById('filtro-estado');
     
     if (categoriaSelect) {
+        categoriaSelect.innerHTML = '<option value="">Todas as categorias</option>';
         CATEGORIAS.forEach(categoria => {
             const option = document.createElement('option');
             option.value = categoria;
@@ -606,6 +604,7 @@ function preencherFiltros() {
     }
     
     if (estadoSelect) {
+        estadoSelect.innerHTML = '<option value="">Todos os estados</option>';
         ESTADOS_BRASIL.forEach(estado => {
             const option = document.createElement('option');
             option.value = estado;
@@ -619,15 +618,13 @@ function aplicarFiltros() {
     const categoria = document.getElementById('filtro-categoria')?.value;
     const estado = document.getElementById('filtro-estado')?.value;
     const status = document.getElementById('filtro-status')?.value;
-    const data = document.getElementById('filtro-data')?.value;
     
-    filtrosAtivos = { categoria, estado, status, data };
+    filtrosAtivos = { categoria, estado, status };
     
     let pedidosFiltrados = pedidosCache.filter(pedido => {
         if (categoria && pedido.categoria !== categoria) return false;
         if (estado && pedido.estado !== estado) return false;
         if (status && pedido.status !== status) return false;
-        // Implementar filtro de data conforme necessário
         return true;
     });
     
@@ -638,7 +635,6 @@ function limparFiltros() {
     document.getElementById('filtro-categoria').value = '';
     document.getElementById('filtro-estado').value = '';
     document.getElementById('filtro-status').value = '';
-    document.getElementById('filtro-data').value = '';
     
     filtrosAtivos = {};
     renderizarFeed(pedidosCache);
@@ -675,121 +671,58 @@ function realizarPesquisa() {
 
 // Modal de doação
 async function abrirModalDoacao(pedidoId) {
-    // Buscar dados do pedido
     let pedidoData;
     try {
         const { data, error } = await supabase
             .from('pedido')
-            .select('id, titulo, user_id, user_nome, endereco_id')
+            .select('id, titulo, descricao, created_at, user_id, user_nome, endereco_id, foto_url')
             .eq('id', pedidoId)
             .single();
-        if (error || !data) throw new Error('Pedido não encontrado: ' + (error?.message || ''));
+        if (error || !data) throw error;
         pedidoData = data;
-        console.log('Dados do pedido:', pedidoData);
     } catch (err) {
-        console.error('Erro ao carregar pedido:', err);
-        alert('Erro ao carregar dados do pedido.');
+        alert('Erro ao carregar dados do pedido: ' + err.message);
         pedidoData = pedidosCache.find(p => p.id === pedidoId);
         if (!pedidoData) return;
     }
 
-    // Validar usuário logado
-    if (!usuarioLogado) {
-        try {
-            const { data: { user }, error } = await supabase.auth.getUser();
-            usuarioLogado = user ? {
-                id: user.id,
-                nome: user.user_metadata.nome || 'Anônimo',
-                bio: user.user_metadata.bio || '',
-                estado: user.user_metadata.estado || 'N/A',
-                photo_url: user.user_metadata.photo_url || 'https://placehold.co/100x100?text=Perfil'
-            } : null;
-            console.log('Usuário logado:', usuarioLogado);
-        } catch (authErr) {
-            console.error('Erro ao carregar usuário logado:', authErr);
-            usuarioLogado = null;
-        }
-    }
-
-    // Impedir doação para próprio pedido
     if (usuarioLogado && pedidoData.user_id === usuarioLogado.id) {
         alert('Você não pode doar para seu próprio pedido.');
         return;
     }
 
-    // Buscar dados do perfil do criador
-    let perfilData = { nome: 'Anônimo', bio: '', estado: 'N/A', photo_url: 'https://placehold.co/100x100?text=Perfil' };
+    let perfilData = { nome: 'Anônimo', bio: '', username: 'anonimo', photo_url: 'https://placehold.co/100x100?text=Perfil' };
     try {
-        if (usuarioLogado && usuarioLogado.id === pedidoData.user_id) {
-            // Usar dados do usuário logado
-            perfilData.nome = usuarioLogado.nome;
-            perfilData.bio = usuarioLogado.bio;
-            perfilData.estado = usuarioLogado.estado;
-            perfilData.photo_url = usuarioLogado.photo_url;
-        } else {
-            // Buscar na tabela usuario
-            const { data: usuario, error: userError } = await supabase
-                .from('usuario')
-                .select('id, nome, bio, estado, photo_url')
-                .eq('id', pedidoData.user_id)
-                .single();
-            if (!userError && usuario) {
-                perfilData.nome = usuario.nome || 'Anônimo';
-                perfilData.bio = usuario.bio || '';
-                perfilData.estado = usuario.estado || 'N/A';
-                perfilData.photo_url = usuario.photo_url || perfilData.photo_url;
-            } else {
-                console.warn('Usuário não encontrado na tabela usuario:', userError);
-                throw new Error('Usuário não encontrado');
-            }
+        const { data: usuario, error: userError } = await supabase
+            .from('usuario')
+            .select('nome, bio, username, photo_url')
+            .eq('id', pedidoData.user_id)
+            .single();
+        if (!userError && usuario) {
+            perfilData = {
+                nome: usuario.nome || 'Anônimo',
+                bio: usuario.bio || '',
+                username: usuario.username || 'anonimo',
+                photo_url: usuario.photo_url || 'https://placehold.co/100x100?text=Perfil'
+            };
         }
-
-        // Fallback para photo_url no storage
-        if (!perfilData.photo_url || perfilData.photo_url === 'https://placehold.co/100x100?text=Perfil') {
-            const extensions = ['jpg', 'png', 'jpeg']; // Tentar múltiplas extensões
-            for (const ext of extensions) {
-                const filePath = `${pedidoData.user_id}/profile.${ext}`;
-                const { data: urlData } = supabase.storage
-                    .from('usuario')
-                    .getPublicUrl(filePath);
-                if (urlData?.publicUrl) {
-                    try {
-                        const response = await fetch(urlData.publicUrl, { method: 'HEAD' });
-                        if (response.ok) {
-                            perfilData.photo_url = urlData.publicUrl;
-                            break;
-                        }
-                    } catch (fetchErr) {
-                        console.warn(`Erro ao verificar photo_url (${filePath}):`, fetchErr);
-                    }
-                }
-            }
-        }
-
-        console.log('Dados do perfil carregados:', perfilData);
     } catch (perfilErr) {
-        console.error('Erro ao carregar perfil do criador:', perfilErr);
-        alert('Erro ao carregar informações do criador.');
+        console.error('Erro ao carregar perfil:', perfilErr);
     }
 
-    // Buscar endereço
     let enderecoData = null;
-    let nomeUsuario = perfilData.nome; // Usar nome do perfil
-    let estadoFallback = perfilData.estado;
-
     if (pedidoData.endereco_id) {
         try {
             const { data: addrData, error: addrError } = await supabase
                 .from('endereco')
-                .select('id, cep, rua, numero, complemento, bairro, cidade, estado_endereco')
+                .select('cep, rua, numero, complemento, bairro, cidade, estado_endereco')
                 .eq('id', pedidoData.endereco_id)
                 .single();
             if (!addrError && addrData) {
                 enderecoData = addrData;
-                console.log('Endereço via endereco_id:', enderecoData);
             }
         } catch (addrErr) {
-            console.error('Erro ao consultar endereço via endereco_id:', addrErr);
+            console.error('Erro ao consultar endereço:', addrErr);
         }
     }
 
@@ -797,78 +730,65 @@ async function abrirModalDoacao(pedidoId) {
         try {
             const { data: addrData, error: addrError } = await supabase
                 .from('endereco')
-                .select('id, cep, rua, numero, complemento, bairro, cidade, estado_endereco')
+                .select('cep, rua, numero, complemento, bairro, cidade, estado_endereco')
                 .eq('usuario_id', pedidoData.user_id)
                 .order('created_at', { ascending: false })
                 .limit(1)
                 .single();
             if (!addrError && addrData) {
                 enderecoData = addrData;
-                console.log('Endereço via usuario_id:', enderecoData);
-                if (!pedidoData.endereco_id && addrData.id) {
-                    try {
-                        const { error: updateError } = await supabase
-                            .from('pedido')
-                            .update({ endereco_id: addrData.id })
-                            .eq('id', pedidoId);
-                        if (updateError) throw updateError;
-                        console.log('Endereço vinculado ao pedido com sucesso.');
-                    } catch (updateErr) {
-                        console.error('Erro ao vincular endereço:', updateErr);
-                    }
+                if (!pedidoData.endereco_id) {
+                    await supabase.from('pedido').update({ endereco_id: addrData.id }).eq('id', pedidoId);
                 }
-            } else {
-                alert('O criador do pedido não possui endereço cadastrado. Peça para cadastrar em Configurações.');
-                enderecoData = null;
             }
         } catch (addrErr) {
-            console.error('Erro ao consultar endereço via usuario_id:', addrErr);
-            alert('Erro ao consultar endereço. Verifique as permissões do banco.');
+            console.error('Erro ao consultar endereço:', addrErr);
+            alert('O criador do pedido não possui endereço cadastrado.');
         }
     }
 
     const endereco = enderecoData ? {
-        nome: nomeUsuario,
-        cep: enderecoData.cep || 'N/A',
-        rua: enderecoData.rua || 'N/A',
-        numero: enderecoData.numero || 'N/A',
+        cep: enderecoData.cep,
+        rua: enderecoData.rua,
+        numero: enderecoData.numero,
         complemento: enderecoData.complemento || '',
-        bairro: enderecoData.bairro || 'N/A',
-        cidade: enderecoData.cidade || 'N/A',
-        estado_endereco: enderecoData.estado_endereco || estadoFallback
+        bairro: enderecoData.bairro,
+        cidade: enderecoData.cidade,
+        estado_endereco: enderecoData.estado_endereco
     } : {
-        nome: nomeUsuario,
         cep: 'N/A',
         rua: 'N/A',
         numero: 'N/A',
         complemento: '',
         bairro: 'N/A',
         cidade: 'N/A',
-        estado_endereco: estadoFallback
+        estado_endereco: 'N/A'
     };
 
-    // Criar modal
+    const createdDate = new Date(pedidoData.created_at).toLocaleDateString('pt-BR');
+
     const modal = document.createElement('div');
     modal.className = 'modal-overlay';
     modal.innerHTML = `
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Doar para: ${pedidoData.titulo}</h3>
+                <h3>${pedidoData.titulo}</h3>
                 <button class="modal-close" onclick="fecharModal()">&times;</button>
             </div>
             <div class="modal-body">
+                <p>${pedidoData.descricao}</p>
+                <p>Criado em: ${createdDate}</p>
+                <div class="pedido-media">
+                    <img src="${pedidoData.foto_url || 'https://placehold.co/400x600?text=Sem+Imagem'}" alt="Imagem do pedido" class="pedido-image">
+                </div>
                 <div class="perfil-criador">
                     <img src="${perfilData.photo_url}" alt="Foto do criador" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; margin-bottom: 10px;">
+                    <p>${perfilData.username}</p>
                     <p>${perfilData.nome}</p>
-                    <p>${perfilData.bio}</p>
-                    <p>${perfilData.estado}</p>
+                    <p>${perfilData.bio || 'Sem bio'}</p>
                 </div>
                 <div class="endereco-completo">
                     <h4>Endereço de entrega:</h4>
-                    <div class="endereco-linha">
-                        <span>${endereco.nome}</span>
-                        <button onclick="copiarTexto('${endereco.nome}')">Copiar</button>
-                    </div>
                     <div class="endereco-linha">
                         <span>${endereco.rua}</span>
                         <button onclick="copiarTexto('${endereco.rua}')">Copiar</button>
@@ -892,15 +812,9 @@ async function abrirModalDoacao(pedidoId) {
                 </div>
                 <div class="form-group">
                     <label class="form-label">Código de rastreio *</label>
-                    <input type="text" id="codigo-rastreio" class="form-input"
-                           placeholder="Digite o código de rastreio (exatamente 13 caracteres)"
+                    <input type="text" id="codigo-rastreio" class="form-input" 
+                           placeholder="Digite o código de rastreio (exatamente 13 caracteres)" 
                            maxlength="13" minlength="13" required>
-                </div>
-                <div class="form-checkbox">
-                    <input type="checkbox" id="aceito-responsabilidade" required>
-                    <label for="aceito-responsabilidade">
-                        Concordo com as responsabilidades da doação
-                    </label>
                 </div>
                 <button class="btn btn-primary" onclick="confirmarDoacao('${pedidoId}')">
                     Confirmar Doação
@@ -908,75 +822,55 @@ async function abrirModalDoacao(pedidoId) {
             </div>
         </div>
     `;
+    
     document.body.appendChild(modal);
 }
 
 // Confirmar Doação
 async function confirmarDoacao(pedidoId) {
-    console.log('Iniciando confirmarDoacao para pedido:', pedidoId);
     const codigoRastreio = document.getElementById('codigo-rastreio').value;
-    const termosAceitos = document.getElementById('aceito-responsabilidade').checked;
 
-    if (!codigoRastreio || codigoRastreio.length !== 13) {
-        console.error('Código inválido:', codigoRastreio);
-        alert('O código de rastreio deve ter 13 caracteres.');
-        return;
-    }
-    if (!termosAceitos) {
-        console.error('Termos não aceitos');
-        alert('Aceite as responsabilidades da doação.');
+    if (!codigoRastreio || codigoRastreio.length !== CONFIG.MIN_CODIGO_RASTREIO) {
+        alert(`O código de rastreio deve ter ${CONFIG.MIN_CODIGO_RASTREIO} caracteres.`);
         return;
     }
 
     try {
-        // Verificar doação existente
-        const { data: existingDoacao, error: checkError } = await supabase
-            .from('doacao')
-            .select('id, codigo_rastreio')
-            .eq('pedido_id', pedidoId)
+        const { data: pedido, error: pedidoError } = await supabase
+            .from('pedido')
+            .select('status')
+            .eq('id', pedidoId)
             .single();
-        if (existingDoacao) {
-            console.warn('Doação existente:', existingDoacao);
-            alert(`Este pedido já tem uma doação com código ${existingDoacao.codigo_rastreio}.`);
+        if (pedidoError) throw pedidoError;
+        if (pedido.status === STATUS_PEDIDOS.CONCLUIDO) {
+            alert('Este pedido já foi concluído e não aceita mais doações.');
             return;
         }
-        if (checkError && checkError.code !== 'PGRST116') {
-            console.error('Erro ao verificar doação:', checkError);
-            throw checkError;
-        }
 
-        // Inserir doação
         const doacaoData = {
             pedido_id: pedidoId,
-            doador_id: (await supabase.auth.getUser()).data.user?.id || null,
+            doador_id: usuarioLogado?.id || null,
             codigo_rastreio: codigoRastreio,
-            termos_doacao: termosAceitos
+            termos_doacao: true
         };
         const { data: doacao, error: doacaoError } = await supabase
             .from('doacao')
             .insert([doacaoData])
             .select()
             .single();
-        if (doacaoError) {
-            console.error('Erro ao inserir doação:', doacaoError);
-            throw doacaoError;
+        if (doacaoError) throw doacaoError;
+
+        if (pedido.status === STATUS_PEDIDOS.DISPONIVEL) {
+            const { error: updateError } = await supabase
+                .from('pedido')
+                .update({ status: STATUS_PEDIDOS.PENDENTE })
+                .eq('id', pedidoId);
+            if (updateError) throw updateError;
         }
 
-        // Atualizar status do pedido
-        const { error: updateError } = await supabase
-            .from('pedido')
-            .update({ status: 'Pendente' })
-            .eq('id', pedidoId);
-        if (updateError) {
-            console.error('Erro ao atualizar status:', updateError);
-            throw updateError;
-        }
-
-        console.log('Doação salva:', doacao);
         alert('Doação confirmada! Código: ' + codigoRastreio);
         fecharModal();
     } catch (err) {
-        console.error('Erro ao confirmar doação:', err);
         alert('Erro ao confirmar doação: ' + err.message);
     }
 }
@@ -993,256 +887,209 @@ function fecharModal() {
     if (modal) modal.remove();
 }
 
-supabase.auth.onAuthStateChange(async (event, session) => {
+// Dashboard
+async function inicializarDashboard() {
+    if (!usuarioLogado) {
+        window.location.href = 'login.html';
+        return;
+    }
+
+    const content = document.getElementById('dashboard-content');
+    const menuItems = document.getElementById('menu-items');
+    if (!content || !menuItems) {
+        content && (content.innerHTML = '<p>Erro: Elementos da página não encontrados.</p>');
+        return;
+    }
+
+    menuItems.innerHTML = `
+        <a href="/index.html" class="menu-item">Início</a>
+        <a href="/new-request.html" class="menu-item">Novo Pedido</a>
+        <a href="/dashboard.html" class="menu-item">Histórico</a>
+        <a href="/config.html" class="menu-item">Configurações</a>
+        <a href="/regras.html" class="menu-item">Termos e Regras</a>
+        <a href="#" class="menu-item" onclick="logout()">Sair</a>
+    `;
+
+    content.innerHTML = `
+        <h2>Meu Histórico</h2>
+        <div class="card">
+            <table class="historico-table">
+                <thead><tr><th>Nome do Pedido</th><th>Categoria</th><th>Status</th><th></th></tr></thead>
+                <tbody id="historico-body"></tbody>
+            </table>
+        </div>
+    `;
+    await carregarHistorico();
+}
+
+// Histórico Tabela
+async function carregarHistorico() {
     try {
-        if (event === 'SIGNED_IN' && session) {
-            const { data: userData, error } = await supabase.auth.getUser();
-            if (error) throw error;
-            usuarioLogado = {
-                id: userData.user.id,
-                nome: userData.user.user_metadata.nome || 'Usuário',
-                email: userData.user.email,
-                username: userData.user.user_metadata.username || '',
-                estado: userData.user.user_metadata.estado || '',
-                termos: true,
-                bio: userData.user.user_metadata.bio || ''
-            };
-            localStorage.setItem('cavalodado_usuario', JSON.stringify(usuarioLogado));
-            await supabase.auth.updateUser({ data: usuarioLogado });
-            atualizarMenuLogado();
-            if (!window.location.pathname.includes('index.html')) {
-                window.location.href = '/index.html';
+        const { data: pedidos, error } = await supabase
+            .from('pedido')
+            .select('id, titulo, categoria, status')
+            .eq('user_id', usuarioLogado.id)
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            alert('Erro ao carregar histórico: ' + error.message);
+            return;
+        }
+
+        const tbody = document.getElementById('historico-body');
+        if (!tbody) return;
+
+        tbody.innerHTML = '';
+
+        for (const pedido of pedidos) {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${pedido.titulo}</td>
+                <td>${pedido.categoria}</td>
+                <td>${pedido.status}</td>
+                <td><span class="expand-btn">▼</span></td>
+            `;
+            const expandRow = document.createElement('tr');
+            expandRow.innerHTML = `<td colspan="4"><div class="expand-content"></div></td>`;
+            tbody.appendChild(row);
+            tbody.appendChild(expandRow);
+
+            const expandContent = expandRow.querySelector('.expand-content');
+
+            const { data: doacoes, error: doacaoError } = await supabase
+                .from('doacao')
+                .select('id, codigo_rastreio')
+                .eq('pedido_id', pedido.id);
+
+            if (doacaoError) {
+                expandContent.innerHTML = '<p>Erro ao carregar códigos de rastreio.</p>';
+                return;
             }
-        } else if (event === 'SIGNED_OUT') {
-            usuarioLogado = null;
-            localStorage.removeItem('cavalodado_usuario');
-            atualizarMenuLogado();
+
+            if (pedido.status === STATUS_PEDIDOS.DISPONIVEL) {
+                expandContent.innerHTML = `
+                    <button class="delete-btn">Excluir</button>
+                `;
+                expandContent.querySelector('.delete-btn').onclick = async () => {
+                    if (confirm('Exclusão permanente. Confirmar?')) {
+                        const { error } = await supabase
+                            .from('pedido')
+                            .delete()
+                            .eq('id', pedido.id);
+                        if (error) {
+                            alert('Erro ao excluir: ' + error.message);
+                            return;
+                        }
+                        carregarHistorico();
+                    }
+                };
+            } else if (pedido.status === STATUS_PEDIDOS.PENDENTE || pedido.status === STATUS_PEDIDOS.DISPONIVEL) {
+                let html = '';
+                doacoes.forEach(doacao => {
+                    html += `
+                        <div class="doacao-item">
+                            <input value="${doacao.codigo_rastreio}" readonly>
+                            <div>
+                                <label><input type="checkbox" name="opt-${doacao.id}" value="invalido">Código Inválido</label>
+                                <label><input type="checkbox" name="opt-${doacao.id}" value="entregue">Produto Entregue</label>
+                            </div>
+                            <p class="note">Conferir o código com atenção.</p>
+                            <button class="confirm-btn" data-doacao-id="${doacao.id}">Confirmar</button>
+                        </div>
+                    `;
+                });
+                expandContent.innerHTML = html;
+
+                doacoes.forEach(doacao => {
+                    const item = expandContent.querySelector(`.doacao-item [data-doacao-id="${doacao.id}"]`).parentNode;
+                    const [invalido, entregue] = item.querySelectorAll(`input[name="opt-${doacao.id}"]`);
+                    const confirmBtn = item.querySelector('.confirm-btn');
+
+                    [invalido, entregue].forEach(cb => {
+                        cb.onchange = () => {
+                            if (cb.checked) [invalido, entregue].forEach(other => other !== cb && (other.checked = false));
+                        };
+                    });
+
+                    confirmBtn.onclick = async () => {
+                        const checked = item.querySelector(`input[name="opt-${doacao.id}"]:checked`);
+                        if (!checked) return alert('Selecione uma opção');
+
+                        if (checked.value === 'entregue') {
+                            const { error } = await supabase
+                                .from('pedido')
+                                .update({ status: STATUS_PEDIDOS.CONCLUIDO, completion_date: new Date().toISOString() })
+                                .eq('id', pedido.id);
+                            if (error) return alert('Erro ao atualizar status: ' + error.message);
+                        } else if (checked.value === 'invalido') {
+                            const { error } = await supabase
+                                .from('doacao')
+                                .delete()
+                                .eq('id', doacao.id);
+                            if (error) return alert('Erro ao remover doação: ' + error.message);
+
+                            const { count, error: countError } = await supabase
+                                .from('doacao')
+                                .select('count', { count: 'exact' })
+                                .eq('pedido_id', pedido.id);
+                            if (countError) return alert('Erro ao verificar doações: ' + countError.message);
+                            if (count === 0) {
+                                await supabase
+                                    .from('pedido')
+                                    .update({ status: STATUS_PEDIDOS.DISPONIVEL })
+                                    .eq('id', pedido.id);
+                            }
+                        }
+                        carregarHistorico();
+                    };
+                });
+            } else if (pedido.status === STATUS_PEDIDOS.CONCLUIDO) {
+                let html = doacoes.map(doacao => `<p>Código de Rastreio: ${doacao.codigo_rastreio || 'N/A'}</p>`).join('');
+                expandContent.innerHTML = html;
+            }
+
+            row.querySelector('.expand-btn').onclick = (e) => {
+                expandContent.style.display = expandContent.style.display === 'block' ? 'none' : 'block';
+                e.target.textContent = expandContent.style.display === 'block' ? '▲' : '▼';
+            };
         }
     } catch (err) {
-        showError('Erro ao processar autenticação: ' + err.message);
-        console.error('Erro no onAuthStateChange:', err);
-    }
-});
-
-// Login
-// Função para exibir mensagens de erro
-function showError(message) {
-    const errorDiv = document.getElementById('error-message');
-    if (errorDiv) {
-        errorDiv.style.display = 'block';
-        errorDiv.textContent = message;
-    } else {
-        console.error('Elemento #error-message não encontrado na página.');
-        alert(message);
+        alert('Erro ao carregar histórico: ' + err.message);
     }
 }
 
-// Função para limpar mensagens de erro
-function clearError() {
-    const errorDiv = document.getElementById('error-message');
-    if (errorDiv) {
-        errorDiv.style.display = 'none';
-        errorDiv.textContent = '';
+// Função preencherDadosUsuario
+async function preencherDadosUsuario() {
+    if (!usuarioLogado) {
+        showError('Nenhum usuário logado.');
+        return;
     }
-}
+    try {
+        const { data: usuario, error } = await supabase
+            .from('usuario')
+            .select('nome, email, username, bio, photo_url')
+            .eq('id', usuarioLogado.id)
+            .single();
+        if (error) throw error;
 
-// Função para alternar visibilidade da senha
-function toggleSenha(id) {
-    const senhaInput = document.getElementById(id);
-    const tipo = senhaInput.type === 'password' ? 'text' : 'password';
-    senhaInput.type = tipo;
-}
-
-// Validação de senha
-function validatePassword(senha, confirmarSenha) {
-    if (senha !== confirmarSenha) return 'As senhas não coincidem.';
-    if (senha.length < 6) return 'A senha deve ter pelo menos 6 caracteres.';
-    if (!/[a-zA-Z]/.test(senha) || !/\d/.test(senha)) return 'A senha deve conter letras e números.';
-    return null;
-}
-
-// Login
-document.getElementById('login-form')?.addEventListener('submit', function(e) {
-    e.preventDefault();
-    clearError();
-
-    const email = document.getElementById('email').value;
-    const senha = document.getElementById('senha').value;
-
-    console.log('Tentando login com:', { email, senha });
-
-    supabase.auth.signInWithPassword({
-        email,
-        password: senha,
-    }).then(({ data, error }) => {
-        if (error) {
-            console.error('Erro no login:', error);
-            const errorMessage = error.message.includes('Invalid login credentials') ? 'E-mail ou senha incorretos.' : 'Erro ao fazer login: ' + error.message;
-            showError(errorMessage);
-            return;
-        }
-
-        const usuario = {
-            id: data.user.id,
-            nome: data.user.user_metadata.nome || 'Usuário',
-            email: data.user.email,
-            username: data.user.user_metadata.username || 'usuário',
-            estado: data.user.user_metadata.estado || ''
+        usuarioLogado = {
+            ...usuarioLogado,
+            nome: usuario.nome || usuarioLogado.nome || 'Usuário',
+            email: usuario.email || usuarioLogado.email || '',
+            username: usuario.username || usuarioLogado.username || '',
+            bio: usuario.bio || '',
+            photo_url: usuario.photo_url || 'https://placehold.co/100x100?text=Perfil'
         };
+        localStorage.setItem('cavalodado_usuario', JSON.stringify(usuarioLogado));
 
-        localStorage.setItem('cavalodado_token', data.session.access_token);
-        localStorage.setItem('cavalodado_usuario', JSON.stringify(usuario));
-        usuarioLogado = usuario;
-        console.log('Usuário logado:', usuario);
-        alert('Login realizado com sucesso!');
-        window.location.href = 'index.html';
-    }).catch(err => {
-        console.error('Erro inesperado no login:', err);
-        showError('Ocorreu um erro inesperado. Tente novamente.');
-    });
-});
-
-// Registro
-document.getElementById('register-form')?.addEventListener('submit', function(e) {
-    e.preventDefault();
-    clearError();
-
-    const dados = {
-        nome: document.getElementById('nome').value,
-        email: document.getElementById('email').value,
-        username: document.getElementById('username').value,
-        estado: document.getElementById('estado').value,
-        senha: document.getElementById('senha').value,
-        confirmarSenha: document.getElementById('confirmar-senha').value,
-        termos: document.getElementById('termos').checked
-    };
-
-    console.log('Tentando cadastro com:', dados);
-
-    if (!dados.termos) {
-        showError('Você deve aceitar os termos e condições.');
-        return;
+        document.getElementById('nome').value = usuarioLogado.nome || '';
+        document.getElementById('email').value = usuarioLogado.email || '';
+        document.getElementById('username').value = usuarioLogado.username || '';
+        document.getElementById('bio').value = usuarioLogado.bio || '';
+        document.getElementById('profile-img').src = usuarioLogado.photo_url;
+    } catch (err) {
+        showError('Falha ao carregar perfil: ' + err.message);
     }
-
-    const passwordError = validatePassword(dados.senha, dados.confirmarSenha);
-    if (passwordError) {
-        showError(passwordError);
-        return;
-    }
-
- supabase.auth.signUp({
-        email: dados.email,
-        password: dados.senha,
-        options: {
-            data: {
-                nome: dados.nome,
-                username: dados.username,
-                estado: dados.estado,
-            },
-        },
-    }).then(({ data, error }) => {
-        if (error) {
-            console.error('Erro no cadastro:', error);
-            showError('Erro ao cadastrar: ' + error.message);
-            return;
-        }
-
-        const usuario = {
-            id: data.user.id,
-            nome: dados.nome,
-            email: dados.email,
-            username: dados.username,
-            estado: dados.estado
-        };
-
-        localStorage.setItem('cavalodado_token', data.session.access_token);
-        localStorage.setItem('cavalodado_usuario', JSON.stringify(usuario));
-        usuarioLogado = usuario;
-        console.log('Usuário cadastrado:', usuario);
-        alert('Cadastro realizado com sucesso!');
-        window.location.href = 'index.html';
-    }).catch(err => {
-        console.error('Erro inesperado no cadastro:', err);
-        showError('Ocorreu um erro inesperado. Tente novamente.');
-    });
-});
-
-// Redefinir senha
-function resetPassword() {
-    const email = document.getElementById('email').value;
-    if (!email) {
-        showError('Por favor, insira seu e-mail.');
-        return;
-    }
-    supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: 'https://cavalodado.vercel.app/forgot-password.html',
-    }).then(({ error }) => {
-        if (error) {
-            showError('Erro ao enviar e-mail de redefinição: ' + error.message);
-            return;
-        }
-        alert('E-mail de redefinição enviado! Verifique sua caixa de entrada.');
-        window.location.href = 'login.html';
-    }).catch(err => {
-        showError('Ocorreu um erro inesperado. Tente novamente.');
-        console.error('Erro no reset de senha:', err);
-    });
-}
-
-// Listener para o formulário de recuperação de senha
-document.getElementById('forgot-password-form')?.addEventListener('submit', function(e) {
-    e.preventDefault();
-    clearError();
-    resetPassword();
-});
-
-// Listener para o formulário de redefinição de senha
-document.getElementById('forgot-password-form')?.addEventListener('submit', function(e) {
-    e.preventDefault();
-    clearError();
-
-    const senha = document.getElementById('senha').value;
-    const confirmarSenha = document.getElementById('confirmar-senha').value;
-
-    if (senha !== confirmarSenha) {
-        showError('As senhas não coincidem.');
-        return;
-    }
-
-    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/;
-    if (!passwordRegex.test(senha)) {
-        showError('A senha deve ter no mínimo 6 caracteres, com letras e números.');
-        return;
-    }
-
-    supabase.auth.updateUser({ password: senha }).then(({ data, error }) => {
-        if (error) {
-            showError('Erro ao redefinir a senha: ' + error.message);
-            return;
-        }
-        alert('Senha redefinida com sucesso! Faça login com a nova senha.');
-        window.location.href = 'login.html';
-    }).catch(err => {
-        showError('Ocorreu um erro inesperado. Tente novamente.');
-        console.error('Erro ao redefinir senha:', err);
-    });
-});
-
-// Logout
-async function logout() {
-    console.log('Tentando logout...');
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-        console.error('Erro ao fazer logout:', error.message);
-        alert('Erro ao sair. Tente novamente.');
-        return;
-    }
-    console.log('Logout bem-sucedido!');
-    localStorage.removeItem('cavalodado_token');
-    localStorage.removeItem('cavalodado_usuario');
-    usuarioLogado = null;
-    alert('Logout realizado com sucesso!');
-    window.location.href = 'index.html';
 }
 
 // Novo pedido
@@ -1258,9 +1105,9 @@ function inicializarNovoPedido() {
         form.addEventListener('submit', criarPedido);
     }
     
-    // Preencher categorias
     const categoriaSelect = document.getElementById('categoria');
     if (categoriaSelect) {
+        categoriaSelect.innerHTML = '<option value="">Selecione uma categoria</option>';
         CATEGORIAS.forEach(categoria => {
             const option = document.createElement('option');
             option.value = categoria;
@@ -1270,7 +1117,6 @@ function inicializarNovoPedido() {
     }
 }
 
-    // Criar Pedido
 async function criarPedido(e) {
     e.preventDefault();
     
@@ -1279,7 +1125,6 @@ async function criarPedido(e) {
         return;
     }
     
-    // Cooldown: checar último pedido no Supabase
     const { data: ultimoPedido, error: checkError } = await supabase
         .from('pedido')
         .select('created_at')
@@ -1303,14 +1148,12 @@ async function criarPedido(e) {
         }
     }
     
-    // Coletar dados do form
     const titulo = document.getElementById('titulo').value.trim();
     const categoria = document.getElementById('categoria').value;
     const descricao = document.getElementById('descricao').value.trim();
     const fotoInput = document.getElementById('foto-input').files[0];
     const termos = document.getElementById('termos-pedido').checked;
     
-    // Validações
     if (!titulo || !categoria || !descricao || !fotoInput || !termos) {
         alert('Preencha todos os campos obrigatórios e aceite os termos.');
         return;
@@ -1327,8 +1170,11 @@ async function criarPedido(e) {
         alert('Foto deve ter no máximo 5MB.');
         return;
     }
+    if (PRODUTOS_PROIBIDOS.some(proibido => titulo.toLowerCase().includes(proibido) || descricao.toLowerCase().includes(proibido))) {
+        alert('O pedido contém itens proibidos.');
+        return;
+    }
     
-    // Upload foto para Storage
     const safeFileName = fotoInput.name.replace(/[^a-zA-Z0-9.-]/g, '_');
     const fileName = `${usuarioLogado.id}/${Date.now()}_${safeFileName}`;
     const { error: uploadError } = await supabase.storage
@@ -1336,260 +1182,101 @@ async function criarPedido(e) {
         .upload(fileName, fotoInput, { upsert: false });
     
     if (uploadError) {
-        console.error('Erro no upload:', {
-            bucket: 'pedidos',
-            fileName,
-            errorDetails: uploadError
-        });
         alert('Erro ao fazer upload da foto: ' + uploadError.message);
         return;
     }
     
     const fotoUrl = `${SUPABASE_URL}/storage/v1/object/public/pedidos/${fileName}`;
     
-    // Inserir pedido no Supabase
-const { error } = await supabase
-    .from('pedido')
-    .insert({
-        user_id: usuarioLogado.id,
-        titulo,
-        categoria,
-        descricao,
-        foto_url: fotoUrl,
-        termos_pedido: termos,
-        status: STATUS_PEDIDOS.DISPONIVEL,
-        user_nome: usuarioLogado.nome || 'Anônimo',  
-        user_estado: usuarioLogado.estado || 'N/A'  
-    });
+    const { error } = await supabase
+        .from('pedido')
+        .insert({
+            user_id: usuarioLogado.id,
+            titulo,
+            categoria,
+            descricao,
+            foto_url: fotoUrl,
+            termos_pedido: termos,
+            status: STATUS_PEDIDOS.DISPONIVEL,
+            user_nome: usuarioLogado.nome || 'Anônimo',
+            user_estado: usuarioLogado.estado || 'N/A'
+        });
     
     if (error) {
         alert('Erro ao criar pedido: ' + error.message);
         return;
     }
     
-    alert('Pedido criado! Aguarde 2 horas para o próximo.');
+    alert('Pedido criado com sucesso!');
     window.location.href = 'index.html';
 }
 
-// Dashboard
-async function inicializarDashboard() {
-    const content = document.getElementById('dashboard-content');
-    const menuItems = document.getElementById('menu-items');
-    if (!content || !menuItems) {
-        console.error('Erro: dashboard-content ou menu-items não encontrado');
-        content && (content.innerHTML = '<p>Erro: Elementos da página não encontrados.</p>');
-        return;
+// Funções auxiliares
+function showError(message) {
+    const errorDiv = document.getElementById('error-message');
+    if (errorDiv) {
+        errorDiv.style.display = 'block';
+        errorDiv.textContent = message;
+    } else {
+        alert(message);
     }
-
-    // Verificar usuário logado
-    if (!usuarioLogado) {
-        content.innerHTML = '<p>Faça login para ver o histórico.</p>';
-        window.location.href = 'login.html';
-        return;
-    }
-
-    // Configurar menu lateral (sem Perfil ou Favoritos)
-    menuItems.innerHTML = `
-        <a href="/index.html" class="menu-item">Início</a>
-        <a href="/new-request.html" class="menu-item">Novo Pedido</a>
-        <a href="/dashboard.html" class="menu-item">Histórico</a>
-        <a href="/config.html" class="menu-item">Configurações</a>
-        <a href="/regras.html" class="menu-item">Termos e Regras</a>
-        <a href="#" class="menu-item" onclick="logout()">Sair</a>
-    `;
-
-    // Carregar histórico diretamente
-    content.innerHTML = `
-        <h2>Meu Histórico</h2>
-        <div class="card">
-            <table class="historico-table">
-                <thead><tr><th>Nome do Pedido</th><th>Categoria</th><th>Status</th><th></th></tr></thead>
-                <tbody id="historico-body"></tbody>
-            </table>
-        </div>
-    `;
-    await carregarHistorico();
 }
 
-// Histórico Tabela
-async function carregarHistorico() {
-    if (!usuarioLogado) {
-        alert('Faça login para ver o histórico');
-        window.location.href = 'login.html';
-        return;
+function clearError() {
+    const errorDiv = document.getElementById('error-message');
+    if (errorDiv) {
+        errorDiv.style.display = 'none';
+        errorDiv.textContent = '';
     }
-
-    const { data: pedidos, error } = await supabase
-        .from('pedido')
-        .select('id, titulo, categoria, status, doacao!left(codigo_rastreio)')
-        .eq('user_id', usuarioLogado.id)
-        .order('created_at', { ascending: false });
-
-    if (error) {
-        console.error('Erro ao carregar histórico:', error);
-        alert('Erro ao carregar histórico: ' + error.message);
-        return;
-    }
-
-    const tbody = document.getElementById('historico-body');
-    if (!tbody) return;
-
-    tbody.innerHTML = ''; // Limpar tabela antes de renderizar
-
-    pedidos.forEach(pedido => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${pedido.titulo}</td>
-            <td>${pedido.categoria}</td>
-            <td>${pedido.status}</td>
-            <td><span class="expand-btn">▼</span></td>
-        `;
-        const expandRow = document.createElement('tr');
-        expandRow.innerHTML = `<td colspan="4"><div class="expand-content"></div></td>`;
-        tbody.appendChild(row);
-        tbody.appendChild(expandRow);
-
-        const expandContent = expandRow.querySelector('.expand-content');
-        if (pedido.status === STATUS_PEDIDOS.DISPONIVEL) {
-            expandContent.innerHTML = `
-                <button class="delete-btn">Excluir</button>
-            `;
-            expandContent.querySelector('.delete-btn').onclick = async () => {
-                if (confirm('Exclusão permanente. Confirmar?')) {
-                    const { error } = await supabase
-                        .from('pedido')
-                        .delete()
-                        .eq('id', pedido.id);
-                    if (error) {
-                        alert('Erro ao excluir: ' + error.message);
-                        return;
-                    }
-                    carregarHistorico();
-                }
-            };
-        } else if (pedido.status === STATUS_PEDIDOS.PENDENTE) {
-            expandContent.innerHTML = `
-                <div><input value="${pedido.doacao?.codigo_rastreio || ''}" readonly><button class="copy-btn">Copiar</button></div>
-                <div>
-                    <label><input type="checkbox" name="opt" value="invalido">Código Inválido</label>
-                    <label><input type="checkbox" name="opt" value="entregue">Produto Entregue</label>
-                </div>
-                <p class="note">Conferir o código com atenção.</p>
-                <button class="confirm-btn">Confirmar</button>
-            `;
-            const [invalido, entregue] = expandContent.querySelectorAll('input[name="opt"]');
-            const confirmBtn = expandContent.querySelector('.confirm-btn');
-            expandContent.querySelector('.copy-btn').onclick = () => {
-                const codigo = pedido.doacao?.codigo_rastreio || '';
-                if (codigo) {
-                    navigator.clipboard.writeText(codigo);
-                    alert('Código copiado!');
-                } else {
-                    alert('Nenhum código de rastreio disponível.');
-                }
-            };
-            [invalido, entregue].forEach(cb => {
-                cb.onchange = () => {
-                    if (cb.checked) [invalido, entregue].forEach(other => other !== cb && (other.checked = false));
-                };
-            });
-            confirmBtn.onclick = async () => {
-                const checked = expandContent.querySelector('input[name="opt"]:checked');
-                if (!checked) return alert('Selecione uma opção');
-                const updates = { status: checked.value === 'invalido' ? STATUS_PEDIDOS.DISPONIVEL : STATUS_PEDIDOS.CONCLUIDO };
-                if (updates.status === STATUS_PEDIDOS.CONCLUIDO) updates.completion_date = new Date().toISOString();
-                const { error } = await supabase
-                    .from('pedido')
-                    .update(updates)
-                    .eq('id', pedido.id);
-                if (error) {
-                    alert('Erro ao atualizar status: ' + error.message);
-                    return;
-                }
-                carregarHistorico();
-            };
-        } else if (pedido.status === STATUS_PEDIDOS.CONCLUIDO) {
-            expandContent.innerHTML = `
-                <p>Código de Rastreio: ${pedido.doacao?.codigo_rastreio || 'N/A'}</p>
-            `;
-        }
-
-        row.querySelector('.expand-btn').onclick = (e) => {
-            expandContent.style.display = expandContent.style.display === 'block' ? 'none' : 'block';
-            e.target.textContent = expandContent.style.display === 'block' ? '▲' : '▼';
-        };
-    });
 }
 
-// Função preencherDadosUsuario
-async function preencherDadosUsuario() {
-    if (!usuarioLogado) {
-        console.error('Erro: usuarioLogado não definido.');
-        showError('Nenhum usuário logado.');
-        return;
-    }
-    console.log('Sincronizando dados do perfil com Supabase...');
+function validatePassword(senha, confirmarSenha) {
+    if (senha !== confirmarSenha) return 'As senhas não coincidem.';
+    if (senha.length < 6) return 'A senha deve ter pelo menos 6 caracteres.';
+    if (!/[a-zA-Z]/.test(senha) || !/\d/.test(senha)) return 'A senha deve conter letras e números.';
+    return null;
+}
+
+async function logout() {
     try {
-        const { data: { user }, error } = await supabase.auth.getUser();
-        if (error || !user) throw new Error('Usuário não encontrado no Supabase.');
-
-        // Atualiza usuarioLogado com user_metadata
-        usuarioLogado = {
-            ...usuarioLogado,
-            id: user.id,
-            nome: user.user_metadata.nome || usuarioLogado.nome || 'Usuário',
-            email: user.email || usuarioLogado.email || '',
-            username: user.user_metadata.username || usuarioLogado.username || '',
-            bio: user.user_metadata.bio || '', // Garantir bio
-            termos: user.user_metadata.termos || true
-            // Nota: Removido 'estado' pois vem da tabela 'endereco', não user_metadata
-        };
-        localStorage.setItem('cavalodado_usuario', JSON.stringify(usuarioLogado));
-
-        // Preenche formulário com verificação de null
-        const nomeInput = document.getElementById('nome');
-        const emailInput = document.getElementById('email');
-        const usernameInput = document.getElementById('username');
-        const bioInput = document.getElementById('bio');
-
-        if (nomeInput) nomeInput.value = usuarioLogado.nome || '';
-        if (emailInput) emailInput.value = usuarioLogado.email || '';
-        if (usernameInput) usernameInput.value = usuarioLogado.username || '';
-        if (bioInput) bioInput.value = usuarioLogado.bio || '';
-
-        console.log('Perfil sincronizado com sucesso, incluindo bio:', usuarioLogado.bio);
-    } catch (err) {
-        console.error('Erro ao sincronizar perfil:', err);
-        showError('Falha ao carregar bio e perfil. Tente recarregar.');
+        const { error } = await supabase.auth.signOut();
+        if (error) throw error;
+        localStorage.removeItem('cavalodado_token');
+        localStorage.removeItem('cavalodado_usuario');
+        usuarioLogado = null;
+        alert('Logout realizado com sucesso!');
+        window.location.href = 'index.html';
+    } catch (error) {
+        alert('Erro ao sair: ' + error.message);
     }
 }
 
-// Verificar usuário logado ao carregar a página
-document.addEventListener('DOMContentLoaded', async () => {
-    console.log('Página carregada. Verificando usuário logado...');
-    const { data: { user }, error } = await supabase.auth.getUser();
-    if (error || !user) {
-        console.error('Nenhum usuário logado:', error);
-        return;
+supabase.auth.onAuthStateChange(async (event, session) => {
+    try {
+        if (event === 'SIGNED_IN' && session) {
+            const { data: userData, error } = await supabase.auth.getUser();
+            if (error) throw error;
+            usuarioLogado = {
+                id: userData.user.id,
+                nome: userData.user.user_metadata.nome || 'Usuário',
+                email: userData.user.email,
+                username: userData.user.user_metadata.username || '',
+                estado: userData.user.user_metadata.estado || '',
+                termos: true,
+                bio: userData.user.user_metadata.bio || '',
+                photo_url: userData.user.user_metadata.photo_url || 'https://placehold.co/100x100?text=Perfil'
+            };
+            localStorage.setItem('cavalodado_usuario', JSON.stringify(usuarioLogado));
+            atualizarMenuLogado();
+            if (!window.location.pathname.includes('index.html')) {
+                window.location.href = '/index.html';
+            }
+        } else if (event === 'SIGNED_OUT') {
+            usuarioLogado = null;
+            localStorage.removeItem('cavalodado_usuario');
+            atualizarMenuLogado();
+        }
+    } catch (err) {
+        showError('Erro ao processar autenticação: ' + err.message);
     }
-    console.log('Usuário logado encontrado:', user);
-    // Buscar dados na tabela 'usuario'
-    const { data, error: dbError } = await supabase
-        .from('usuario')
-        .select('nome, email, username, bio, estado')
-        .eq('id', user.id)
-        .single();
-    if (dbError) {
-        console.error('Erro ao buscar dados do usuário:', dbError);
-        return;
-    }
-    window.usuarioLogado = data || {
-        nome: user.user_metadata.full_name || '',
-        email: user.email || '',
-        username: '',
-        bio: '',
-        estado: ''
-    };
-    console.log('Dados do usuário carregados:', window.usuarioLogado);
-    preencherDadosUsuario();
 });
