@@ -691,7 +691,7 @@ async function abrirModalDoacao(pedidoId) {
         return;
     }
 
-    let perfilData = { nome: 'Anônimo', bio: '', username: 'anonimo', photo_url: 'https://placehold.co/100x100?text=Perfil' };
+    let usuarioData = { nome: 'Anônimo', bio: '', username: 'anonimo', photo_url: 'https://placehold.co/100x100?text=Perfil' };
     try {
         const { data: usuario, error: userError } = await supabase
             .from('usuario')
@@ -699,7 +699,7 @@ async function abrirModalDoacao(pedidoId) {
             .eq('id', pedidoData.user_id)
             .single();
         if (!userError && usuario) {
-            perfilData = {
+            usuarioData = {
                 nome: usuario.nome || 'Anônimo',
                 bio: usuario.bio || '',
                 username: usuario.username || 'anonimo',
