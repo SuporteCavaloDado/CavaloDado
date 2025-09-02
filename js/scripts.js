@@ -718,39 +718,25 @@ try {
         .single();
     if (!userError && usuario) {
         perfilData.nome = usuario.nome || 'Anônimo';
-        perfilData.bio = usuario.bio || ''; // Removido 'Sem bio' para evitar texto padrão
+        perfilData.bio = usuario.bio || '';
         perfilData.estado = usuario.estado || 'N/A';
-        perfilData.photo_url = usuario.photo_url || 'https://placehold.co/100x100?text=Perfil';
+        perfilData.photo_url = usuario.photo_url || perfilData.photo_url;
     } else {
         console.warn('Usuário não encontrado na tabela usuario:', userError);
     }
 
-    // Buscar user_metadata do Supabase Auth como fallback
+    // Buscar user_metadata do Supabase Auth para o usuário logado
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (!authError && user && user.id === pedidoData.user_id) {
-        // Se for o usuário logado, usar usuarioLogado
         perfilData.nome = usuarioLogado.nome || perfilData.nome;
         perfilData.bio = usuarioLogado.bio || perfilData.bio;
         perfilData.estado = usuarioLogado.estado || perfilData.estado;
         perfilData.photo_url = usuarioLogado.photo_url || perfilData.photo_url;
-    } else {
-        // Tentar buscar user_metadata para outro usuário (requer permissões admin)
-        try {
-            const { data: authUser, error: adminError } = await supabase.auth.admin.getUserById(pedidoData.user_id);
-            if (!adminError && authUser?.user?.user_metadata) {
-                perfilData.nome = authUser.user.user_metadata.nome || perfilData.nome;
-                perfilData.bio = authUser.user.user_metadata.bio || perfilData.bio;
-                perfilData.estado = authUser.user.user_metadata.estado || perfilData.estado;
-                perfilData.photo_url = authUser.user.user_metadata.photo_url || perfilData.photo_url;
-            }
-        } catch (adminErr) {
-            console.warn('Erro ao acessar user_metadata via admin API:', adminErr);
-        }
     }
 
-    // Buscar photo_url no storage como último fallback
-    if (perfilData.photo_url === 'https://placehold.co/100x100?text=Perfil') {
-        const filePath = `${pedidoData.user_id}/profile.jpg`; // Supondo que a foto seja salva como profile.jpg
+    // Buscar photo_url diretamente no storage como fallback
+    if (!perfilData.photo_url || perfilData.photo_url === 'https://placehold.co/100x100?text=Perfil') {
+        const filePath = `${pedidoData.user_id}/profile.jpg`; // Ajuste a extensão se necessário
         const { data: urlData } = supabase.storage
             .from('usuario')
             .getPublicUrl(filePath);
@@ -762,6 +748,7 @@ try {
     console.log('Dados do perfil carregados:', perfilData);
 } catch (perfilErr) {
     console.error('Erro ao carregar perfil do criador:', perfilErr);
+    alert('Erro ao carregar informações do criador.');
 }
 
     // Buscar endereço (mantido como antes)
