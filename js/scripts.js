@@ -777,15 +777,15 @@ async function abrirModalDoacao(pedidoId) {
             </div>
             <div class="modal-body">
                 <p>${pedidoData.descricao}</p>
-                <p>Criado em: ${createdDate}</p>
                 <div class="pedido-media">
                     <img src="${pedidoData.foto_url || 'https://placehold.co/400x600?text=Sem+Imagem'}" alt="Imagem do pedido" class="pedido-image">
                 </div>
+                <p>Criado em: ${createdDate}</p>
                 <div class="perfil-criador">
-                    <img src="${perfilData.photo_url}" alt="Foto do criador" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; margin-bottom: 10px;">
-                    <p>${perfilData.username}</p>
-                    <p>${perfilData.nome}</p>
-                    <p>${perfilData.bio || 'Sem bio'}</p>
+                    <img src="${usuarioData.photo_url}" alt="Foto do criador" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; margin-bottom: 10px;">
+                    <p>${usuarioData.username}</p>
+                    <p>${usuarioData.nome}</p>
+                    <p>${usuarioData.bio || 'Sem bio'}</p>
                 </div>
                 <div class="endereco-completo">
                     <h4>Endereço de entrega:</h4>
