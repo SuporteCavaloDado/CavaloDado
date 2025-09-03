@@ -279,10 +279,12 @@ function inicializarConfiguracoes() {
             const fileInput = document.getElementById('profile-photo');
             if (fileInput?.files?.[0]) {
                 const file = fileInput.files[0];
+                // Validar tipo de arquivo (apenas imagens)
                 if (!file.type.startsWith('image/')) {
                     showError('Por favor, selecione uma imagem válida (ex: JPEG, PNG).');
                     return;
                 }
+                // Validar tamanho (máximo 5MB para evitar erros)
                 if (file.size > 5 * 1024 * 1024) {
                     showError('A imagem deve ter no máximo 5MB.');
                     return;
@@ -307,12 +309,6 @@ function inicializarConfiguracoes() {
             try {
                 const { error } = await supabase.auth.updateUser({ data: dados });
                 if (error) throw error;
-                await supabase.from('usuario').update({
-                    nome: dados.nome,
-                    username: dados.username,
-                    bio: dados.bio,
-                    photo_url: dados.photo_url
-                }).eq('id', usuarioLogado.id);
                 Object.assign(usuarioLogado, dados);
                 localStorage.setItem('cavalodado_usuario', JSON.stringify(usuarioLogado));
                 alert('Perfil atualizado com sucesso!');
@@ -324,15 +320,55 @@ function inicializarConfiguracoes() {
 
     const enderecoForm = document.getElementById('endereco-form');
     if (enderecoForm) {
-        enderecoForm.addEventListener('submit', salvarEndereco);
+        enderecoForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            clearError();
+            const dados = {
+                estado: document.getElementById('estado-endereco')?.value || ''
+            };
+            if (!dados.estado) {
+                showError('Preencha o estado no endereço.');
+                return;
+            }
+            try {
+                const { error } = await supabase.auth.updateUser({ data: dados });
+                if (error) throw error;
+                Object.assign(usuarioLogado, dados);
+                localStorage.setItem('cavalodado_usuario', JSON.stringify(usuarioLogado));
+                alert('Endereço atualizado com sucesso!');
+            } catch (error) {
+                showError('Erro ao atualizar endereço: ' + error.message);
+            }
+        });
     }
 }
 
 // Salvar Endereço
 async function salvarEndereco(event) {
     event.preventDefault();
+    console.log('Salvando endereço...');
     try {
-        const userId = usuarioLogado.id;
+        const { data: session, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) {
+            console.error('Erro ao obter sessão:', sessionError.message);
+            alert('Erro ao obter sessão: ' + sessionError.message);
+            return;
+        }
+        if (!session || !session.session) {
+            console.error('Nenhuma sessão encontrada');
+            alert('Nenhuma sessão encontrada. Faça login novamente.');
+            window.location.href = 'login.html';
+            return;
+        }
+
+        const userId = session.session.user.id;
+        console.log('Usuário ID:', userId);
+        if (!userId) {
+            console.error('ID de usuário inválido');
+            alert('ID de usuário inválido. Tente novamente.');
+            return;
+        }
+
         const cep = document.getElementById('cep').value.trim();
         const rua = document.getElementById('rua').value.trim();
         const numero = document.getElementById('numero').value.trim();
@@ -341,15 +377,20 @@ async function salvarEndereco(event) {
         const cidade = document.getElementById('cidade').value.trim();
         const estado_endereco = document.getElementById('estado-endereco').value;
 
+        console.log('Dados do endereço:', { userId, cep, rua, numero, complemento, bairro, cidade, estado_endereco });
+
         if (!cep.match(/^\d{5}-\d{3}$/)) {
+            console.log('CEP inválido');
             alert('CEP inválido. Use o formato 00000-000.');
             return;
         }
-        if (!rua || !numero || !bairro || !cidade || !estado_endereco) {
+        if (!rua || !numero || !bairro || !cidade) {
+            console.log('Campos obrigatórios não preenchidos');
             alert('Preencha todos os campos obrigatórios.');
             return;
         }
         if (!ESTADOS_BRASIL.includes(estado_endereco)) {
+            console.log('Estado inválido');
             alert('Selecione um estado válido.');
             return;
         }
@@ -361,12 +402,14 @@ async function salvarEndereco(event) {
             .eq('usuario_id', userId)
             .single();
 
-        if (selectError && selectError.code !== 'PGRST116') {
+        if (selectError && selectError.code !== 'PGRST116') { // PGRST116 = no rows found
+            console.error('Erro ao verificar endereço existente:', selectError.message);
             alert('Erro ao verificar endereço: ' + selectError.message);
             return;
         }
 
         if (existingAddress) {
+            console.log('Atualizando endereço existente');
             ({ data: result, error } = await supabase
                 .from('endereco')
                 .update({ cep, rua, numero, complemento, bairro, cidade, estado_endereco, updated_at: new Date() })
@@ -374,6 +417,7 @@ async function salvarEndereco(event) {
                 .select()
                 .single());
         } else {
+            console.log('Inserindo novo endereço');
             ({ data: result, error } = await supabase
                 .from('endereco')
                 .insert({ usuario_id: userId, cep, rua, numero, complemento, bairro, cidade, estado_endereco })
@@ -382,14 +426,17 @@ async function salvarEndereco(event) {
         }
 
         if (error) {
-            alert('Erro ao salvar endereço: ' + error.message);
+            console.error('Erro ao salvar endereço:', error.message, error.details, error.code);
+            alert('Erro ao salvar endereço: ' + error.message + ' (Código: ' + error.code + ')');
             return;
         }
 
+        console.log('Endereço salvo com sucesso:', result);
         alert('Endereço salvo com sucesso!');
-        carregarEndereco();
+        carregarEndereco(); // Recarrega os dados após salvar
     } catch (err) {
-        alert('Erro ao salvar endereço: ' + err.message);
+        console.error('Erro inesperado ao salvar endereço:', err.message, err.stack);
+        alert('Erro inesperado ao salvar endereço: ' + err.message);
     }
 }
 
