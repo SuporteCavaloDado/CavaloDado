@@ -185,7 +185,9 @@ function inicializarRegistro() {
                 estado: document.getElementById('estado').value,
                 senha: document.getElementById('senha').value,
                 confirmarSenha: document.getElementById('confirmar-senha').value,
-                termos: document.getElementById('termos').checked
+                termos: document.getElementById('termos').checked,
+                bio: '', // Inicializa bio no formulário
+                photo_url: 'https://placehold.co/100x100?text=Perfil' // Default para photo_url
             };
 
             if (!dados.termos) {
@@ -208,7 +210,9 @@ function inicializarRegistro() {
                             nome: dados.nome,
                             username: dados.username,
                             estado: dados.estado,
-                            termos: true
+                            termos: true,
+                            bio: dados.bio, // Sincroniza com auth
+                            photo_url: dados.photo_url // Sincroniza com auth
                         }
                     }
                 });
@@ -221,8 +225,8 @@ function inicializarRegistro() {
                     username: dados.username,
                     estado: dados.estado,
                     termos: true,
-                    bio: '',
-                    photo_url: 'https:
+                    bio: dados.bio, // Salva bio na tabela
+                    photo_url: dados.photo_url // Salva photo_url na tabela
                 });
 
                 usuarioLogado = {
@@ -232,8 +236,8 @@ function inicializarRegistro() {
                     username: dados.username,
                     estado: dados.estado,
                     termos: true,
-                    bio: '',
-                    photo_url: 'https:
+                    bio: dados.bio, // Vincula ao objeto
+                    photo_url: dados.photo_url // Vincula ao objeto
                 };
                 localStorage.setItem('cavalodado_token', data.session.access_token);
                 localStorage.setItem('cavalodado_usuario', JSON.stringify(usuarioLogado));
