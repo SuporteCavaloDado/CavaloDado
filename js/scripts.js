@@ -220,7 +220,7 @@ function inicializarRegistro() {
                     email: dados.email,
                     username: dados.username,
                     estado: dados.estado,
-                    termos: true
+                    termos: true,
                     bio: '',
                     photo_url: 'https:
                 });
@@ -231,7 +231,7 @@ function inicializarRegistro() {
                     email: dados.email,
                     username: dados.username,
                     estado: dados.estado,
-                    termos: true
+                    termos: true,
                     bio: '',
                     photo_url: 'https:
                 };
