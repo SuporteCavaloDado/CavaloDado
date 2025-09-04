@@ -746,6 +746,7 @@ async function abrirModalDoacao(pedidoId) {
         if (error || !data) throw error;
         pedidoData = data;
     } catch (err) {
+        console.error('Erro ao carregar dados do pedido:', err);
         alert('Erro ao carregar dados do pedido: ' + err.message);
         pedidoData = pedidosCache.find(p => p.id === pedidoId);
         if (!pedidoData) return;
@@ -756,23 +757,32 @@ async function abrirModalDoacao(pedidoId) {
         return;
     }
 
-    let usuarioData = { nome: 'Anônimo', bio: '', username: 'anonimo', photo_url: 'https://placehold.co/100x100?text=Perfil' };
+    let usuarioData = {
+        nome: 'Anônimo',
+        bio: 'Sem bio',
+        username: 'anonimo',
+        photo_url: 'https://placehold.co/100x100?text=Perfil'
+    };
     try {
         const { data: usuario, error: userError } = await supabase
             .from('usuario')
             .select('nome, bio, username, photo_url')
             .eq('id', pedidoData.user_id)
             .single();
-        if (!userError && usuario) {
-            usuarioData = {
-                nome: usuario.nome || 'Anônimo',
-                bio: usuario.bio || '',
-                username: usuario.username || 'anonimo',
-                photo_url: usuario.photo_url || 'https://placehold.co/100x100?text=Perfil'
-            };
+        if (userError) {
+            console.error('Erro ao buscar usuario:', userError.message, userError);
+            throw userError;
         }
+        console.log('Dados usuario do modal:', usuario); // Debug para confirmar dados
+        usuarioData = {
+            nome: usuario.nome || 'Anônimo',
+            bio: usuario.bio || 'Sem bio',
+            username: usuario.username || 'anonimo',
+            photo_url: usuario.photo_url || 'https://placehold.co/100x100?text=Perfil'
+        };
     } catch (perfilErr) {
         console.error('Erro ao carregar perfil:', perfilErr);
+        // Mantém defaults de usuarioData
     }
 
     let enderecoData = null;
@@ -807,19 +817,19 @@ async function abrirModalDoacao(pedidoId) {
                 }
             }
         } catch (addrErr) {
-            console.error('Erro ao consultar endereço:', addrErr);
+            console.error('Erro ao consultar endereço alternativo:', addrErr);
             alert('O criador do pedido não possui endereço cadastrado.');
         }
     }
 
     const endereco = enderecoData ? {
-        cep: enderecoData.cep,
-        rua: enderecoData.rua,
-        numero: enderecoData.numero,
+        cep: enderecoData.cep || 'N/A',
+        rua: enderecoData.rua || 'N/A',
+        numero: enderecoData.numero || 'N/A',
         complemento: enderecoData.complemento || '',
-        bairro: enderecoData.bairro,
-        cidade: enderecoData.cidade,
-        estado_endereco: enderecoData.estado_endereco
+        bairro: enderecoData.bairro || 'N/A',
+        cidade: enderecoData.cidade || 'N/A',
+        estado_endereco: enderecoData.estado_endereco || 'N/A'
     } : {
         cep: 'N/A',
         rua: 'N/A',
@@ -850,7 +860,7 @@ async function abrirModalDoacao(pedidoId) {
                     <img src="${usuarioData.photo_url}" alt="Foto do criador" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; margin-bottom: 10px;">
                     <p>${usuarioData.username}</p>
                     <p>${usuarioData.nome}</p>
-                    <p>${usuarioData.bio || 'Sem bio'}</p>
+                    <p>${usuarioData.bio}</p>
                 </div>
                 <div class="endereco-completo">
                     <h4>Endereço de entrega:</h4>
