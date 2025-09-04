@@ -221,6 +221,8 @@ function inicializarRegistro() {
                     username: dados.username,
                     estado: dados.estado,
                     termos: true
+                    bio: '',
+                    photo_url: 'https:
                 });
 
                 usuarioLogado = {
@@ -230,6 +232,8 @@ function inicializarRegistro() {
                     username: dados.username,
                     estado: dados.estado,
                     termos: true
+                    bio: '',
+                    photo_url: 'https:
                 };
                 localStorage.setItem('cavalodado_token', data.session.access_token);
                 localStorage.setItem('cavalodado_usuario', JSON.stringify(usuarioLogado));
