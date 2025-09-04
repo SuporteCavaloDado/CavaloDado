@@ -309,23 +309,26 @@ function inicializarConfiguracoes() {
                     return;
                 }
             }
-
-            try {
+                try {
   const { error } = await supabase.auth.updateUser({ data: dados });
   if (error) throw error;
-  // Sincronizar com tabela usuario
   await supabase.from('usuario').update({
     nome: dados.nome,
     username: dados.username,
-    bio: dados.bio,
-    photo_url: dados.photo_url
+    bio: dados.bio || '', // Garante vazio se não preenchido
+    photo_url: dados.photo_url || usuarioLogado.photo_url || 'https://placehold.co/100x100?text=Perfil' // Mantém existente ou default
   }).eq('id', usuarioLogado.id);
-  Object.assign(usuarioLogado, dados);
+  Object.assign(usuarioLogado, {
+    nome: dados.nome,
+    username: dados.username,
+    bio: dados.bio || '',
+    photo_url: dados.photo_url || usuarioLogado.photo_url || 'https://placehold.co/100x100?text=Perfil'
+  });
   localStorage.setItem('cavalodado_usuario', JSON.stringify(usuarioLogado));
   alert('Perfil atualizado com sucesso!');
 } catch (error) {
   showError('Erro ao atualizar perfil: ' + error.message);
-}
+            }
         });
     }
 
