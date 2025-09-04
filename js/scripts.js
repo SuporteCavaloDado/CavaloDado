@@ -71,30 +71,52 @@ function atualizarMenuLogado() {
 }
 
 // Inicializar página específica
-function inicializarPagina() {
+async function inicializarPagina() {
     usuarioLogado = JSON.parse(localStorage.getItem('cavalodado_usuario')) || null;
-    supabase.auth.getSession().then(({ data: { session } }) => {
-        if (session && !usuarioLogado) {
-            supabase.auth.getUser().then(({ data: userData, error }) => {
-                if (!error && userData.user) {
-                    usuarioLogado = {
-                        id: userData.user.id,
-                        nome: userData.user.user_metadata.nome || 'Usuário',
-                        email: userData.user.email,
-                        username: userData.user.user_metadata.username || '',
-                        estado: userData.user.user_metadata.estado || '',
-                        termos: userData.user.user_metadata.termos || true,
-                        bio: userData.user.user_metadata.bio || '',
-                        photo_url: userData.user.user_metadata.photo_url || 'https://placehold.co/100x100?text=Perfil'
-                    };
-                    localStorage.setItem('cavalodado_usuario', JSON.stringify(usuarioLogado));
+
+    // Wrapper para retry com timeout
+    async function withRetry(fn, retries = 3, delay = 1000) {
+        for (let attempt = 1; attempt <= retries; attempt++) {
+            try {
+                return await Promise.race([
+                    fn(),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000)) // Timeout de 5s
+                ]);
+            } catch (error) {
+                console.error(`Tentativa ${attempt} falhou:`, error);
+                if (attempt === retries) {
+                    showError('Erro ao carregar sessão. Verifique a internet e recarregue (F5).');
+                    throw error;
                 }
-                atualizarMenuLogado();
-            });
-        } else {
-            atualizarMenuLogado();
+                await new Promise(res => setTimeout(res, delay * attempt)); // Delay exponencial
+            }
         }
-    });
+    }
+
+    try {
+        const { session } = await withRetry(() => supabase.auth.getSession());
+        if (session && !usuarioLogado) {
+            const { userData } = await withRetry(() => supabase.auth.getUser());
+            if (userData?.user) {
+                usuarioLogado = {
+                    id: userData.user.id,
+                    nome: userData.user.user_metadata.nome || 'Usuário',
+                    email: userData.user.email,
+                    username: userData.user.user_metadata.username || '',
+                    estado: userData.user.user_metadata.estado || '',
+                    termos: userData.user.user_metadata.termos || true,
+                    bio: userData.user.user_metadata.bio || '',
+                    photo_url: userData.user.user_metadata.photo_url || 'https://placehold.co/100x100?text=Perfil'
+                };
+                localStorage.setItem('cavalodado_usuario', JSON.stringify(usuarioLogado));
+            }
+        }
+        atualizarMenuLogado();
+    } catch (err) {
+        console.error('Erro na inicialização:', err);
+        showError('Falha ao carregar dados. Recarregue a página.');
+    }
+
     const pagina = window.location.pathname.split('/').pop() || 'index.html';
     
     switch (pagina) {
