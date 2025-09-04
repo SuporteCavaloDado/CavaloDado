@@ -1025,7 +1025,7 @@ async function carregarHistorico() {
                 <td><span class="expand-btn">▼</span></td>
             `;
             const expandRow = document.createElement('tr');
-            expandRow.innerHTML = `<td colspan="4"><div class="expand-content"></div></td>`;
+            expandRow.innerHTML = `<td colspan="4"><div class="expand-content" style="display: none;"></div></td>`;
             tbody.appendChild(row);
             tbody.appendChild(expandRow);
 
@@ -1058,21 +1058,21 @@ async function carregarHistorico() {
                         carregarHistorico();
                     }
                 };
-            } else if (pedido.status === STATUS_PEDIDOS.PENDENTE || pedido.status === STATUS_PEDIDOS.DISPONIVEL) {
-                let html = '';
-                doacoes.forEach(doacao => {
-                    html += `
-                        <div class="doacao-item">
+            } else if (pedido.status === STATUS_PEDIDOS.PENDENTE) {
+                let html = doacoes && doacoes.length > 0 ? doacoes.map(doacao => `
+                    <div class="doacao-item">
+                        <div class="codigo-container">
                             <input value="${doacao.codigo_rastreio}" readonly>
-                            <div>
-                                <label><input type="checkbox" name="opt-${doacao.id}" value="invalido">Código Inválido</label>
-                                <label><input type="checkbox" name="opt-${doacao.id}" value="entregue">Produto Entregue</label>
-                            </div>
-                            <p class="note">Conferir o código com atenção.</p>
+                            <button onclick="copiarTexto('${doacao.codigo_rastreio}')">Copiar</button>
+                        </div>
+                        <div class="opcoes-container">
+                            <label><input type="checkbox" name="opt-${doacao.id}" value="invalido"> Código Inválido</label>
+                            <label><input type="checkbox" name="opt-${doacao.id}" value="entregue"> Produto Entregue</label>
                             <button class="confirm-btn" data-doacao-id="${doacao.id}">Confirmar</button>
                         </div>
-                    `;
-                });
+                        <p class="note">Conferir o código com atenção.</p>
+                    </div>
+                `).join('') : '<p>Nenhum código de rastreio registrado.</p>';
                 expandContent.innerHTML = html;
 
                 doacoes.forEach(doacao => {
@@ -1103,23 +1103,31 @@ async function carregarHistorico() {
                                 .eq('id', doacao.id);
                             if (error) return alert('Erro ao remover doação: ' + error.message);
 
-                            const { count, error: countError } = await supabase
+                            const { data: remainingDoacoes, error: countError } = await supabase
                                 .from('doacao')
-                                .select('count', { count: 'exact' })
+                                .select('id')
                                 .eq('pedido_id', pedido.id);
                             if (countError) return alert('Erro ao verificar doações: ' + countError.message);
-                            if (count === 0) {
-                                await supabase
+                            if (!remainingDoacoes || remainingDoacoes.length === 0) {
+                                const { error: statusError } = await supabase
                                     .from('pedido')
                                     .update({ status: STATUS_PEDIDOS.DISPONIVEL })
                                     .eq('id', pedido.id);
+                                if (statusError) return alert('Erro ao atualizar status: ' + statusError.message);
                             }
                         }
                         carregarHistorico();
                     };
                 });
             } else if (pedido.status === STATUS_PEDIDOS.CONCLUIDO) {
-                let html = doacoes.map(doacao => `<p>Código de Rastreio: ${doacao.codigo_rastreio || 'N/A'}</p>`).join('');
+                let html = doacoes.map(doacao => `
+                    <div class="doacao-item">
+                        <div class="codigo-container">
+                            <input value="${doacao.codigo_rastreio}" readonly>
+                            <button onclick="copiarTexto('${doacao.codigo_rastreio}')">Copiar</button>
+                        </div>
+                    </div>
+                `).join('') || '<p>Nenhum código de rastreio registrado.</p>';
                 expandContent.innerHTML = html;
             }
 
@@ -1129,6 +1137,7 @@ async function carregarHistorico() {
             };
         }
     } catch (err) {
+        console.error('Erro ao carregar histórico:', err);
         alert('Erro ao carregar histórico: ' + err.message);
     }
 }
