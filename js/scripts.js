@@ -307,14 +307,21 @@ function inicializarConfiguracoes() {
             }
 
             try {
-                const { error } = await supabase.auth.updateUser({ data: dados });
-                if (error) throw error;
-                Object.assign(usuarioLogado, dados);
-                localStorage.setItem('cavalodado_usuario', JSON.stringify(usuarioLogado));
-                alert('Perfil atualizado com sucesso!');
-            } catch (error) {
-                showError('Erro ao atualizar perfil: ' + error.message);
-            }
+  const { error } = await supabase.auth.updateUser({ data: dados });
+  if (error) throw error;
+  // Sincronizar com tabela usuario
+  await supabase.from('usuario').update({
+    nome: dados.nome,
+    username: dados.username,
+    bio: dados.bio,
+    photo_url: dados.photo_url
+  }).eq('id', usuarioLogado.id);
+  Object.assign(usuarioLogado, dados);
+  localStorage.setItem('cavalodado_usuario', JSON.stringify(usuarioLogado));
+  alert('Perfil atualizado com sucesso!');
+} catch (error) {
+  showError('Erro ao atualizar perfil: ' + error.message);
+}
         });
     }
 
