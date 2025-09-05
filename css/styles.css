@@ -517,15 +517,15 @@ body {
 }
 
 /* Filtros */
+/* Filtros */
 .filtros-container {
-    background: rgba(255, 255, 255, 0.98); /* Mais opaco para um visual mais limpo */
+    background: rgba(255, 255, 255, 0.98);
     border-radius: var(--border-radius);
     margin-bottom: 1rem;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); /* Sombra mais leve */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     transition: var(--transicao);
-    backdrop-filter: blur(6px); /* Efeito blur reduzido para suavidade */
-    /* Fallback para navegadores sem suporte a backdrop-filter */
-    background-color: var(--cor-cinza-claro);
+    backdrop-filter: blur(6px);
+    background-color: var(--cor-cinza-claro); /* Fallback */
 }
 
 .filtros-container:hover {
@@ -534,13 +534,13 @@ body {
 
 .filtros-toggle {
     width: 100%;
-    padding: 0.7rem 1rem; /* Ajustado para maior delicadeza */
+    padding: 0.7rem 1rem;
     background: none;
     border: none;
     text-align: left;
     cursor: pointer;
     font-weight: 500;
-    font-size: 0.95rem; /* Tamanho ligeiramente maior */
+    font-size: 0.95rem;
     color: var(--cor-preto);
     display: flex;
     justify-content: space-between;
@@ -549,20 +549,24 @@ body {
     border-radius: var(--border-radius);
 }
 
+.filtros-toggle::before {
+    content: none; /* Garante que não há pseudo-elemento extra */
+}
+
 .filtros-toggle::after {
-    content: '\25BC';
+    content: '\25BC'; /* Seta para baixo */
     font-size: 0.8rem;
     color: var(--cor-cinza-escuro);
     transition: var(--transicao);
 }
 
 .filtros-toggle.active::after {
-    content: '\25B2';
+    content: '\25B2'; /* Seta para cima */
 }
 
 .filtros-toggle:hover {
     color: var(--cor-primaria);
-    background: rgba(255, 215, 0, 0.05); /* Fundo sutil ao hover */
+    background: rgba(255, 215, 0, 0.05);
 }
 
 .filtros-toggle:hover::after {
@@ -585,13 +589,13 @@ body {
 .filtros-grid {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 0.8rem; /* Aumentado para melhor espaçamento */
+    gap: 0.8rem;
     margin-bottom: 0.8rem;
 }
 
 .filtros-grid .form-select {
     padding: 0.7rem;
-    border: 1px solid var(--cor-cinza-medio); /* Borda mais fina */
+    border: 1px solid var(--cor-cinza-medio);
     border-radius: var(--border-radius);
     font-size: 0.9rem;
     background: rgba(255, 255, 255, 0.98);
@@ -629,6 +633,50 @@ body {
 .search-input:focus {
     border-color: var(--cor-primaria);
     box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.15);
+}
+
+.search-btn {
+    display: inline-flex;
+    padding: 0.7rem 1.4rem;
+    background: var(--cor-primaria);
+    border: none;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    color: var(--cor-preto);
+    font-weight: 500;
+    font-size: 0.9rem;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+    transition: var(--transicao);
+}
+
+.search-btn::before {
+    content: '\1F50D'; /* Ícone de lupa */
+    font-size: 0.8rem;
+    margin-right: 0.3rem;
+}
+
+.search-btn::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: 0.5s;
+}
+
+.search-btn:hover::after {
+    left: 100%;
+}
+
+.search-btn:hover {
+    background: #FACC15;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(255, 215, 0, 0.3);
 }
 
 /* Anúncios */
