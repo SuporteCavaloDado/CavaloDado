@@ -441,6 +441,10 @@ body {
     transition: var(--transicao);
 }
 
+.filtros-toggle::before {
+    content: none; /* Remove qualquer pseudo-elemento ::before */
+}
+
 .filtros-toggle::after {
     content: '\25BC'; /* Seta para baixo (Unicode) */
     font-size: 0.7rem;
@@ -450,7 +454,7 @@ body {
 
 .filtros-toggle.active::after {
     content: '\25B2'; /* Seta para cima (Unicode) */
-    transform: rotate(180deg);
+    transform: rotate(0deg); /* Remove rotação para evitar duplicação visual */
 }
 
 .filtros-toggle:hover {
@@ -541,6 +545,10 @@ body {
 .search-btn::before {
     content: '\1F50D'; /* Ícone de lupa (Unicode) */
     font-size: 0.8rem;
+}
+
+.search-btn::after {
+    content: none; /* Remove qualquer pseudo-elemento ::after */
 }
 
 .search-btn:hover {
