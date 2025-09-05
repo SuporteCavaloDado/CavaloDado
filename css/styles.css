@@ -517,15 +517,14 @@ body {
 }
 
 /* Filtros */
-/* Filtros */
 .filtros-container {
-    background: rgba(255, 255, 255, 0.98);
+    background: rgba(255, 255, 255, 0.98); /* Opacidade alta para visual limpo */
     border-radius: var(--border-radius);
     margin-bottom: 1rem;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); /* Sombra leve */
     transition: var(--transicao);
-    backdrop-filter: blur(6px);
-    background-color: var(--cor-cinza-claro); /* Fallback */
+    backdrop-filter: blur(6px); /* Efeito blur suave */
+    background-color: var(--cor-cinza-claro); /* Fallback para navegadores sem suporte */
 }
 
 .filtros-container:hover {
@@ -549,6 +548,13 @@ body {
     border-radius: var(--border-radius);
 }
 
+/* Remove qualquer ícone ou elemento filho que possa causar duplicação */
+.filtros-toggle > i,
+.filtros-toggle > span,
+.filtros-toggle > svg {
+    display: none !important; /* Força a remoção de ícones extras no HTML */
+}
+
 .filtros-toggle::before {
     content: none; /* Garante que não há pseudo-elemento extra */
 }
@@ -566,7 +572,7 @@ body {
 
 .filtros-toggle:hover {
     color: var(--cor-primaria);
-    background: rgba(255, 215, 0, 0.05);
+    background: rgba(255, 215, 0, 0.05); /* Fundo sutil ao hover */
 }
 
 .filtros-toggle:hover::after {
@@ -650,6 +656,13 @@ body {
     position: relative;
     overflow: hidden;
     transition: var(--transicao);
+}
+
+/* Remove qualquer ícone ou elemento filho que possa causar duplicação da lupa */
+.search-btn > i,
+.search-btn > span,
+.search-btn > svg {
+    display: none !important; /* Força a remoção de ícones extras no HTML */
 }
 
 .search-btn::before {
