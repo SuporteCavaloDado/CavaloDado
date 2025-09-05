@@ -656,19 +656,24 @@ body {
     position: relative;
     overflow: hidden;
     transition: var(--transicao);
+    font-family: inherit; /* Evita fontes de ícones externas */
+    text-align: center; /* Centraliza o texto */
 }
 
-/* Remove qualquer ícone ou elemento filho que possa causar duplicação da lupa */
+/* Remove qualquer ícone ou elemento filho que cause duplicação */
 .search-btn > i,
 .search-btn > span,
-.search-btn > svg {
-    display: none !important; /* Força a remoção de ícones extras no HTML */
+.search-btn > svg,
+.search-btn[class*="fa-"],
+.search-btn[class*="icon-"] {
+    display: none !important; /* Remove ícones extras do HTML */
 }
 
 .search-btn::before {
     content: '\1F50D'; /* Ícone de lupa */
     font-size: 0.8rem;
-    margin-right: 0.3rem;
+    margin-right: 0.4rem; /* Ajustado para melhor espaçamento */
+    display: inline-block; /* Garante exibição correta */
 }
 
 .search-btn::after {
