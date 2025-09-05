@@ -896,40 +896,6 @@ body {
     color: var(--cor-cinza-escuro);
 }
 
-/* Favoritos */
-.favoritos-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 1.2rem;
-    max-width: 100%;
-    margin: 1.5rem auto;
-    padding: 0.8rem;
-    box-sizing: border-box;
-}
-
-.favorito-item {
-    width: 100%;
-    aspect-ratio: 1/1;
-    overflow: hidden;
-    border-radius: var(--border-radius);
-    background: rgba(255, 255, 255, var(--transparencia));
-    box-shadow: var(--sombra-leve);
-    transition: var(--transicao);
-}
-
-.favorito-item:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--sombra-hover);
-}
-
-.favorito-image {
-    width: 100%;
-    height: 160px;
-    object-fit: cover;
-    display: block;
-    border-radius: var(--border-radius);
-}
-
 /* Dashboard */
 .dashboard-nav {
     display: flex;
